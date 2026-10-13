@@ -82,11 +82,12 @@ main {
   min-height: 0;
 }
 .list-view, .cart-view { overflow: auto; min-height: 0; position: relative; }
-.running {
+.side {
   border-left: 1px solid var(--line);
   background: var(--bg2);
   overflow: auto;
   padding: 8px 10px;
+  display: flex; flex-direction: column; gap: 12px;
 }
 .running h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 4px 0 8px; }
 
@@ -155,6 +156,39 @@ main {
 .cart-btn.standby { outline: 2px dashed var(--standby); outline-offset: 2px; }
 .cart-btn .cb-edit { position: absolute; top: 4px; right: 4px; padding: 0 6px; font-size: 13px; z-index: 1; }
 .cart-btn .cb-top .cb-edit-space { width: 28px; }
+
+/* ---------- Memo (Kapitel-Trenner in Liste/Cart) ---------- */
+.cue-row.memo-row td {
+  background: color-mix(in srgb, var(--memo, #6639ba) 22%, var(--bg2));
+  border-top: 2px solid var(--memo, #6639ba);
+  padding-top: 10px; padding-bottom: 10px;
+}
+.memo-row .title { font-size: 17px; font-weight: 700; letter-spacing: .01em; }
+.memo-row .ic { color: color-mix(in srgb, var(--memo, #6639ba) 50%, #fff); }
+.memo-row .has-text { color: var(--muted); font-size: 13px; }
+.cue-row.memo-row.standby td.c-num { box-shadow: inset 4px 0 0 var(--standby); }
+.cart-btn.memo { border-style: dashed; border-color: var(--memo, #6639ba); background: color-mix(in srgb, var(--memo, #6639ba) 22%, var(--bg2)); }
+
+/* ---------- Regiebuch-Panel ---------- */
+.memo-panel { background: var(--bg3); border: 1px solid var(--line); border-radius: var(--radius); }
+.memo-panel > summary {
+  cursor: pointer; padding: 8px 10px; font-weight: 600; list-style-position: inside;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.memo-body { padding: 0 12px 10px; user-select: text; }
+.memo-item + .memo-item { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; }
+.memo-item .memo-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.memo-item .memo-title { font-size: 18px; font-weight: 700; margin: 2px 0 4px; }
+.md { font-size: 15px; line-height: 1.45; }
+.md h3, .md h4, .md h5 { margin: 8px 0 4px; }
+.md h3 { font-size: 18px; } .md h4 { font-size: 16px; } .md h5 { font-size: 14px; color: var(--muted); }
+.md p { margin: 4px 0; }
+.md ul, .md ol { margin: 4px 0; padding-left: 20px; }
+.md blockquote { margin: 4px 0; padding-left: 10px; border-left: 3px solid var(--line); color: var(--muted); }
+.md mark { background: #9e6a03; color: #fff; padding: 0 3px; border-radius: 3px; }
+.md .md-warn { background: #3a1d1d; border-left: 4px solid var(--danger); padding: 6px 10px; border-radius: 4px; font-weight: 600; }
+.md-preview { grid-column: 2; background: var(--bg); border: 1px dashed var(--line); border-radius: 6px; padding: 6px 10px; min-height: 2em; }
+@media (max-width: 600px) { .md-preview { grid-column: 1; } }
 
 /* ---------- Aktiv-Liste ---------- */
 .running-list { display: flex; flex-direction: column; gap: 8px; }
@@ -235,8 +269,9 @@ main {
 /* ---------- Responsiv (Tablet/Handy) ---------- */
 @media (max-width: 900px) {
   main { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
-  .running { border-left: none; border-top: 1px solid var(--line); max-height: 30vh; }
-  .running:has(.muted:only-child) { display: none; }
+  .side { border-left: none; border-top: 1px solid var(--line); max-height: 45vh; }
+  .side.empty, .running.idle { display: none; }
+  .memo-body { max-height: 28vh; overflow: auto; }
   .c-pre, .c-post { display: none; }
 }
 @media (max-width: 600px) {
@@ -254,4 +289,5 @@ main {
   .form-grid { grid-template-columns: 1fr; }
   .form-grid .hint { grid-column: 1; }
   .cart-view { --cols: 2 !important; }
+  .toasts { bottom: auto; top: 64px; }
 }

@@ -1,5 +1,6 @@
 // Datenmodell: Session und Cue-Typen.
 import { uid } from './util.js';
+import { firstLine } from './md.js';
 
 export const SESSION_VERSION = 1;
 
@@ -85,6 +86,7 @@ export function cueDisplayName(session, cue) {
     case 'start': return `Start ${tn || '?'}`;
     case 'pause': return `${{ toggle: 'Pause/Weiter', pause: 'Pause', resume: 'Weiter' }[cue.mode]} ${tn || 'alle'}`;
     case 'midi': return `MIDI ${cue.msg} ${cue.data1}`;
+    case 'memo': return firstLine(cue.notes) || 'Memo';
     default: return CUE_TYPES[cue.type]?.label ?? cue.type;
   }
 }

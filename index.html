@@ -59,9 +59,15 @@
 
     <section id="cart-view" class="cart-view" hidden></section>
 
-    <aside class="running">
-      <h2>Aktiv</h2>
-      <div id="running-list" class="running-list"><p class="muted">Nichts läuft.</p></div>
+    <aside id="side" class="side">
+      <details id="memo-panel" class="memo-panel" open hidden>
+        <summary id="memo-summary">📖 Regiebuch</summary>
+        <div id="memo-body" class="memo-body"></div>
+      </details>
+      <section id="running" class="running">
+        <h2>Aktiv</h2>
+        <div id="running-list" class="running-list"><p class="muted">Nichts läuft.</p></div>
+      </section>
     </aside>
   </main>
 

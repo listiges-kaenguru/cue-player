@@ -59,6 +59,8 @@ Inhalt:
 - **🔓 Edit / 🔒 Show** – Show-Modus: sperrt alle Bearbeitungen, damit während der Vorstellung
   nichts versehentlich verändert wird.
 - **⚙** – Einstellungen.
+- **📖 Regiebuch** (rechts oben, auf dem Handy über GO) – Memo-Texte und Notizen zum nächsten Cue,
+  siehe [Memo](#-memo).
 - **Aktiv** (rechts, auf dem Handy unten) – alle gerade laufenden Cues mit Fortschritt,
   Pause- und Stop-Knopf.
 - **Farben der Fortschrittsbalken:** grün = läuft, violett = Pre-Wait, orange = Post-Wait,
@@ -107,7 +109,7 @@ Alle Cues haben diese gemeinsamen Felder:
 | Farbe | Farbmarkierung in Liste und Cart. |
 | Pre-Wait, Danach, Post-Wait | Ablaufsteuerung, siehe [Abschnitt 5](#5-ablaufsteuerung). |
 | Taste, MIDI | Direkt-Trigger, siehe [Abschnitt 8](#8-tastatur--und-midi-trigger). |
-| Notizen | Hinweise für die Technik (werden in der Liste unter dem Namen angezeigt). |
+| Notizen | Hinweise für die Technik. In der Liste steht die erste Zeile unter dem Namen, vollständig und formatiert erscheinen sie im Regiebuch, wenn der Cue im Standby steht. Markdown wie beim Memo. |
 
 ### ♪ Audio
 
@@ -172,8 +174,41 @@ aktiviert sein.
 
 ### ✎ Memo
 
-Tut nichts – dient als Überschrift/Notiz in der Liste („2. Akt“, „Pause“). Kann wie jeder Cue
-Auto-Follow nutzen.
+Gliedert die Show und enthält Hinweise für die Technik. Spielt nichts ab.
+
+- **In der Liste** erscheint ein Memo als breite, farbige **Zwischenüberschrift** (Name des Memos,
+  z. B. „1. Akt – Im Wald“, „PAUSE“, „Achtung: Umbau“). Die Farbe lässt sich im Editor wählen. In der Cart-Ansicht
+  hat die Kachel einen gestrichelten Rahmen.
+- **Der Text** des Memos erscheint formatiert im **Regiebuch** (siehe unten), sobald das Memo oder der
+  Cue direkt danach im Standby steht. Im Editor zeigt eine Vorschau, wie der Text aussehen wird.
+- **GO überspringt Memos**: Nach einem GO landet der Standby nie auf einem Memo, sondern auf dem
+  nächsten Cue dahinter. Ein Memo kostet also kein zusätzliches GO, sein Text bleibt aber im Regiebuch
+  sichtbar. Ausnahme: Ein Memo mit Pre-Wait oder Auto-Continue/-Follow wird normal angefahren und
+  kann so z. B. als Wartezeit vor dem nächsten Cue dienen. Mit ↑/↓ oder Antippen lässt sich ein Memo
+  trotzdem auswählen.
+
+**Formatierung (Markdown)** für Memo-Text und Notizen:
+
+| Eingabe | Ergebnis |
+|---|---|
+| `# Überschrift`, `## …`, `### …` | Überschriften in drei Größen |
+| `**fett**`, `*kursiv*`, `~~durchgestrichen~~`, `==markiert==` | Hervorhebungen |
+| `- Punkt` oder `* Punkt` | Aufzählung |
+| `1. Schritt` | Nummerierte Liste |
+| `! Text` | Roter Warnkasten |
+| `> Text` | Zitat, z. B. Stichwort aus dem Textbuch |
+| Leerzeile | Neuer Absatz |
+
+### Regiebuch-Bereich
+
+Der Bereich **📖 Regiebuch** steht am PC rechts über „Aktiv“, auf dem Handy über der GO-Taste. Er
+zeigt automatisch:
+
+- die Memos, die **direkt vor** dem Standby-Cue stehen (bzw. das Memo selbst, wenn es ausgewählt ist), und
+- die **Notizen des Standby-Cues**.
+
+Gibt es nichts anzuzeigen, verschwindet der Bereich. Mit einem Tipp auf die Kopfzeile lässt er sich
+zuklappen, z. B. auf dem Handy, wenn der Platz knapp ist.
 
 ---
 

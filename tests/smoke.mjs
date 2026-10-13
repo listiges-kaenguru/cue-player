@@ -129,6 +129,25 @@ check('Klonen: Kopie hinter dem Original', titles.length === before + 1 && title
 check('Klonen: Editor der Kopie offen', await page.$eval('#dlg-cue', (d) => d.open) && (await page.textContent('#cue-form-title')).startsWith('Cue 2'));
 await page.click('#cue-form button[value=cancel]');
 
+// --- Memo: Kapitel-Trenner, Regiebuch, GO überspringt passive Memos ---
+await page.click('.cue-row >> nth=0');
+await page.click('#btn-add-cue');
+await page.click('[data-add="memo"]');
+await page.fill('#cue-form-body input[type=text] >> nth=0', 'Umbau');
+await page.fill('#cue-form-body textarea >> nth=0', '! **Achtung** <img src=x onerror=alert(1)>\n- Punkt');
+await page.click('#cue-form .primary');
+await page.waitForTimeout(200);
+check('Memo als Trenner in der Liste', await page.$eval('.cue-row >> nth=1', (r) => r.classList.contains('memo-row')));
+await page.click('.cue-row >> nth=0');
+await page.click('#btn-go');
+await page.waitForTimeout(400);
+const sbTitle = await page.$eval('.cue-row.standby .title', (t) => t.textContent);
+check('GO überspringt passives Memo', sbTitle !== 'Umbau', sbTitle);
+const panel = await page.$eval('#memo-panel', (d) => ({ hidden: d.hidden, html: d.querySelector('#memo-body').innerHTML }));
+check('Regiebuch zeigt Memo', !panel.hidden && panel.html.includes('<strong>Achtung</strong>') && panel.html.includes('<li>Punkt</li>'));
+check('Regiebuch escaped HTML', !panel.html.includes('<img') && panel.html.includes('&lt;img'));
+await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
+
 check('Keine Konsolenfehler', errors.length === 0, errors.join(' | '));
 await browser.close();
 process.exit(failed ? 1 : 0);

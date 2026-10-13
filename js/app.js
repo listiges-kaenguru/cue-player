@@ -4,6 +4,7 @@ import { Midi, midiLabel } from './midi.js';
 import * as store from './storage.js';
 import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, cueDisplayName } from './model.js';
 import { fmtTime, fmtDb, debounce, keyLabel, uid, MIN_DB } from './util.js';
+import { renderMarkdown, firstLine } from './md.js';
 
 export const APP_VERSION = '0.1.0';
 
@@ -74,7 +75,7 @@ async function openSession(session) {
   engine.stopAll(0);
   state.session = normalizeSession(session);
   engine.setSession(state.session);
-  state.standbyId = cues()[0]?.id ?? null;
+  state.standbyId = nextStandby(0);
   await store.setMeta('lastSession', session.id);
   $('#session-name').value = session.name;
   $('#master').value = settings().masterDb;
@@ -133,6 +134,7 @@ function durationText(cue) {
     return d ? fmtTime(d) + (cue.loop ? ' ⟳' : '') : '…';
   }
   if (cue.type === 'fade') return fmtTime(cue.duration);
+  if (cue.type === 'memo') return cue.notes?.trim() ? '📖' : '';
   return '–';
 }
 
@@ -146,17 +148,40 @@ function renderList() {
     const fill = h('div', { class: 'fill' });
     const txt = h('div', { class: 'txt' }, durationText(cue));
     const bar = h('div', { class: 'bar' }, fill, txt);
+    const actions = edit && h('td', { class: 'c-act' },
+      h('button', { class: 'wide-only', title: 'Nach oben', onclick: () => moveCue(cue.id, -1) }, '↑'), ' ',
+      h('button', { class: 'wide-only', title: 'Nach unten', onclick: () => moveCue(cue.id, 1) }, '↓'), ' ',
+      h('button', { class: 'wide-only', title: 'Klonen (Kopie dahinter einfügen)', onclick: () => cloneCue(cue.id) }, '⧉'), ' ',
+      h('button', { title: 'Bearbeiten', onclick: () => openEditor(cue.id) }, '✎'));
+    const rowAttrs = {
+      class: 'cue-row', 'data-id': cue.id, draggable: edit ? 'true' : null,
+      onclick: (e) => { if (!e.target.closest('button')) setStandby(cue.id); },
+      ondblclick: (e) => { if (!e.target.closest('button') && edit) openEditor(cue.id); },
+    };
+    if (cue.type === 'memo') {
+      // Variante A: Kapitel-Trenner über die ganze Breite
+      const row = h('tr', { ...rowAttrs, class: 'cue-row memo-row' },
+        h('td', { class: 'c-num' }, i + 1),
+        h('td', { class: 'c-name', colSpan: 4 },
+          h('div', { class: 'nm' },
+            h('span', { class: 'ic' }, CUE_TYPES.memo.icon),
+            h('span', { class: 'title' }, label(cue)),
+            h('span', { class: 'badges' },
+              cue.notes?.trim() && cue.name && h('span', { class: 'has-text', title: 'Text im Regiebuch' }, '📖'),
+              cue.hotkey && h('span', { class: 'badge' }, '⌨ ' + keyLabel(cue.hotkey))))),
+        actions);
+      if (cue.color) row.style.setProperty('--memo', cue.color);
+      tbody.append(row);
+      state.rows.set(cue.id, { row, bar, fill, txt, lastState: null });
+      return;
+    }
     const badges = h('span', { class: 'badges' },
       cue.hotkey && h('span', { class: 'badge', title: 'Tastatur-Trigger' }, '⌨ ' + keyLabel(cue.hotkey)),
       cue.midiTrigger && h('span', { class: 'badge', title: 'MIDI-Trigger' }, '🎹 ' + midiLabel(cue.midiTrigger)),
       cue.type === 'audio' && engine.runners.get(cue.id)?.error && h('span', { class: 'badge err' }, '!'));
     const post = cue.nextAction === 'none' ? (cue.postWait ? fmtTime(cue.postWait) : '') :
       `${cue.nextAction === 'continue' ? '⤵ AC' : '↧ AF'}${cue.postWait ? ' ' + fmtTime(cue.postWait) : ''}`;
-    const row = h('tr', {
-      class: 'cue-row', 'data-id': cue.id, draggable: edit ? 'true' : null,
-      onclick: (e) => { if (!e.target.closest('button')) setStandby(cue.id); },
-      ondblclick: (e) => { if (!e.target.closest('button') && edit) openEditor(cue.id); },
-    },
+    const row = h('tr', rowAttrs,
       h('td', { class: 'c-num' }, i + 1),
       h('td', { class: 'c-name' },
         h('div', { class: 'nm' },
@@ -164,15 +189,11 @@ function renderList() {
           h('span', { class: 'ic', title: CUE_TYPES[cue.type]?.label }, CUE_TYPES[cue.type]?.icon),
           h('span', { class: 'title' }, label(cue)),
           badges),
-        cue.notes && h('div', { class: 'notes' }, cue.notes)),
+        cue.notes?.trim() && h('div', { class: 'notes', title: 'Vollständig im Regiebuch, wenn der Cue im Standby steht' }, firstLine(cue.notes) + (cue.notes.trim().includes('\n') ? ' …' : ''))),
       h('td', { class: 'c-pre' }, cue.preWait ? fmtTime(cue.preWait) : ''),
       h('td', { class: 'c-dur' }, bar),
       h('td', { class: 'c-post' }, post),
-      edit && h('td', { class: 'c-act' },
-        h('button', { class: 'wide-only', title: 'Nach oben', onclick: () => moveCue(cue.id, -1) }, '↑'), ' ',
-        h('button', { class: 'wide-only', title: 'Nach unten', onclick: () => moveCue(cue.id, 1) }, '↓'), ' ',
-        h('button', { class: 'wide-only', title: 'Klonen (Kopie dahinter einfügen)', onclick: () => cloneCue(cue.id) }, '⧉'), ' ',
-        h('button', { title: 'Bearbeiten', onclick: () => openEditor(cue.id) }, '✎')));
+      actions);
     tbody.append(row);
     state.rows.set(cue.id, { row, bar, fill, txt, lastState: null });
   });
@@ -189,9 +210,10 @@ function renderCart() {
   cues().forEach((cue, i) => {
     const fill = h('div', { class: 'cb-fill' });
     const time = h('div', { class: 'cb-time' }, durationText(cue));
+    const memo = cue.type === 'memo';
     const tile = h('button', {
-      class: 'cart-btn', 'data-id': cue.id,
-      style: { background: cue.color || null },
+      class: 'cart-btn' + (memo ? ' memo' : ''), 'data-id': cue.id,
+      style: { background: (!memo && cue.color) || null },
       onclick: (e) => { if (!e.target.closest('.cb-edit')) cartPress(cue.id); },
     },
       fill,
@@ -199,6 +221,7 @@ function renderCart() {
       h('div', { class: 'cb-name' }, label(cue)),
       time,
       edit && h('span', { class: 'cb-edit', role: 'button', title: 'Bearbeiten', onclick: () => openEditor(cue.id) }, '✎'));
+    if (memo && cue.color) tile.style.setProperty('--memo', cue.color);
     view.append(tile);
     state.tiles.set(cue.id, { tile, fill, time, lastState: null });
   });
@@ -209,6 +232,47 @@ function updateStandbyMarks() {
   state.rows.forEach((r, id) => r.row.classList.toggle('standby', id === state.standbyId));
   state.tiles.forEach((t, id) => t.tile.classList.toggle('standby', id === state.standbyId));
   updateGo();
+  renderMemoPanel();
+}
+
+/**
+ * Variante C: Regiebuch-Panel. Zeigt Memos, die direkt vor dem Standby-Cue stehen (oder der Standby selbst),
+ * sowie die Notizen des Standby-Cues.
+ */
+function renderMemoPanel() {
+  const list = cues();
+  let i = list.findIndex((c) => c.id === state.standbyId);
+  if (i < 0) i = list.length;
+  const items = [];
+  for (let k = i - 1; k >= 0 && list[k].type === 'memo' && items.length < 3; k--) items.unshift(list[k]);
+  if (list[i]) items.push(list[i]);
+  const shown = items.filter((c) => (c.type === 'memo' ? c.name || c.notes?.trim() : c.notes?.trim()));
+  const panel = $('#memo-panel');
+  const body = $('#memo-body');
+  panel.hidden = !shown.length;
+  body.textContent = '';
+  if (shown.length) {
+    const main = shown.find((c) => c.type === 'memo') ?? shown[0];
+    $('#memo-summary').textContent = `📖 Regiebuch · Cue ${list.indexOf(main) + 1}: ${label(main)}`;
+    shown.forEach((c) => {
+      const n = list.indexOf(c) + 1;
+      const memo = c.type === 'memo';
+      const text = h('div', { class: 'md' });
+      text.innerHTML = renderMarkdown(c.notes); // sicher: renderMarkdown escaped jedes HTML
+      body.append(h('div', { class: 'memo-item' },
+        h('div', { class: 'memo-lbl' }, memo ? `Memo · Cue ${n}` : `Hinweis zu Cue ${n} (Standby)`),
+        memo && c.name && h('div', { class: 'memo-title' }, c.name),
+        !memo && h('div', { class: 'memo-title' }, label(c)),
+        text));
+    });
+  }
+  updateSideVisibility();
+}
+
+function updateSideVisibility() {
+  const idle = !engine.active().length;
+  $('#running').classList.toggle('idle', idle);
+  $('#side').classList.toggle('empty', idle && $('#memo-panel').hidden);
 }
 
 function updateGo() {
@@ -283,6 +347,7 @@ function renderRunning() {
   const active = engine.active();
   list.textContent = '';
   state.runItems.clear();
+  updateSideVisibility();
   if (!active.length) { list.append(h('p', { class: 'muted' }, 'Nichts läuft.')); return; }
   active.forEach((r) => {
     const cue = r.cue;
@@ -304,6 +369,15 @@ function renderRunning() {
 // ---------------------------------------------------------------------------
 // Transport
 
+/** Passive Memos (ohne Ablauf-Aktion) bekommen keinen Standby: Sie würden nur ein leeres GO kosten. */
+const isPassiveMemo = (c) => c.type === 'memo' && c.nextAction === 'none' && !(c.preWait > 0);
+
+function nextStandby(j) {
+  const list = cues();
+  while (j < list.length && isPassiveMemo(list[j])) j++;
+  return list[j]?.id ?? null;
+}
+
 function setStandby(id) {
   state.standbyId = id;
   updateStandbyMarks();
@@ -321,7 +395,7 @@ function go() {
   // Standby hinter die automatisch verketteten Cues setzen.
   let j = i + 1;
   while (j < list.length && list[j - 1].nextAction !== 'none') j++;
-  setStandby(list[j]?.id ?? null);
+  setStandby(nextStandby(j));
 }
 
 function stopAll(immediate = false) {
@@ -581,6 +655,22 @@ function openEditor(id) {
     add(field('Velocity / Wert', numInput(draft, 'data2', { min: 0, max: 127, step: 1 })));
   }
 
+  const mdField = (lbl, rows) => {
+    const preview = h('div', { class: 'md md-preview' });
+    const upd = () => { preview.innerHTML = renderMarkdown(draft.notes) || '<span class="muted">Vorschau</span>'; };
+    upd();
+    return [
+      ...field(lbl, h('textarea', { rows, value: draft.notes, oninput: (e) => { draft.notes = e.target.value; upd(); } }),
+        '# Überschrift · **fett** · *kursiv* · - Liste · 1. Liste · ! Warnung · > Zitat · ==markiert=='),
+      h('label', {}, 'Vorschau'), preview,
+    ];
+  };
+  if (cue.type === 'memo') {
+    add(h('h3', {}, 'Memo'));
+    add(mdField('Text (Markdown)', 8));
+    add(h('div', { class: 'hint' }, 'Der Name erscheint als Zwischenüberschrift in der Liste, der Text im Regiebuch-Bereich, sobald das Memo oder der Cue danach im Standby steht.'));
+  }
+
   add(h('h3', {}, 'Ablauf'));
   add(field('Pre-Wait (s)', numInput(draft, 'preWait'), 'Verzögerung zwischen GO und Start'));
   add(field('Danach', selectInput(draft, 'nextAction', Object.entries(NEXT_ACTIONS)),
@@ -590,7 +680,7 @@ function openEditor(id) {
   add(h('h3', {}, 'Trigger'));
   add(field('Taste', learnButton('key', draft.hotkey, (v) => { draft.hotkey = v; })));
   add(field('MIDI', learnButton('midi', draft.midiTrigger, (v) => { draft.midiTrigger = v; })));
-  add(field('Notizen', h('textarea', { value: draft.notes, oninput: (e) => { draft.notes = e.target.value; } })));
+  if (cue.type !== 'memo') add(mdField('Notizen', 3));
 
   $('#cue-delete').onclick = () => {
     if (confirm(`Cue „${label(cue)}“ löschen?`)) { dlg.close('deleted'); deleteCue(id); }

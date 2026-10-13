@@ -34,6 +34,8 @@ einzigen Codebasis, ohne Store, offline-fähig, installierbar wie eine normale A
 | MIDI-Trigger (Eingang) & MIDI-Cues (Ausgang) | ✅ (Web MIDI) | ✅ |
 | Mehrere Shows, Export/Import als eine Datei | ✅ (`.cueshow`) | ✅ (`.lsp`) |
 | Show-Modus (Bearbeiten sperren) | ✅ | – |
+| Memo-Cues als Zwischenüberschrift, Regiebuch mit Markdown | ✅ | – |
+| Cues klonen | ✅ | ✅ |
 | Ausgabegerät wählen | ✅ (Chrome/Edge) | ✅ |
 | Video-Cues, OSC, Kommando-Cues, Gruppen-Cues | ❌ (Roadmap) | ✅ |
 | Mehrkanal-Routing, JACK, Timecode | ❌ | ✅ |
@@ -79,6 +81,7 @@ js/engine.js           Wiedergabe-Engine: Cue-Ablauf, Audio-Kette, Fades
 js/model.js            Datenmodell (Session, Cue-Typen, Standardwerte)
 js/storage.js          IndexedDB-Speicher, Export/Import (.cueshow)
 js/midi.js             Web-MIDI-Anbindung
+js/md.js               Markdown-Renderer (sicher, ohne Bibliothek)
 js/util.js             Hilfsfunktionen (Timer, dB-Umrechnung, Fade-Kurven)
 tests/smoke.mjs        Browser-Smoke-Test (Playwright)
 icons/                 App-Icons
