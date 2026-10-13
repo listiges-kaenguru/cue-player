@@ -46,15 +46,40 @@ Erledigt in v0.2.0: Pause-Cue mit Fade · Memo-Darstellung A+C mit Markdown · P
 
 Offen, in dieser Reihenfolge:
 
-- [ ] **Presets – Ausbau (bei Bedarf, mit Nutzer klären):**
-  - Mehr-Cue-Presets (Abfolgen, z. B. „Fade + Memo + Stop“)
-  - Presets exportieren/importieren bzw. mit `.cueshow` weitergeben (heute nur lokal im Browser)
-  - Preset direkt bearbeiten (heute: einfügen, ändern, neu als Preset speichern, altes löschen)
+Entscheidungen des Nutzers (2026-10-13, nach v0.2.0): **Mehr-Cue-Presets: ja** · **Memo-Bestätigung vor GO: ja (optional)** ·
+**LiSP-Import: später**. Nutzer testet v0.2.0 noch, Ergebnisse oben unter „Nutzertest“ eintragen.
 
-- [ ] **Memo – offene Punkte:** Soll ein Memo optional das GO „bestätigen lassen“ (Sicherheitsabfrage, z. B. bei Umbau)?
-  Zustand des Regiebuchs (auf-/zugeklappt) merken?
+Nächste Schritte, in dieser Reihenfolge:
 
-- [ ] **Import aus Linux Show Player (LiSP) und evtl. anderen Programmen.**
+- [ ] **Memo: optionale Bestätigung vor GO.**
+  Vorschlag zur Umsetzung:
+  - `model.js`: Memo-Feld `confirm: false` (Checkbox im Editor „Vor dem nächsten GO bestätigen“) und optional `confirmText`.
+  - Verhalten: Steht ein Memo mit `confirm` direkt vor dem Standby-Cue (bzw. ist es selbst Standby), löst das **erste GO
+    nicht aus**, sondern zeigt eine deutliche Abfrage (großes Overlay mit Memo-Titel/Text, Knöpfe „Bestätigen & GO“ / „Abbrechen“).
+    Leertaste/MIDI-GO im Overlay = bestätigen. Esc = abbrechen. Nach der Bestätigung gilt sie nur für dieses eine GO.
+  - Cart, Hotkeys und Direkt-Trigger einzelner Cues: **nicht** blockieren (nur der GO-Ablauf).
+  - In der Liste ein Schloss-Symbol 🔒 am Memo-Trenner, im Regiebuch Hinweis „Bestätigung erforderlich“.
+  - GO-Taste zeigt bei anstehender Bestätigung z. B. „GO (bestätigen)“ in Orange.
+  - Smoke-Test: GO → Overlay sichtbar, Cue läuft nicht; Bestätigen → Cue läuft.
+
+- [ ] **Mehr-Cue-Presets.**
+  Vorschlag zur Umsetzung:
+  - Preset-Format erweitern: `{ id, name, cues: [...] }`. Alte Presets mit `cue` beim Lesen in `cues: [cue]` umwandeln
+    (in `listPresets` oder `model.js`).
+  - **Ziele innerhalb des Presets erhalten:** Beim Speichern Ziel-IDs, die auf Cues *innerhalb* der Auswahl zeigen, in
+    Platzhalter umschreiben (`target: '#2'` = 2. Cue im Preset). Ziele *außerhalb* → leer. Beim Einfügen neue IDs vergeben
+    und Platzhalter auflösen. Leere Fade-/Start-Ziele zeigen wie bisher auf den Cue vor dem eingefügten Block.
+  - **Auswahl mehrerer Cues** wird dafür gebraucht (steht ohnehin auf der Roadmap): Mehrfachauswahl in der Liste
+    (Desktop: Strg/Shift+Klick; Handy: „Auswählen“-Modus mit Checkboxen). Aktionen für die Auswahl: „Als Preset…“,
+    Klonen, Löschen. Einfacher Zwischenschritt, falls nötig: „Als Preset…“ im Editor mit Feld „+ folgende N Cues“.
+  - Menü: Mehr-Cue-Presets mit Anzahl anzeigen („◢■ Ausblenden & Stop (2 Cues)“).
+  - Mitgeliefertes Beispiel: „Szenenwechsel“ = Fade −∞ 3 s (+Stop) → Memo „Umbau“ mit Bestätigung → leerer Platzhalter?
+    (mit Nutzer abstimmen, welche Standard-Abfolgen sinnvoll sind).
+  - Weiterhin offen: Presets exportieren/importieren bzw. mit `.cueshow` weitergeben. Preset direkt bearbeiten.
+
+- [ ] **Memo:** Zustand des Regiebuchs (auf-/zugeklappt) merken (klein, bei Gelegenheit).
+
+- [ ] **Import aus Linux Show Player (LiSP) und evtl. anderen Programmen.** *(Nutzer: später)*
   Stand des Wissens (an echter Datei prüfen!):
   - LiSP-Sessions (`.lsp`) sind JSON: Layout-Einstellungen + Liste `cues` mit `_type_` (z. B. `MediaCue`/`GstMediaCue`,
     `VolumeControl`, `StopAll`, `SeekCue`, `CollectionCue`, `IndexActionCue`, `MidiCue`, `OscCue`, `CommandCue`),
