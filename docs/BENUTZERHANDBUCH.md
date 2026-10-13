@@ -96,6 +96,26 @@ weiterhin einstellbar.
 
 Alles wird **automatisch gespeichert**.
 
+### Presets (Vorlagen)
+
+Häufig gebrauchte Cues lassen sich als **Preset** speichern und mit zwei Tipps wieder einfügen.
+Presets gelten **für alle Shows** auf diesem Gerät.
+
+- **Einfügen:** **＋ Cue ▾** → Abschnitt **Presets** → Preset antippen. Der Cue wird hinter dem
+  Standby-Cue eingefügt. Fade- und Start-Presets zielen automatisch auf den Cue davor.
+- **Speichern:** Einen Cue fertig einstellen, im Editor **Als Preset…** antippen und einen Namen
+  vergeben. Gespeichert werden alle Einstellungen außer Tasten-/MIDI-Trigger und dem Ziel-Cue.
+  Auch Audio-Cues gehen, z. B. ein Standard-Jingle: Die Audiodatei bleibt dann im Gerät gespeichert.
+- **Verwalten:** **＋ Cue ▾** → **Presets verwalten…** → umbenennen oder löschen.
+  **Standard-Presets wiederherstellen** ergänzt die mitgelieferten Vorlagen, falls sie gelöscht wurden.
+- **Ändern:** Preset einfügen, anpassen, unter gleichem Namen neu als Preset speichern und das alte löschen.
+
+Mitgeliefert werden: *Ausblenden 3 s + Stop*, *Musik unter Text (−15 dB, 3 s)*,
+*Pause/Weiter mit Fade 2 s*, *Alles ausblenden 5 s*.
+
+Hinweis: Presets werden (noch) nicht mit einer Show exportiert. Beim Wechsel auf ein anderes Gerät
+müssen sie dort neu angelegt werden.
+
 ---
 
 ## 4. Cue-Typen

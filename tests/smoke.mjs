@@ -148,6 +148,30 @@ check('Regiebuch zeigt Memo', !panel.hidden && panel.html.includes('<strong>Acht
 check('Regiebuch escaped HTML', !panel.html.includes('<img') && panel.html.includes('&lt;img'));
 await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
 
+// --- Presets ---
+await page.click('.cue-row >> nth=0');
+await page.click('#btn-add-cue');
+await page.waitForSelector('#add-menu:not([hidden]) [data-preset]');
+const presetNames = await page.$$eval('#preset-menu [data-preset]', (b) => b.map((x) => x.textContent.trim()));
+check('Standard-Presets vorhanden', presetNames.length >= 4, JSON.stringify(presetNames));
+const nRows = (await page.$$('.cue-row')).length;
+await page.click('#preset-menu [data-preset]:has-text("Ausblenden 3 s + Stop")');
+await page.waitForTimeout(300);
+const ins = await page.evaluate(() => { const c = window.cuePlayer.state.session.cues; return { n: c.length, type: c[1].type, target: c[1].target, first: c[0].id, vol: c[1].volume }; });
+check('Preset eingefügt (Fade auf Cue davor)', ins.n === nRows + 1 && ins.type === 'fade' && ins.target === ins.first && ins.vol === -60, JSON.stringify(ins));
+page.once('dialog', (d) => d.accept('Mein Test-Preset'));
+await page.dblclick('.cue-row >> nth=1');
+await page.click('#cue-preset');
+await page.waitForTimeout(300);
+await page.click('#cue-form button[value=cancel]');
+await page.click('#btn-add-cue');
+await page.waitForSelector('#add-menu:not([hidden]) [data-preset]');
+check('Eigenes Preset im Menü', (await page.$$eval('#preset-menu [data-preset]', (b) => b.map((x) => x.textContent))).some((t) => t.includes('Mein Test-Preset')));
+await page.click('#preset-menu [data-manage]');
+await page.waitForSelector('#dlg-presets[open]');
+check('Presets-Dialog', (await page.$$('#preset-list .ses')).length === presetNames.length + 1);
+await page.click('#dlg-presets button[value=close]');
+
 check('Keine Konsolenfehler', errors.length === 0, errors.join(' | '));
 await browser.close();
 process.exit(failed ? 1 : 0);

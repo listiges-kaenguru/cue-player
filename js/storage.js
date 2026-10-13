@@ -2,7 +2,7 @@
 import { uid } from './util.js';
 
 const DB_NAME = 'cue-player';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // 2: Store „presets“
 let dbPromise = null;
 
 function db() {
@@ -14,6 +14,7 @@ function db() {
         if (!d.objectStoreNames.contains('sessions')) d.createObjectStore('sessions', { keyPath: 'id' });
         if (!d.objectStoreNames.contains('media')) d.createObjectStore('media', { keyPath: 'id' });
         if (!d.objectStoreNames.contains('meta')) d.createObjectStore('meta', { keyPath: 'key' });
+        if (!d.objectStoreNames.contains('presets')) d.createObjectStore('presets', { keyPath: 'id' });
       };
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
@@ -63,16 +64,26 @@ export async function storeFile(file) {
   return rec;
 }
 
-/** Löscht Mediendateien, die von keiner Session mehr referenziert werden. */
+/** Löscht Mediendateien, die von keiner Session und keinem Preset mehr referenziert werden. */
 export async function gcMedia() {
   const sessions = await tx('sessions', 'readonly', (s) => req2p(s.getAll()));
+  const presets = await listPresets();
   const used = new Set();
   sessions.forEach((se) => se.cues?.forEach((c) => c.mediaId && used.add(c.mediaId)));
+  presets.forEach((p) => p.cue?.mediaId && used.add(p.cue.mediaId));
   const keys = await tx('media', 'readonly', (s) => req2p(s.getAllKeys()));
   const unused = keys.filter((k) => !used.has(k));
   if (unused.length) await tx('media', 'readwrite', (s) => unused.forEach((k) => s.delete(k)));
   return unused.length;
 }
+
+// --- Presets (global, für alle Shows) ---
+export async function listPresets() {
+  const all = await tx('presets', 'readonly', (s) => req2p(s.getAll()));
+  return all.sort((a, b) => a.name.localeCompare(b.name, 'de'));
+}
+export const savePreset = (p) => tx('presets', 'readwrite', (s) => s.put(JSON.parse(JSON.stringify(p))));
+export const deletePreset = (id) => tx('presets', 'readwrite', (s) => s.delete(id));
 
 export const getMeta = async (key) => (await tx('meta', 'readonly', (s) => req2p(s.get(key))))?.value;
 export const setMeta = (key, value) => tx('meta', 'readwrite', (s) => s.put({ key, value }));

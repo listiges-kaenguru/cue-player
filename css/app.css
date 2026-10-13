@@ -70,7 +70,10 @@ button.small { padding: 2px 8px; font-size: 13px; }
   display: flex; flex-direction: column; min-width: 200px; padding: 4px;
   box-shadow: 0 8px 24px #0008;
 }
+.menu { max-height: 70vh; overflow: auto; }
 .menu button { border: none; text-align: left; background: transparent; }
+.menu .menu-sec { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 8px 12px 2px; border-top: 1px solid var(--line); margin-top: 4px; }
+.menu .menu-muted { color: var(--muted); font-size: 13px; }
 .menu button:hover { background: var(--bg2); }
 
 body.show-mode .edit-only { display: none !important; }

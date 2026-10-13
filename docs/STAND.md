@@ -3,85 +3,56 @@
 Arbeitsnotizen, damit die Entwicklung jederzeit schnell weitergehen kann.
 **Bei jeder Sitzung aktualisieren** (Stand, erledigte/neue ToDos, Erkenntnisse aus Tests).
 
-## Stand (2026-10-13, v0.1.0, nach Nutzertest 1)
+## Stand (2026-10-13, v0.2.0)
 
-Erster Prototyp als PWA, ohne Build-Schritt (Vanilla JS, ES-Module).
+PWA ohne Build-Schritt (Vanilla JS, ES-Module). Branch `ccr-c726005c-rg7agm`, noch nicht nach `main` gemergt, kein PR.
 
-**Fertig und im Browser getestet** (Chromium, automatisiert über `tests/smoke.mjs`, dazu manuelle Playwright-Läufe):
+**Fertig und automatisiert getestet** (`tests/smoke.mjs`, 22+ Prüfungen, Chromium headless):
 
-- Audio-Cues hinzufügen (Datei-Dialog, Drag & Drop), Editor, Umsortieren (↑↓, Drag, Positionsfeld), Duplizieren, Löschen
+- Audio-Cues hinzufügen (Datei-Dialog, Drag & Drop), Editor, Umsortieren (↑↓, Drag, Positionsfeld), Löschen
 - GO/Standby, Leertaste, Esc (Stop alle mit Fade, doppelt = sofort), Pause/Weiter für alle
 - Fade-Cue, Pre-Wait, Auto-Continue mit Post-Wait, Pause/Resume mitten im Ablauf
 - Hotkey lernen und auslösen
 - Cart-Ansicht, Show-Modus, responsive Handy-Ansicht (390 px)
 - Speicherung in IndexedDB, Neuladen, Export/Import `.cueshow` (inkl. Audio)
-- Service Worker registriert
+- **v0.2.0:**
+  - Pause-Cue mit Fade beim Pausieren/Fortsetzen, Einstellung „Pause-alle-Fade“ (Pegelverlauf im Test gemessen)
+  - Klonen (Editor-Knopf „Klonen“, überall nutzbar; ⧉ in der Liste am Desktop)
+  - Memo A+C: Kapitel-Trenner in Liste/Cart, Regiebuch-Panel mit Markdown (`js/md.js`, escaped HTML), GO überspringt passive Memos
+  - Presets (global, IndexedDB-Store `presets`, DB-Version 2): „Als Preset…“ im Editor, Einfügen über „＋ Cue ▾“,
+    Verwalten-Dialog (umbenennen, löschen, Standard-Presets wiederherstellen), 4 Standard-Presets beim ersten Start.
+    Audio-Presets behalten ihre Datei (`gcMedia` berücksichtigt Presets).
 
-**Nutzertest 1 (Android-Smartphone, Chrome), 2026-10-13:**
+**Nutzertest 1 (Android-Smartphone, Chrome), v0.1.0:**
 
-- ✅ Tonausgabe
-- ✅ Fade-Cue
-- ✅ Pause-Cue
-- ✅ Memo-Cue (Darstellung auf dem Handy, Wunsch: auffälliger, siehe ToDo „Memo-Darstellung“). Desktop noch nicht getestet.
+- ✅ Tonausgabe · ✅ Fade-Cue · ✅ Pause-Cue · ✅ Memo-Cue (Wunsch: auffälliger, umgesetzt in v0.2.0)
 
-**Implementiert, aber noch NICHT getestet:**
+**Implementiert, aber noch NICHT vom Nutzer getestet:**
 
+- Alles aus v0.2.0 (Pause-Fade, Klonen, Memo/Regiebuch, Presets), besonders auf dem Handy
 - Android: Installation als App, Latenz, Wake Lock, Hintergrundverhalten
-- Memo-Cue am Desktop
-- Windows/Linux-Installation als App
+- Windows/Linux-Installation als App, Desktop-Darstellung allgemein
 - MIDI mit echter Hardware (Lernen, Trigger, MIDI-Cues)
 - Ausgabegerät-Wahl (`AudioContext.setSinkId`)
-- Stop-, Start- und Pause-Cues, Auto-Follow, Loop mit Trimmung, Fade-Out am Ende, Panorama (Code vorhanden, nicht einzeln geprüft)
-- Offline-Betrieb nach Installation
+- Stop- und Start-Cues, Auto-Follow, Loop mit Trimmung, Fade-Out am Ende, Panorama (Code vorhanden, nicht einzeln geprüft)
+- Offline-Betrieb nach Installation, Update von v0.1.0 auf v0.2.0 (DB-Upgrade auf Version 2)
 - GitHub-Pages-Workflow (`.github/workflows/pages.yml`, nie gelaufen; Pages muss in den Repo-Einstellungen aktiviert werden)
-
-**Git:** Branch `ccr-c726005c-rg7agm`, noch nicht nach `main` gemergt, kein PR.
 
 ## ToDo
 
 ### Vom Nutzer gewünscht
 
-Reihenfolge = Vorschlag für die Umsetzung (klein → groß). Offene Fragen an den Nutzer stehen jeweils dabei.
+Erledigt in v0.2.0: Pause-Cue mit Fade · Memo-Darstellung A+C mit Markdown · Presets (global) · Klonen.
 
-- [ ] **Pause-Cue mit optionalem Fade (Ausfaden beim Pausieren, Einfaden beim Fortsetzen).**
-  Entscheidung (Vorschlag, mit Nutzer bestätigen): **als Option direkt im Pause-Cue**, nicht nur über Presets.
-  Der Fade gehört zur Aktion, genau wie beim Stop-Cue (der hat schon „Fade-Out“). Presets (siehe unten)
-  speichern dann z. B. „Pause mit 2 s Fade“ zur Wiederverwendung.
-  Umsetzung:
-  - `model.js`: Pause-Cue um `fadeOut` (beim Pausieren) und `fadeIn` (beim Fortsetzen) erweitern, Standard 0.
-  - `engine.js`: `Runner.pause(fade)` / `resume(fade)` durchreichen; `AudioRunner.pauseAction(fade)` rampt `env`
-    über `fade` auf 0 und pausiert danach das `<audio>`; `resumeAction(fade)` rampt wieder hoch
-    (heute: fest `DECLICK`). Achtung: Wird während des Ausfadens erneut fortgesetzt, muss der `pauseH`-Timer abgebrochen werden.
-    Andere Runner ignorieren den Fade.
-  - Editor: zwei Felder; Modus „Umschalten“ nutzt je nach Richtung das passende Feld.
-  - Optional: Einstellung „Pause alle mit Fade“ für die Transport-Buttons.
-  - Doku: Benutzerhandbuch Abschnitt 4 (Pause/Weiter), Smoke-Test ergänzen.
+Offen, in dieser Reihenfolge:
 
-- [ ] **Memo-Darstellung auffälliger, evtl. mit Formatierung (Markdown).**
-  Vor der Umsetzung Darstellung mit dem Nutzer klären. Mockup mit drei Varianten:
-  `docs/mockups/memo-varianten.html` (im Browser öffnen).
-  - A: Kapitel-Trenner (breite, farbige Zwischenüberschrift, einzeilig)
-  - B: Notizkarte in der Liste (Markdown, nach 3 Zeilen gekürzt)
-  - C: Regiebuch-Panel. **Empfehlung: C kombiniert mit A**, also in der Liste ein kompakter Trenner und der formatierte Text
-    groß im eigenen Bereich, sobald Memo oder Folge-Cue im Standby steht (Desktop: rechte Spalte; Handy: aufklappbar über GO).
-  Technische Notizen:
-  - Markdown-Teilmenge selbst rendern (keine Bibliothek, wegen Offline): Überschriften, **fett**, *kursiv*, Listen,
-    Hervorhebung (z. B. Zeile mit `!` → roter Warnkasten), Zeilenumbrüche.
-  - **HTML immer escapen**: Shows werden geteilt (.cueshow), fremder Text darf kein HTML/JS einschleusen.
-  - Die Notizen anderer Cues (Feld `notes`) könnten im selben Panel erscheinen.
-  - Offene Fragen: Welche Variante? Soll ein Memo die GO-Taste kurz „blockieren“ bzw. bestätigen lassen? Farbe frei oder fest?
+- [ ] **Presets – Ausbau (bei Bedarf, mit Nutzer klären):**
+  - Mehr-Cue-Presets (Abfolgen, z. B. „Fade + Memo + Stop“)
+  - Presets exportieren/importieren bzw. mit `.cueshow` weitergeben (heute nur lokal im Browser)
+  - Preset direkt bearbeiten (heute: einfügen, ändern, neu als Preset speichern, altes löschen)
 
-- [ ] **Presets (Vorlagen) erstellen und als Cue einfügen.**
-  Konzept-Vorschlag:
-  - Ein Preset ist ein gespeicherter Cue (später auch mehrere Cues) mit allen Einstellungen, aber ohne `id`, und bei
-    Ziel-Cues ohne festes Ziel (beim Einfügen: Ziel = vorheriger Cue, wie heute bei `addCue`).
-  - Anlegen: im Editor „Als Preset speichern…“ (Name vergeben). Einfügen: Menü „＋ Cue ▾“ → Abschnitt „Presets“.
-  - Verwaltung (umbenennen, löschen) in ⚙ oder eigenem Dialog.
-  - Speicherort: **global** im IndexedDB-Store `meta` bzw. eigenem Store `presets` (Store-Version erhöhen), damit Presets in
-    allen Shows verfügbar sind. Beim `.cueshow`-Export optional mitnehmen.
-  - Beispiele für Standard-Presets: „Ausblenden 3 s + Stop“, „Musik unter Text (−15 dB, 3 s)“, „Pause mit Fade“, „Stop alle 5 s“.
-  - Offene Fragen: Nur Cue-Einstellungen oder auch Audiodatei (z. B. Standard-Jingle)? Mehr-Cue-Presets (Abfolgen) gleich mit
-    einplanen? Global oder pro Show?
+- [ ] **Memo – offene Punkte:** Soll ein Memo optional das GO „bestätigen lassen“ (Sicherheitsabfrage, z. B. bei Umbau)?
+  Zustand des Regiebuchs (auf-/zugeklappt) merken?
 
 - [ ] **Import aus Linux Show Player (LiSP) und evtl. anderen Programmen.**
   Stand des Wissens (an echter Datei prüfen!):
@@ -142,6 +113,10 @@ Reihenfolge = Vorschlag für die Umsetzung (klein → groß). Offene Fragen an d
 
 ### Kleinigkeiten / bekannte Schwächen
 
+- DB-Upgrade (Version 1 → 2): Ist die App noch in einem zweiten Tab mit alter Version offen, blockiert das Upgrade
+  (`onblocked` wird nicht behandelt). Die Lösung für Nutzer ist, alle Tabs zu schließen.
+- Geklonte Fade-/Start-/Stop-Cues zielen weiterhin auf denselben Ziel-Cue wie das Original (gewollt, aber ggf. überraschend).
+
 - Ersetzte Audiodateien bleiben in IndexedDB liegen, bis die Show gewechselt oder gelöscht wird
   oder in ⚙ „Unbenutzte Medien löschen“ gedrückt wird (`gcMedia`).
 - Fade-Cue pausiert nur seinen Timer; die laufende Gain-Automation in Web Audio läuft beim Pausieren weiter.
@@ -156,6 +131,10 @@ Reihenfolge = Vorschlag für die Umsetzung (klein → groß). Offene Fragen an d
 - `js/engine.js`: `Runner` (Zustände prewait/running/paused/postwait/idle, Timer) und Unterklassen je Cue-Typ.
   Audio: `<audio>` (gestreamt) → MediaElementSource → vol-Gain (Fade-Cues) → env-Gain (Fade-In/-Out/Stop) → Panner → Master.
   Neuer Cue-Typ: Runner-Klasse + Eintrag in `RUNNERS`, Defaults in `model.js` (`newCue`), Editor-Felder in `app.js` (`openEditor`), Menüeintrag in `index.html`.
+- `js/md.js`: Markdown-Teilmenge, escaped zuerst alles HTML. Ergebnis darf per `innerHTML` gesetzt werden, anderes nicht.
+- Presets: `storage.js` (`listPresets/savePreset/deletePreset`), `model.js` (`cueToPreset`, `defaultPresets`),
+  UI in `app.js` (Abschnitt „Presets“). Seed einmalig über Meta-Key `presetsSeeded`.
+- `window.cuePlayer = { engine, state }` für Tests/DevTools (Smoke-Test liest darüber Pegel und Cue-Daten).
 - `js/app.js`: komplette UI. Rendering bei Strukturänderung neu (`renderAll`), Fortschritt pro Frame (`frame`).
 - `js/storage.js`: IndexedDB-Stores `sessions`, `media` (Blobs), `meta`. Export/Import.
 - `sw.js`: Cache-First. **Bei jedem Release `VERSION` erhöhen und neue Dateien in `ASSETS` eintragen.**

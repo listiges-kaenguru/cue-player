@@ -1,5 +1,5 @@
 // Service Worker: hält die App offline verfügbar (Cache-First für die App-Dateien).
-const VERSION = 'cue-player-v0.1.0';
+const VERSION = 'cue-player-v0.2.0';
 const ASSETS = [
   './',
   'index.html',

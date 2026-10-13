@@ -26,6 +26,7 @@
           <button data-add="pause">❚❚ Pause / Weiter</button>
           <button data-add="midi">⎍ MIDI senden</button>
           <button data-add="memo">✎ Memo</button>
+          <div id="preset-menu"></div>
         </div>
       </div>
     </div>
@@ -96,6 +97,7 @@
       <div class="dlg-actions">
         <button type="button" id="cue-delete" class="danger">Löschen</button>
         <button value="clone" title="Änderungen übernehmen und eine Kopie dahinter einfügen">Klonen</button>
+        <button type="button" id="cue-preset" title="Diesen Cue als Vorlage speichern (für alle Shows)">Als Preset…</button>
         <span class="tb-spacer"></span>
         <button value="cancel" formnovalidate>Abbrechen</button>
         <button value="ok" class="primary">Übernehmen</button>
@@ -116,6 +118,20 @@
         <button value="close" class="primary">Schließen</button>
       </div>
       <input id="file-import" type="file" accept=".cueshow,application/octet-stream" hidden>
+    </form>
+  </dialog>
+
+  <!-- Presets verwalten -->
+  <dialog id="dlg-presets" class="dlg">
+    <form method="dialog">
+      <h2>Presets</h2>
+      <p class="muted">Vorlagen für alle Shows. Einfügen über „＋ Cue ▾“, neue Presets im Cue-Editor mit „Als Preset…“.</p>
+      <div id="preset-list" class="session-list"></div>
+      <div class="dlg-actions">
+        <button type="button" id="presets-defaults">Standard-Presets wiederherstellen</button>
+        <span class="tb-spacer"></span>
+        <button value="close" class="primary">Schließen</button>
+      </div>
     </form>
   </dialog>
 

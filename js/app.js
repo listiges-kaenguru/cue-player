@@ -2,11 +2,11 @@
 import { Engine } from './engine.js';
 import { Midi, midiLabel } from './midi.js';
 import * as store from './storage.js';
-import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, cueDisplayName } from './model.js';
+import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, cueDisplayName, cueToPreset, defaultPresets } from './model.js';
 import { fmtTime, fmtDb, debounce, keyLabel, uid, MIN_DB } from './util.js';
 import { renderMarkdown, firstLine } from './md.js';
 
-export const APP_VERSION = '0.1.0';
+export const APP_VERSION = '0.2.0';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const COLORS = ['', '#b62324', '#bd561d', '#9e6a03', '#1a7f37', '#0f6e6e', '#1f6feb', '#6639ba', '#bf3989', '#57606a'];
@@ -104,6 +104,7 @@ async function init() {
     await store.saveSession(session).catch(() => {});
   }
   await openSession(session);
+  ensureDefaultPresets().catch((e) => console.warn('Presets:', e));
   requestAnimationFrame(frame);
   registerSW();
 }
@@ -457,6 +458,65 @@ function addCue(type) {
   openEditor(cue.id);
 }
 
+// ---------------------------------------------------------------------------
+// Presets
+
+async function ensureDefaultPresets() {
+  if (await store.getMeta('presetsSeeded')) return;
+  for (const p of defaultPresets()) await store.savePreset(p);
+  await store.setMeta('presetsSeeded', true);
+}
+
+async function insertPreset(id) {
+  const p = (await store.listPresets()).find((x) => x.id === id);
+  if (!p) return;
+  const cue = { ...newCue(p.cue.type), ...structuredClone(p.cue), id: uid() };
+  // Wie bei neuen Cues: Fade/Start zielen auf den Cue davor.
+  const prev = cues()[insertIndex() - 1];
+  if ('target' in cue && !cue.target && prev && (cue.type === 'fade' || cue.type === 'start')) cue.target = prev.id;
+  cues().splice(insertIndex(), 0, cue);
+  engine.cueChanged(cue.id);
+  save();
+  renderAll();
+  toast(`Preset „${p.name}“ eingefügt`);
+}
+
+async function renderPresetMenu() {
+  const box = $('#preset-menu');
+  box.textContent = '';
+  const presets = await store.listPresets().catch(() => []);
+  box.append(h('div', { class: 'menu-sec' }, 'Presets'));
+  if (!presets.length) box.append(h('div', { class: 'menu-sec menu-muted', style: { border: 'none', textTransform: 'none', letterSpacing: '0' } }, 'Noch keine Presets'));
+  presets.forEach((p) => box.append(h('button', { 'data-preset': p.id, title: 'Einfügen hinter dem Standby-Cue' }, `${CUE_TYPES[p.cue.type]?.icon ?? ''} ${p.name}`)));
+  box.append(h('button', { 'data-manage': '1', class: 'menu-muted' }, '⚙ Presets verwalten…'));
+}
+
+async function renderPresetList() {
+  const list = $('#preset-list');
+  list.textContent = '';
+  const presets = await store.listPresets();
+  if (!presets.length) list.append(h('p', { class: 'muted' }, 'Keine Presets vorhanden.'));
+  presets.forEach((p) => list.append(h('div', { class: 'ses' },
+    h('div', { class: 'ses-name' }, h('div', {}, `${CUE_TYPES[p.cue.type]?.icon ?? ''} ${p.name}`),
+      h('div', { class: 'ses-meta' }, CUE_TYPES[p.cue.type]?.label + (p.cue.mediaId ? ' · mit Audiodatei' : ''))),
+    h('button', {
+      type: 'button', onclick: async () => {
+        const name = prompt('Neuer Name:', p.name);
+        if (!name) return;
+        p.name = name;
+        await store.savePreset(p);
+        renderPresetList();
+      },
+    }, 'Umbenennen'),
+    h('button', {
+      type: 'button', class: 'danger', onclick: async () => {
+        if (!confirm(`Preset „${p.name}“ löschen?`)) return;
+        await store.deletePreset(p.id);
+        renderPresetList();
+      },
+    }, 'Löschen'))));
+}
+
 function moveCue(id, delta) {
   const list = cues();
   const i = list.findIndex((c) => c.id === id);
@@ -682,6 +742,12 @@ function openEditor(id) {
   add(field('MIDI', learnButton('midi', draft.midiTrigger, (v) => { draft.midiTrigger = v; })));
   if (cue.type !== 'memo') add(mdField('Notizen', 3));
 
+  $('#cue-preset').onclick = async () => {
+    const name = prompt('Name des Presets (gilt für alle Shows):', draft.name || label(draft));
+    if (!name) return;
+    await store.savePreset(cueToPreset(draft, name));
+    toast(`Preset „${name}“ gespeichert`);
+  };
   $('#cue-delete').onclick = () => {
     if (confirm(`Cue „${label(cue)}“ löschen?`)) { dlg.close('deleted'); deleteCue(id); }
   };
@@ -883,8 +949,20 @@ function bindUI() {
   $('#btn-add-audio').addEventListener('click', () => $('#file-audio').click());
   $('#btn-empty-add').addEventListener('click', () => $('#file-audio').click());
   $('#file-audio').addEventListener('change', (e) => { addAudioFiles(e.target.files); e.target.value = ''; });
-  $('#btn-add-cue').addEventListener('click', (e) => { e.stopPropagation(); $('#add-menu').hidden = !$('#add-menu').hidden; });
+  $('#btn-add-cue').addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const menu = $('#add-menu');
+    if (menu.hidden) await renderPresetMenu();
+    menu.hidden = !menu.hidden;
+  });
   $('#add-menu').addEventListener('click', (e) => {
+    const p = e.target.closest('[data-preset]');
+    if (p) { $('#add-menu').hidden = true; insertPreset(p.dataset.preset); return; }
+    if (e.target.closest('[data-manage]')) {
+      $('#add-menu').hidden = true;
+      renderPresetList().then(() => $('#dlg-presets').showModal());
+      return;
+    }
     const t = e.target.closest('[data-add]');
     if (t) { $('#add-menu').hidden = true; addCue(t.dataset.add); }
   });
@@ -907,6 +985,13 @@ function bindUI() {
     await store.saveSession(s);
     await openSession(s);
     $('#dlg-sessions').close();
+  });
+  $('#presets-defaults').addEventListener('click', async () => {
+    const existing = new Set((await store.listPresets()).map((p) => p.name));
+    const missing = defaultPresets().filter((p) => !existing.has(p.name));
+    for (const p of missing) await store.savePreset(p);
+    toast(missing.length ? `${missing.length} Standard-Preset(s) ergänzt` : 'Alle Standard-Presets sind vorhanden');
+    renderPresetList();
   });
   $('#ses-export').addEventListener('click', () => exportCurrent().catch((e) => toast('Export fehlgeschlagen: ' + e.message, true)));
   $('#ses-import').addEventListener('click', () => $('#file-import').click());

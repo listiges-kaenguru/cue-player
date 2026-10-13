@@ -67,6 +67,23 @@ export function newCue(type, extra = {}) {
   return { ...base, ...specific, ...extra };
 }
 
+/** Macht aus einem Cue eine Preset-Vorlage: ohne Identität, Trigger und festes Ziel. */
+export function cueToPreset(cue, name) {
+  const { id, hotkey, midiTrigger, ...rest } = structuredClone(cue);
+  if ('target' in rest) rest.target = '';
+  return { id: uid(), name, cue: rest, created: Date.now() };
+}
+
+/** Standard-Presets beim ersten Start. */
+export function defaultPresets() {
+  return [
+    cueToPreset(newCue('fade', { volume: -60, duration: 3, stopAfter: true }), 'Ausblenden 3 s + Stop'),
+    cueToPreset(newCue('fade', { volume: -15, duration: 3, stopAfter: false }), 'Musik unter Text (−15 dB, 3 s)'),
+    cueToPreset(newCue('pause', { mode: 'toggle', fadeOut: 2, fadeIn: 2 }), 'Pause/Weiter mit Fade 2 s'),
+    cueToPreset(newCue('stop', { target: '', fade: 5 }), 'Alles ausblenden 5 s'),
+  ];
+}
+
 /** Ergänzt fehlende Felder (z. B. nach Import älterer Shows). */
 export function normalizeSession(s) {
   const def = newSession();
