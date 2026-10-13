@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#14151b">
+  <meta name="description" content="Cue Player – Show-Player für Theater, Events und Live-Sound (PWA)">
+  <title>Cue Player</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <button id="btn-sessions" class="tb" title="Shows verwalten">☰</button>
+    <input id="session-name" class="session-name" aria-label="Name der Show" spellcheck="false">
+    <div class="tb-group edit-only">
+      <button id="btn-add-audio" class="tb" title="Audio-Dateien hinzufügen">＋ Audio</button>
+      <div class="menu-wrap">
+        <button id="btn-add-cue" class="tb" title="Weiteren Cue hinzufügen">＋ Cue ▾</button>
+        <div id="add-menu" class="menu" hidden>
+          <button data-add="fade">◢ Fade</button>
+          <button data-add="stop">■ Stop</button>
+          <button data-add="start">▶ Start</button>
+          <button data-add="pause">❚❚ Pause / Weiter</button>
+          <button data-add="midi">⎍ MIDI senden</button>
+          <button data-add="memo">✎ Memo</button>
+        </div>
+      </div>
+    </div>
+    <div class="tb-spacer"></div>
+    <button id="btn-layout" class="tb" title="Ansicht wechseln (Liste / Cart)">▦ Cart</button>
+    <button id="btn-showmode" class="tb" title="Show-Modus: Bearbeiten sperren">🔓 Edit</button>
+    <button id="btn-settings" class="tb" title="Einstellungen">⚙</button>
+    <input id="file-audio" type="file" accept="audio/*,video/*,.mp3,.wav,.ogg,.flac,.m4a,.aac,.opus,.webm" multiple hidden>
+  </header>
+
+  <main id="main">
+    <section id="list-view" class="list-view">
+      <table class="cue-table">
+        <thead>
+          <tr>
+            <th class="c-num">#</th>
+            <th class="c-name">Cue</th>
+            <th class="c-pre">Pre</th>
+            <th class="c-dur">Dauer</th>
+            <th class="c-post">Post / Next</th>
+            <th class="c-act edit-only"></th>
+          </tr>
+        </thead>
+        <tbody id="cue-rows"></tbody>
+      </table>
+      <div id="empty-hint" class="empty-hint">
+        <p><strong>Noch keine Cues.</strong></p>
+        <p>Audio-Dateien hierher ziehen oder <button class="linkbtn" id="btn-empty-add">Dateien auswählen</button>.</p>
+      </div>
+    </section>
+
+    <section id="cart-view" class="cart-view" hidden></section>
+
+    <aside class="running">
+      <h2>Aktiv</h2>
+      <div id="running-list" class="running-list"><p class="muted">Nichts läuft.</p></div>
+    </aside>
+  </main>
+
+  <footer class="transport">
+    <button id="btn-go" class="go" title="GO (Leertaste)">
+      <span class="go-label">GO</span>
+      <span id="go-next" class="go-next">–</span>
+    </button>
+    <div class="transport-btns">
+      <button id="btn-stopall" class="tbtn danger" title="Alle stoppen mit Fade (Esc) – Shift: sofort">■ Stop alle</button>
+      <button id="btn-pauseall" class="tbtn" title="Alle pausieren">❚❚ Pause</button>
+      <button id="btn-resumeall" class="tbtn" title="Alle fortsetzen">▶ Weiter</button>
+    </div>
+    <label class="master" title="Master-Lautstärke">
+      <span>Master</span>
+      <input id="master" type="range" min="-60" max="6" step="0.5" value="0">
+      <output id="master-val">0.0 dB</output>
+    </label>
+  </footer>
+
+  <!-- Cue bearbeiten -->
+  <dialog id="dlg-cue" class="dlg">
+    <form method="dialog" id="cue-form" novalidate>
+      <h2 id="cue-form-title">Cue bearbeiten</h2>
+      <div id="cue-form-body" class="form-grid"></div>
+      <div class="dlg-actions">
+        <button type="button" id="cue-delete" class="danger">Löschen</button>
+        <span class="tb-spacer"></span>
+        <button value="cancel" formnovalidate>Abbrechen</button>
+        <button value="ok" class="primary">Übernehmen</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Shows verwalten -->
+  <dialog id="dlg-sessions" class="dlg">
+    <form method="dialog">
+      <h2>Shows</h2>
+      <div id="session-list" class="session-list"></div>
+      <div class="dlg-actions wrap">
+        <button type="button" id="ses-new">Neue Show</button>
+        <button type="button" id="ses-import">Importieren…</button>
+        <button type="button" id="ses-export">Aktuelle exportieren</button>
+        <span class="tb-spacer"></span>
+        <button value="close" class="primary">Schließen</button>
+      </div>
+      <input id="file-import" type="file" accept=".cueshow,application/octet-stream" hidden>
+    </form>
+  </dialog>
+
+  <!-- Einstellungen -->
+  <dialog id="dlg-settings" class="dlg">
+    <form method="dialog">
+      <h2>Einstellungen</h2>
+      <div id="settings-body" class="form-grid"></div>
+      <div class="dlg-actions">
+        <span class="tb-spacer"></span>
+        <button value="close" class="primary">Schließen</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="drop-overlay" class="drop-overlay" hidden>Dateien loslassen, um Audio-Cues anzulegen</div>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

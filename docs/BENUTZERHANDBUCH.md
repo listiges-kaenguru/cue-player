@@ -1,0 +1,324 @@
+# Benutzerhandbuch
+
+Cue Player spielt eine vorbereitete Liste von **Cues** (Einsätzen) ab – Musik, Geräusche, Fades,
+Stopps – jeweils auf Knopfdruck mit der **GO**-Taste. Typische Einsätze: Theater, Lesungen,
+Tanzaufführungen, Gottesdienste, Vereinsfeiern.
+
+Inhalt:
+
+1. [Grundbegriffe](#1-grundbegriffe)
+2. [Der Bildschirm](#2-der-bildschirm)
+3. [Eine Show vorbereiten](#3-eine-show-vorbereiten)
+4. [Cue-Typen](#4-cue-typen)
+5. [Ablaufsteuerung: Pre-Wait, Post-Wait, Auto-Continue, Auto-Follow](#5-ablaufsteuerung)
+6. [Die Show fahren](#6-die-show-fahren)
+7. [Cart-Ansicht](#7-cart-ansicht)
+8. [Tastatur- und MIDI-Trigger](#8-tastatur--und-midi-trigger)
+9. [Shows verwalten, sichern und übertragen](#9-shows-verwalten-sichern-und-übertragen)
+10. [Einstellungen](#10-einstellungen)
+11. [Tastenkürzel](#11-tastenkürzel)
+12. [Checkliste vor der Vorstellung](#12-checkliste-vor-der-vorstellung)
+13. [Fehlerbehebung](#13-fehlerbehebung)
+
+---
+
+## 1. Grundbegriffe
+
+| Begriff | Bedeutung |
+|---|---|
+| **Show** | Eine Sammlung von Cues mit eigenen Einstellungen (entspricht einer „Session“ in Linux Show Player). |
+| **Cue** | Ein Eintrag in der Liste: spielt eine Datei ab oder führt eine Aktion aus. |
+| **Standby** | Der Cue, der beim nächsten **GO** ausgelöst wird. Blau markiert mit ▸. |
+| **GO** | Löst den Standby-Cue aus und setzt den Standby auf den nächsten Cue. |
+| **Fade** | Allmähliche Lautstärkeänderung. |
+| **dB** | Lautstärke in Dezibel. 0 dB = Originallautstärke, −6 dB ≈ halbe Amplitude, −∞ = stumm. |
+
+---
+
+## 2. Der Bildschirm
+
+```
+┌───────────────────────────────────────────────────────────────────────┐
+│ ☰  Meine Show   ＋Audio  ＋Cue▾            ▦ Cart  🔓 Edit  ⚙        │  ← Kopfleiste
+├────────────────────────────────────────────────────┬──────────────────┤
+│ #  Cue                   Pre    Dauer       Post   │ AKTIV            │
+│ 1  ♪ Einlassmusik               ███░░ 1:02  ↧ AF   │ 1 · Einlassmusik │
+│ 2▸ ◢ Fade #1 → −∞               0:03.0             │  ❚❚  ■  ███░░    │
+│ 3  ♪ Gewitter          0:02.0   0:45.0             │                  │
+├────────────────────────────────────────────────────┴──────────────────┤
+│ [   GO   ]  [■ Stop alle] [❚❚ Pause] [▶ Weiter]      Master ───●── 0 dB│  ← Transportleiste
+│  2 · Fade…                                                            │
+└───────────────────────────────────────────────────────────────────────┘
+```
+
+- **☰** – Shows verwalten (neu, öffnen, löschen, exportieren, importieren).
+- **Show-Name** – direkt anklicken und umbenennen.
+- **＋ Audio** – Audiodateien hinzufügen (mehrere auf einmal möglich).
+- **＋ Cue ▾** – Fade-, Stop-, Start-, Pause-, MIDI- oder Memo-Cue hinzufügen.
+- **▦ Cart / ☰ Liste** – zwischen Listen- und Button-Ansicht wechseln.
+- **🔓 Edit / 🔒 Show** – Show-Modus: sperrt alle Bearbeitungen, damit während der Vorstellung
+  nichts versehentlich verändert wird.
+- **⚙** – Einstellungen.
+- **Aktiv** (rechts, auf dem Handy unten) – alle gerade laufenden Cues mit Fortschritt,
+  Pause- und Stop-Knopf.
+- **Farben der Fortschrittsbalken:** grün = läuft, violett = Pre-Wait, orange = Post-Wait,
+  gelb = pausiert.
+
+Auf schmalen Bildschirmen (Handy) werden die Spalten Pre/Post ausgeblendet; sie sind im Editor
+weiterhin einstellbar.
+
+---
+
+## 3. Eine Show vorbereiten
+
+1. **Show anlegen:** ☰ → **Neue Show**, Namen eingeben. (Beim ersten Start gibt es bereits
+   „Meine Show“.)
+2. **Audiodateien hinzufügen:**
+   - **＋ Audio** antippen und Dateien auswählen, **oder**
+   - am PC Dateien aus dem Dateimanager in das Fenster **ziehen**.
+   Neue Cues werden **hinter dem Standby-Cue** eingefügt. Unterstützt werden alle Formate, die der
+   Browser abspielen kann (MP3, WAV, OGG, FLAC, M4A/AAC, Opus, WebM).
+   Die Dateien werden **in die App kopiert** – die Originale können danach verschoben werden.
+3. **Cue bearbeiten:** Doppelklick auf die Zeile oder **✎** antippen. Es öffnet sich der Editor
+   (siehe [Cue-Typen](#4-cue-typen)). Mit **Übernehmen** speichern.
+4. **Reihenfolge ändern:**
+   - am PC: Zeile mit der Maus an die neue Stelle ziehen, oder
+   - die Pfeile **↑ ↓** in der Zeile, oder
+   - im Editor die **Position** (Nummer) ändern – funktioniert auch auf dem Handy.
+5. **Duplizieren:** **⧉** (z. B. für mehrere Fade-Cues).
+6. **Löschen:** Im Editor unten links **Löschen**.
+
+Alles wird **automatisch gespeichert**.
+
+---
+
+## 4. Cue-Typen
+
+Alle Cues haben diese gemeinsamen Felder:
+
+| Feld | Bedeutung |
+|---|---|
+| Name | Anzeigename. Leer lassen = automatischer Name (z. B. Dateiname, „Fade #1 → −∞“). |
+| Position | Nummer in der Liste. |
+| Farbe | Farbmarkierung in Liste und Cart. |
+| Pre-Wait, Danach, Post-Wait | Ablaufsteuerung, siehe [Abschnitt 5](#5-ablaufsteuerung). |
+| Taste, MIDI | Direkt-Trigger, siehe [Abschnitt 8](#8-tastatur--und-midi-trigger). |
+| Notizen | Hinweise für die Technik (werden in der Liste unter dem Namen angezeigt). |
+
+### ♪ Audio
+
+Spielt eine Audiodatei ab.
+
+| Feld | Bedeutung |
+|---|---|
+| Datei | Andere Datei wählen. |
+| Lautstärke | −∞ bis +12 dB. |
+| Panorama | −1 = links, 0 = Mitte, +1 = rechts. |
+| Start bei / Ende bei | Ausschnitt der Datei in Sekunden. „Ende 0“ = bis Dateiende. |
+| Fade-In | Einblenddauer beim Start. |
+| Fade-Out | Automatisches Ausblenden vor dem Ende. |
+| Fade-Kurve | *Logarithmisch* klingt meist natürlicher, *Linear* fällt anfangs langsamer ab. |
+| Schleife | Wiederholt den Ausschnitt endlos, bis der Cue gestoppt wird. |
+
+**GO auf einen laufenden Audio-Cue** startet ihn neu von vorne. **GO auf einen pausierten** setzt
+ihn fort.
+
+### ◢ Fade
+
+Ändert die Lautstärke eines **laufenden** Audio-Cues über eine Zeit.
+
+| Feld | Bedeutung |
+|---|---|
+| Ziel-Cue | Der Audio-Cue, der gefadet wird (vorbelegt: der Cue davor). |
+| Ziel-Lautstärke | Endlautstärke; ganz links = −∞ (aus). |
+| Dauer | Fade-Dauer in Sekunden. |
+| Danach stoppen | Ziel-Cue nach dem Fade beenden (sinnvoll beim Ausblenden auf −∞). |
+
+Beispiel „Musik unter Text ziehen“: Fade-Cue auf −15 dB, 3 s, *Danach stoppen* aus. Später ein
+zweiter Fade auf −∞ mit *Danach stoppen* an.
+
+### ■ Stop
+
+Stoppt einen Cue oder **alle laufenden Cues** (Ziel leer lassen), optional mit Fade-Out.
+
+### ▶ Start
+
+Startet einen anderen Cue (nützlich, um mehrere Cues von einer Stelle aus auszulösen).
+
+### ❚❚ Pause / Weiter
+
+Pausiert, setzt fort oder schaltet um – für einen Cue oder alle laufenden.
+
+### ⎍ MIDI
+
+Sendet eine MIDI-Nachricht (Note On/Off, Control Change, Program Change) – z. B. um ein
+Lichtpult, einen Sampler oder ein Mischpult-Preset anzusteuern. MIDI muss in den Einstellungen
+aktiviert sein.
+
+### ✎ Memo
+
+Tut nichts – dient als Überschrift/Notiz in der Liste („2. Akt“, „Pause“). Kann wie jeder Cue
+Auto-Follow nutzen.
+
+---
+
+## 5. Ablaufsteuerung
+
+Jeder Cue hat drei Einstellungen im Editor unter **Ablauf**:
+
+- **Pre-Wait** – Wartezeit zwischen Auslösen (GO) und tatsächlichem Start.
+- **Danach** – was nach diesem Cue automatisch passiert:
+  - **Keine** – nichts; der nächste Cue braucht ein neues GO.
+  - **Auto-Continue (AC)** – der **nächste Cue startet**, sobald dieser Cue **gestartet** ist –
+    nach Ablauf von *Post-Wait*. So laufen Cues gleichzeitig oder versetzt.
+  - **Auto-Follow (AF)** – der **nächste Cue startet**, wenn dieser Cue **zu Ende** ist – nach
+    Ablauf von *Post-Wait*. So entstehen Abfolgen. Wird der Cue manuell gestoppt, folgt nichts.
+- **Post-Wait** – Verzögerung für Auto-Continue/-Follow.
+
+```
+GO ─┬─ Pre-Wait ─┬──── Cue läuft ─────────┬─ Post-Wait ─▶ nächster Cue  (Auto-Follow)
+    │            └─ Post-Wait ─▶ nächster Cue                           (Auto-Continue)
+```
+
+Beispiele:
+
+- *Gewitter + Regen gleichzeitig:* Cue 5 „Donner“ mit **Auto-Continue**, Post-Wait 0 → Cue 6
+  „Regen“ startet zeitgleich.
+- *Regen setzt 2 s nach dem Donner ein:* wie oben, Post-Wait 2.
+- *Playlist für den Einlass:* alle Titel auf **Auto-Follow**.
+- *Musik ausblenden und dann Ansage:* Fade-Cue mit **Auto-Follow**, nächster Cue ist die Ansage.
+
+**Verkettungen und Standby:** Nach einem GO springt der Standby automatisch **hinter** alle Cues,
+die durch Auto-Continue/-Follow ohnehin ausgelöst werden. Das nächste GO trifft also den nächsten
+„eigenständigen“ Cue.
+
+---
+
+## 6. Die Show fahren
+
+1. Vor Beginn **🔒 Show-Modus** einschalten (Kopfleiste oder `Strg+E`). Damit sind Editor,
+   Hinzufügen und Löschen gesperrt.
+2. **Standby setzen:** Zeile antippen, oder mit **↑ / ↓**. Standardmäßig steht der Standby auf Cue 1.
+   Die GO-Taste zeigt unten an, welcher Cue als Nächstes kommt.
+3. **GO** – großer grüner Knopf oder **Leertaste**. Eine kurze GO-Sperre (Standard 300 ms)
+   verhindert versehentliches Doppel-Auslösen.
+4. Laufende Cues erscheinen unter **Aktiv**. Dort einzeln pausieren (❚❚/▶) oder stoppen (■ – mit
+   dem eingestellten Stop-alle-Fade).
+5. **Notfall / Ende:**
+   - **Stop alle** oder **Esc** – alle Cues mit dem eingestellten Fade (Standard 1,5 s) ausblenden.
+   - **Zweimal Esc** (innerhalb einer Sekunde) oder **Shift+Esc** – sofort stoppen.
+   - **Pause** / **Weiter** – alle laufenden Cues anhalten / fortsetzen (inkl. laufender Pre- und
+     Post-Waits).
+6. **Master** – Gesamtlautstärke (−∞ bis +6 dB).
+
+**Tipp:** Die App beim ersten Antippen „aufwecken“ – Browser erlauben Audio erst nach einer
+Benutzeraktion. Ein Tipp irgendwo in die App genügt; ein GO zählt natürlich auch.
+
+---
+
+## 7. Cart-Ansicht
+
+**▦ Cart** zeigt alle Cues als große Kacheln – ideal für Tablets/Handys und für Jingles,
+Soundeffekte oder Einspieler, die in beliebiger Reihenfolge gebraucht werden.
+
+- **Antippen** startet den Cue. **Erneut antippen** stoppt ihn. Ein pausierter Cue wird fortgesetzt.
+- Die Kachel füllt sich von unten mit dem Fortschritt und zeigt Restzeit an.
+- Im Edit-Modus öffnet **✎** oben rechts den Editor.
+- Anzahl der Spalten in den Einstellungen (auf dem Handy immer 2).
+- GO, Leertaste, Hotkeys und MIDI funktionieren auch in der Cart-Ansicht.
+
+---
+
+## 8. Tastatur- und MIDI-Trigger
+
+Jeder Cue kann zusätzlich zur GO-Taste **direkt** ausgelöst werden:
+
+- **Taste:** Im Editor bei *Taste* auf **Lernen** klicken und die gewünschte Taste drücken
+  (z. B. `F1`, `A`, `1`). **✕** entfernt die Zuordnung. Leertaste und Pfeiltasten sind reserviert.
+  Mehrere Cues können dieselbe Taste haben – sie starten dann gemeinsam.
+- **MIDI:** Bei *MIDI* auf **Lernen** klicken und am MIDI-Gerät eine Taste/einen Pad/Regler
+  betätigen. Erkannt werden Note On, Control Change (Wert > 0) und Program Change.
+
+Hotkeys funktionieren nicht, solange ein Dialog geöffnet ist oder in ein Textfeld getippt wird.
+
+**Globale MIDI-Zuordnung:** In ⚙ Einstellungen → MIDI können **GO** und **Stop alle** auf
+MIDI-Nachrichten gelegt werden – z. B. auf einen Fußschalter.
+
+---
+
+## 9. Shows verwalten, sichern und übertragen
+
+Über **☰** öffnet sich die Show-Verwaltung:
+
+- **Neue Show** – leere Show anlegen.
+- **Öffnen** – zu einer anderen gespeicherten Show wechseln (laufende Cues werden gestoppt).
+- **Löschen** – Show inkl. ihrer nicht anderweitig benutzten Audiodateien entfernen.
+- **Aktuelle exportieren** – speichert die Show **inklusive aller Audiodateien** als eine Datei
+  `Showname.cueshow` (landet im Download-Ordner).
+- **Importieren…** – eine `.cueshow`-Datei laden. Sie wird als **neue** Show angelegt; bestehende
+  Shows werden nie überschrieben.
+
+**Show auf ein anderes Gerät bringen** (z. B. am PC vorbereiten, auf dem Tablet spielen):
+Am PC exportieren → Datei per USB-Kabel, Cloud oder Messenger auf das Tablet → dort ☰ →
+Importieren.
+
+**Backup:** Shows liegen im Speicher des Browsers. Wird die App deinstalliert oder werden die
+Website-Daten gelöscht, sind sie weg. Deshalb nach jeder Probe **exportieren**.
+
+---
+
+## 10. Einstellungen
+
+| Einstellung | Bedeutung |
+|---|---|
+| GO-Sperre (ms) | Mindestabstand zwischen zwei GOs. 0 = aus. |
+| Stop-alle-Fade (s) | Ausblendzeit für „Stop alle“/Esc und die ■-Knöpfe im Aktiv-Bereich. |
+| Cart-Spalten | Kacheln pro Zeile in der Cart-Ansicht. |
+| Bildschirm nicht abschalten | Verhindert, dass das Display während der Show ausgeht. |
+| Ausgabegerät | Soundkarte/Interface wählen (nur Chrome/Edge). |
+| MIDI verwenden | Web MIDI aktivieren (der Browser fragt nach Erlaubnis). |
+| GO / Stop alle per MIDI | Globale MIDI-Trigger. |
+| Speicher | Belegung anzeigen, dauerhaften Speicher anfordern, unbenutzte Dateien löschen. |
+
+Die Einstellungen gelten **pro Show** und werden mit exportiert.
+
+---
+
+## 11. Tastenkürzel
+
+| Taste | Funktion |
+|---|---|
+| **Leertaste** | GO |
+| **Esc** | Alle stoppen (mit Fade) |
+| **Esc Esc** / **Shift+Esc** | Alle sofort stoppen |
+| **↑ / ↓** | Standby verschieben |
+| **Strg+E** | Edit-/Show-Modus umschalten |
+| *eigene Tasten* | Cue-Hotkeys (im Editor festgelegt) |
+
+---
+
+## 12. Checkliste vor der Vorstellung
+
+- [ ] Show vollständig einmal durchgespielt – auf **dem Gerät, das in der Show benutzt wird**.
+- [ ] Show **exportiert** (Backup auf USB-Stick o. ä.).
+- [ ] Gerät am Netzteil, Benachrichtigungen aus (Flugmodus/Bitte nicht stören).
+- [ ] Richtiges **Ausgabegerät** gewählt, Master-Lautstärke geprüft.
+- [ ] **Show-Modus** 🔒 an.
+- [ ] Standby steht auf Cue 1.
+- [ ] Einmal in die App getippt (Audio „aufgeweckt“).
+
+---
+
+## 13. Fehlerbehebung
+
+| Problem | Lösung |
+|---|---|
+| Kein Ton beim ersten GO | Einmal in die App tippen/klicken (Autoplay-Sperre des Browsers). Lautstärke von System und Master prüfen. |
+| Cue zeigt „Datei fehlt“ oder „!“ | Datei wurde gelöscht oder ist beschädigt → Editor → *Datei wählen…* |
+| „Datei nicht abspielbar“ | Format wird vom Browser nicht unterstützt (z. B. manche WMA/AIFF). In MP3/WAV/OGG umwandeln. |
+| Ton setzt aus / ruckelt auf Android | Akku-Optimierung für Chrome ausschalten; App im Vordergrund lassen; andere Apps schließen. |
+| Fade-Cue meldet „Ziel-Cue läuft nicht“ | Ein Fade wirkt nur auf einen gerade **laufenden** Audio-Cue. |
+| Ausgabegerät-Auswahl fehlt | Nur in Chrome/Edge verfügbar; sonst Systemeinstellung nutzen. |
+| MIDI wird nicht erkannt | Chrome/Edge verwenden, Gerät vor dem Öffnen der App anschließen, in ⚙ MIDI aus- und wieder einschalten. |
+| Shows sind weg | Website-Daten wurden gelöscht. Letzten Export importieren. In ⚙ „Dauerhaft: Anfordern“ nutzen. |
+| Neue Version wird nicht angezeigt | App komplett schließen und neu öffnen (Updates werden beim nächsten Start aktiv). |

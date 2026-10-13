@@ -1,0 +1,40 @@
+{
+  "name": "Cue Player",
+  "short_name": "Cue Player",
+  "description": "Show-Player für Theater, Events und Live-Sound: Cue-Liste, GO-Taste, Fades, Hotkeys, MIDI.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14151b",
+  "theme_color": "#14151b",
+  "categories": [
+    "music",
+    "entertainment",
+    "productivity"
+  ],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
