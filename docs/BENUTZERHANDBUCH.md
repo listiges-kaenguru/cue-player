@@ -85,7 +85,11 @@ weiterhin einstellbar.
    - am PC: Zeile mit der Maus an die neue Stelle ziehen, oder
    - die Pfeile **↑ ↓** in der Zeile, oder
    - im Editor die **Position** (Nummer) ändern – funktioniert auch auf dem Handy.
-5. **Duplizieren:** **⧉** (z. B. für mehrere Fade-Cues).
+5. **Klonen:** Im Editor auf **Klonen** tippen (funktioniert überall, auch auf dem Handy und in der
+   Cart-Ansicht) oder am PC **⧉** in der Zeile. Die Kopie wird direkt hinter dem Original eingefügt;
+   beim Klonen aus dem Editor werden vorher die Änderungen übernommen und gleich der Editor der Kopie
+   geöffnet. Die Kopie ist unabhängig vom Original. Tasten- und MIDI-Trigger werden nicht mitkopiert,
+   damit eine Taste nicht versehentlich zwei Cues auslöst. Name: „… (Kopie)“.
 6. **Löschen:** Im Editor unten links **Löschen**.
 
 Alles wird **automatisch gespeichert**.

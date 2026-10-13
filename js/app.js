@@ -171,7 +171,7 @@ function renderList() {
       edit && h('td', { class: 'c-act' },
         h('button', { class: 'wide-only', title: 'Nach oben', onclick: () => moveCue(cue.id, -1) }, '↑'), ' ',
         h('button', { class: 'wide-only', title: 'Nach unten', onclick: () => moveCue(cue.id, 1) }, '↓'), ' ',
-        h('button', { class: 'wide-only', title: 'Duplizieren', onclick: () => duplicateCue(cue.id) }, '⧉'), ' ',
+        h('button', { class: 'wide-only', title: 'Klonen (Kopie dahinter einfügen)', onclick: () => cloneCue(cue.id) }, '⧉'), ' ',
         h('button', { title: 'Bearbeiten', onclick: () => openEditor(cue.id) }, '✎')));
     tbody.append(row);
     state.rows.set(cue.id, { row, bar, fill, txt, lastState: null });
@@ -404,14 +404,17 @@ function moveCueTo(id, beforeId) {
   renderAll();
 }
 
-function duplicateCue(id) {
+/** Fügt eine unabhängige Kopie direkt hinter dem Cue ein. Trigger werden nicht mitkopiert (sonst doppelte Auslösung). */
+function cloneCue(id) {
   const i = cues().findIndex((c) => c.id === id);
+  if (i < 0) return null;
   const copy = { ...structuredClone(cues()[i]), id: uid(), hotkey: '', midiTrigger: '' };
   if (copy.name) copy.name += ' (Kopie)';
   cues().splice(i + 1, 0, copy);
   engine.cueChanged(copy.id);
   save();
   renderAll();
+  return copy;
 }
 
 function deleteCue(id) {
@@ -594,7 +597,8 @@ function openEditor(id) {
   };
   dlg.onclose = () => {
     state.learn = null;
-    if (dlg.returnValue !== 'ok') return;
+    const action = dlg.returnValue;
+    if (action !== 'ok' && action !== 'clone') return;
     if (draft.type === 'audio' && draft.end > 0 && draft.end <= draft.start) {
       toast('Ende liegt vor dem Start – Ende wird ignoriert', true);
       draft.end = 0;
@@ -606,6 +610,10 @@ function openEditor(id) {
     engine.cueChanged(id);
     save();
     renderAll();
+    if (action === 'clone') {
+      const copy = cloneCue(id);
+      if (copy) { toast('Cue geklont – Kopie wird bearbeitet'); openEditor(copy.id); }
+    }
   };
   dlg.returnValue = '';
   dlg.showModal();

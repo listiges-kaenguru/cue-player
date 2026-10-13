@@ -118,6 +118,17 @@ await page.waitForTimeout(800);
 e = await env(0);
 check('Pause-Fade: wieder volle Lautstärke', e.gain > 0.99, JSON.stringify(e));
 
+// --- Klonen über den Editor ---
+await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
+const before = (await page.$$('.cue-row')).length;
+await page.dblclick('.cue-row >> nth=0');
+await page.click('#cue-form button[value=clone]');
+await page.waitForTimeout(300);
+const titles = await page.$$eval('.cue-row .title', (r) => r.map((x) => x.textContent));
+check('Klonen: Kopie hinter dem Original', titles.length === before + 1 && titles[1] === titles[0], JSON.stringify(titles));
+check('Klonen: Editor der Kopie offen', await page.$eval('#dlg-cue', (d) => d.open) && (await page.textContent('#cue-form-title')).startsWith('Cue 2'));
+await page.click('#cue-form button[value=cancel]');
+
 check('Keine Konsolenfehler', errors.length === 0, errors.join(' | '));
 await browser.close();
 process.exit(failed ? 1 : 0);
