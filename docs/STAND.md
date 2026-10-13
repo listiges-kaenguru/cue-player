@@ -3,7 +3,7 @@
 Arbeitsnotizen, damit die Entwicklung jederzeit schnell weitergehen kann.
 **Bei jeder Sitzung aktualisieren** (Stand, erledigte/neue ToDos, Erkenntnisse aus Tests).
 
-## Stand (2026-10-13, v0.1.0)
+## Stand (2026-10-13, v0.1.0, nach Nutzertest 1)
 
 Erster Prototyp als PWA, ohne Build-Schritt (Vanilla JS, ES-Module).
 
@@ -17,10 +17,17 @@ Erster Prototyp als PWA, ohne Build-Schritt (Vanilla JS, ES-Module).
 - Speicherung in IndexedDB, Neuladen, Export/Import `.cueshow` (inkl. Audio)
 - Service Worker registriert
 
+**Nutzertest 1 (Android-Smartphone, Chrome), 2026-10-13:**
+
+- ✅ Tonausgabe
+- ✅ Fade-Cue
+- ✅ Pause-Cue
+- ✅ Memo-Cue (Darstellung auf dem Handy, Wunsch: auffälliger, siehe ToDo „Memo-Darstellung“). Desktop noch nicht getestet.
+
 **Implementiert, aber noch NICHT getestet:**
 
-- Ob tatsächlich Ton ausgegeben wird (Tests laufen headless: nur Status und Zeiten geprüft, nicht die Ausgabe)
-- Echte Android-Geräte (Installation, Latenz, Wake Lock, Hintergrundverhalten)
+- Android: Installation als App, Latenz, Wake Lock, Hintergrundverhalten
+- Memo-Cue am Desktop
 - Windows/Linux-Installation als App
 - MIDI mit echter Hardware (Lernen, Trigger, MIDI-Cues)
 - Ausgabegerät-Wahl (`AudioContext.setSinkId`)
@@ -34,9 +41,73 @@ Erster Prototyp als PWA, ohne Build-Schritt (Vanilla JS, ES-Module).
 
 ### Vom Nutzer gewünscht
 
-- [ ] **Projekt-Export als ZIP (o. ä.) zum Teilen mit anderen.**
+Reihenfolge = Vorschlag für die Umsetzung (klein → groß). Offene Fragen an den Nutzer stehen jeweils dabei.
+
+- [ ] **Pause-Cue mit optionalem Fade (Ausfaden beim Pausieren, Einfaden beim Fortsetzen).**
+  Entscheidung (Vorschlag, mit Nutzer bestätigen): **als Option direkt im Pause-Cue**, nicht nur über Presets.
+  Der Fade gehört zur Aktion, genau wie beim Stop-Cue (der hat schon „Fade-Out“). Presets (siehe unten)
+  speichern dann z. B. „Pause mit 2 s Fade“ zur Wiederverwendung.
+  Umsetzung:
+  - `model.js`: Pause-Cue um `fadeOut` (beim Pausieren) und `fadeIn` (beim Fortsetzen) erweitern, Standard 0.
+  - `engine.js`: `Runner.pause(fade)` / `resume(fade)` durchreichen; `AudioRunner.pauseAction(fade)` rampt `env`
+    über `fade` auf 0 und pausiert danach das `<audio>`; `resumeAction(fade)` rampt wieder hoch
+    (heute: fest `DECLICK`). Achtung: Wird während des Ausfadens erneut fortgesetzt, muss der `pauseH`-Timer abgebrochen werden.
+    Andere Runner ignorieren den Fade.
+  - Editor: zwei Felder; Modus „Umschalten“ nutzt je nach Richtung das passende Feld.
+  - Optional: Einstellung „Pause alle mit Fade“ für die Transport-Buttons.
+  - Doku: Benutzerhandbuch Abschnitt 4 (Pause/Weiter), Smoke-Test ergänzen.
+
+- [ ] **Memo-Darstellung auffälliger, evtl. mit Formatierung (Markdown).**
+  Vor der Umsetzung Darstellung mit dem Nutzer klären. Mockup mit drei Varianten:
+  `docs/mockups/memo-varianten.html` (im Browser öffnen).
+  - A: Kapitel-Trenner (breite, farbige Zwischenüberschrift, einzeilig)
+  - B: Notizkarte in der Liste (Markdown, nach 3 Zeilen gekürzt)
+  - C: Regiebuch-Panel. **Empfehlung: C kombiniert mit A**, also in der Liste ein kompakter Trenner und der formatierte Text
+    groß im eigenen Bereich, sobald Memo oder Folge-Cue im Standby steht (Desktop: rechte Spalte; Handy: aufklappbar über GO).
+  Technische Notizen:
+  - Markdown-Teilmenge selbst rendern (keine Bibliothek, wegen Offline): Überschriften, **fett**, *kursiv*, Listen,
+    Hervorhebung (z. B. Zeile mit `!` → roter Warnkasten), Zeilenumbrüche.
+  - **HTML immer escapen**: Shows werden geteilt (.cueshow), fremder Text darf kein HTML/JS einschleusen.
+  - Die Notizen anderer Cues (Feld `notes`) könnten im selben Panel erscheinen.
+  - Offene Fragen: Welche Variante? Soll ein Memo die GO-Taste kurz „blockieren“ bzw. bestätigen lassen? Farbe frei oder fest?
+
+- [ ] **Presets (Vorlagen) erstellen und als Cue einfügen.**
+  Konzept-Vorschlag:
+  - Ein Preset ist ein gespeicherter Cue (später auch mehrere Cues) mit allen Einstellungen, aber ohne `id`, und bei
+    Ziel-Cues ohne festes Ziel (beim Einfügen: Ziel = vorheriger Cue, wie heute bei `addCue`).
+  - Anlegen: im Editor „Als Preset speichern…“ (Name vergeben). Einfügen: Menü „＋ Cue ▾“ → Abschnitt „Presets“.
+  - Verwaltung (umbenennen, löschen) in ⚙ oder eigenem Dialog.
+  - Speicherort: **global** im IndexedDB-Store `meta` bzw. eigenem Store `presets` (Store-Version erhöhen), damit Presets in
+    allen Shows verfügbar sind. Beim `.cueshow`-Export optional mitnehmen.
+  - Beispiele für Standard-Presets: „Ausblenden 3 s + Stop“, „Musik unter Text (−15 dB, 3 s)“, „Pause mit Fade“, „Stop alle 5 s“.
+  - Offene Fragen: Nur Cue-Einstellungen oder auch Audiodatei (z. B. Standard-Jingle)? Mehr-Cue-Presets (Abfolgen) gleich mit
+    einplanen? Global oder pro Show?
+
+- [ ] **Import aus Linux Show Player (LiSP) und evtl. anderen Programmen.**
+  Stand des Wissens (an echter Datei prüfen!):
+  - LiSP-Sessions (`.lsp`) sind JSON: Layout-Einstellungen + Liste `cues` mit `_type_` (z. B. `MediaCue`/`GstMediaCue`,
+    `VolumeControl`, `StopAll`, `SeekCue`, `CollectionCue`, `IndexActionCue`, `MidiCue`, `OscCue`, `CommandCue`),
+    `name`, `pre_wait`, `post_wait`, `next_action` (`DoNothing`, `TriggerAfterWait`, `TriggerAfterEnd`, …).
+  - **Medien sind nicht enthalten**: `media` → `elements` → `UriInput.uri` verweist auf die Datei (`file:///…`, je nach
+    Version absolut oder relativ zur Session-Datei). Lautstärke, Fades und Start-/Stop-Zeit (ms) stehen ebenfalls unter `media`.
+  - Der Browser kennt keine Dateipfade. Daher Import-Ablauf:
+    1. `.lsp` auswählen und parsen → Liste der benötigten Dateien anzeigen.
+    2. Nutzer wählt die Audiodateien bzw. den Ordner (`<input webkitdirectory>` am Desktop; Android: Mehrfachauswahl).
+    3. Zuordnung über Dateinamen (bei Mehrdeutigkeit über relativen Pfad), fehlende Dateien anzeigen. Cue wird trotzdem
+       angelegt und die Datei kann später nachgereicht werden.
+    4. Nicht unterstützte Cue-Typen (OSC, Command, Seek …) **als Memo-Cue mit Hinweis** übernehmen, damit nichts still verloren geht.
+  - Zuordnung: MediaCue → audio, VolumeControl → fade, StopAll → stop (Ziel alle), MidiCue → midi,
+    CollectionCue → mehrere Start-Cues (bzw. später Gruppen-Cue), next_action → nextAction (`TriggerAfterWait` → continue,
+    `TriggerAfterEnd` → follow; `Select…`-Varianten → none + Hinweis).
+  - **Vom Nutzer benötigt: eine oder mehrere echte `.lsp`-Beispieldateien** (möglichst mit verschiedenen Cue-Typen,
+    dazu die LiSP-Version). Ohne Beispiel ist das Format nur aus dem Gedächtnis rekonstruiert.
+  - Weitere Programme (später, je nach Bedarf): einfache Playlists (M3U, Ordner mit Dateien → Audio-Cues in Reihenfolge),
+    CSV-Cue-Listen, Show Cue Systems (SCS, XML). QLab (macOS, Binärformat) eher nicht.
+
+- [ ] **Projekt-Export als ZIP zum Teilen, zusätzlich zu `.cueshow`.**
+  **`.cueshow` bleibt auf jeden Fall erhalten** (Nutzer: „Das ist super!“). ZIP ist eine zusätzliche Exportoption.
   Stand: Der Export (☰ → „Aktuelle exportieren“) packt Show **und** Audiodateien bereits in **eine**
-  Datei `.cueshow`. Das ist aber ein eigenes Binärformat (siehe `js/storage.js`, `exportShow`/`importShow`),
+  Datei `.cueshow`. Das ist ein eigenes Binärformat (siehe `js/storage.js`, `exportShow`/`importShow`),
   das man nur mit Cue Player öffnen kann.
   Plan:
   - Export als echte **ZIP-Datei** (Endung z. B. `.cueshow.zip` oder `.cuezip`):
@@ -89,6 +160,7 @@ Erster Prototyp als PWA, ohne Build-Schritt (Vanilla JS, ES-Module).
 - `js/storage.js`: IndexedDB-Stores `sessions`, `media` (Blobs), `meta`. Export/Import.
 - `sw.js`: Cache-First. **Bei jedem Release `VERSION` erhöhen und neue Dateien in `ASSETS` eintragen.**
 - Sprache in UI und Doku: Deutsch.
+- Mockups für Abstimmungen mit dem Nutzer: `docs/mockups/` (statisches HTML, nutzt `css/app.css`).
 
 ## Entwickeln & Testen
 
