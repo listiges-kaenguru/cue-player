@@ -270,14 +270,24 @@ await page.click('#sel-delete');
 await page.waitForTimeout(300);
 check('Auswahl löschen', (await cueData()).length === 6);
 
-// Langes Drücken (Touch) startet die Auswahl
-const box = await page.locator('.cue-row >> nth=0').boundingBox();
-const px = box.x + box.width / 3, py = box.y + box.height / 2;
-await page.dispatchEvent('.cue-row >> nth=0', 'pointerdown', { pointerType: 'touch', clientX: px, clientY: py, bubbles: true });
-await page.waitForTimeout(700);
-await page.evaluate(() => window.dispatchEvent(new PointerEvent('pointerup', { pointerType: 'touch' })));
-check('Langes Drücken wählt aus', (await page.textContent('#sel-count')).startsWith('1'));
+// Auswahl-Modus über den Knopf ☑ (für Touch-Geräte)
+await page.click('#btn-select');
+check('Auswahl-Modus: Leiste sichtbar, Zeilen nicht ziehbar', !(await page.$eval('#sel-bar', (e) => e.hidden)) && !(await page.$eval('.cue-row', (r) => r.draggable)));
+await page.click('.cue-row >> nth=0');
+await page.click('.cue-row >> nth=2');
+check('Auswahl-Modus: Antippen wählt aus', (await page.textContent('#sel-count')).startsWith('2'));
 await page.click('#sel-clear');
+check('Auswahl-Modus: Fertig beendet', (await page.$eval('#sel-bar', (e) => e.hidden)) && (await page.$eval('.cue-row', (r) => r.draggable)));
+
+// Memo-Zeilen gleich breit wie andere Zeilen (auch auf dem Handy)
+for (const w of [1280, 390]) {
+  await page.setViewportSize({ width: w, height: 800 });
+  await page.waitForTimeout(200);
+  const widths = await page.$$eval('.cue-row', (rows) => rows.map((r) => Math.round(r.getBoundingClientRect().width)));
+  const acts = await page.$$eval('.cue-row .c-act', (cells) => cells.map((c) => Math.round(c.getBoundingClientRect().right)));
+  check(`Memo-Zeile gleich breit (${w}px)`, new Set(widths).size === 1 && new Set(acts).size === 1, JSON.stringify({ widths, acts }));
+}
+await page.setViewportSize({ width: 1280, height: 800 });
 
 check('Keine Konsolenfehler', errors.length === 0, errors.join(' | '));
 await browser.close();

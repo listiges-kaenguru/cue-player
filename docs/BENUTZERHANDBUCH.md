@@ -95,8 +95,9 @@ weiterhin einstellbar.
 6. **Löschen:** Im Editor unten links **Löschen**.
 7. **Mehrere Cues auf einmal** (Listenansicht, Edit-Modus):
    - am PC: **Strg+Klick** wählt einzelne Cues aus oder ab, **Shift+Klick** wählt einen Bereich;
-   - auf Handy/Tablet: eine Zeile **lange drücken**. Danach schaltet jedes Antippen die Auswahl um.
-   Unten erscheint eine Leiste mit **Als Preset…**, **Klonen**, **Löschen** und **✕** (Auswahl aufheben).
+   - auf Handy/Tablet (und auch am PC): im Tabellenkopf neben **#** auf **☑** tippen. Im Auswahl-Modus
+     schaltet jedes Antippen einer Zeile die Auswahl um (☐/☑); Drag & Drop ist dann abgeschaltet.
+   Unten erscheint eine Leiste mit **Als Preset…**, **Klonen**, **Löschen** und **✕ Fertig** (Auswahl beenden).
    Beim Klonen einer Auswahl zeigen Fades/Start/Stop innerhalb des Blocks auf die Kopien, nicht auf die Originale.
    Ein normaler Klick/Tipp ohne Taste hebt die Auswahl auf und setzt den Standby.
 

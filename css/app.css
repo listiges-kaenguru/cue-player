@@ -189,6 +189,10 @@ main {
 /* ---------- Mehrfachauswahl ---------- */
 .cue-row.sel td { background: #1f3a5f !important; }
 .cue-row.sel .c-num::before { content: "☑ "; color: var(--standby); }
+.selecting .cue-row:not(.sel) .c-num::before { content: "☐ "; color: var(--muted); }
+.sel-toggle { padding: 0 6px; margin-left: 4px; font-size: 13px; line-height: 1.4; }
+.sel-toggle.active { background: var(--standby); border-color: var(--standby); color: #fff; }
+.sel-bar button:disabled { opacity: .4; }
 .sel-bar {
   position: sticky; bottom: 0; z-index: 3;
   display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
@@ -322,7 +326,8 @@ main {
   .mode-switch[aria-checked="true"] .ms-knob { left: 15px; }
   .topbar { gap: 5px; padding-left: 8px; padding-right: 8px; }
   .c-dur { width: 7.5em; }
-  .c-act .wide-only { display: none; }
+  .c-act .wide-only, .memo-row .badge .wide-only { display: none; }
+  .memo-row .title { font-size: 15px; }
   .go { min-width: 0; flex: 1 1 100%; height: 64px; }
   .go-next { max-width: 80vw; }
   .transport-btns { flex: 1; }

@@ -3,7 +3,7 @@
 Arbeitsnotizen, damit die Entwicklung jederzeit schnell weitergehen kann.
 **Bei jeder Sitzung aktualisieren** (Stand, erledigte/neue ToDos, Erkenntnisse aus Tests).
 
-## Stand (2026-10-13, v0.4.0)
+## Stand (2026-10-13, v0.4.1)
 
 PWA ohne Build-Schritt (Vanilla JS, ES-Module). Branch `ccr-c726005c-rg7agm`, noch nicht nach `main` gemergt, kein PR.
 
@@ -37,10 +37,22 @@ PWA ohne Build-Schritt (Vanilla JS, ES-Module). Branch `ccr-c726005c-rg7agm`, no
     interne Verweise auf Kopien), Löschen. Nur Listenansicht und Edit-Modus.
   - Neues Standard-Preset „Szenenwechsel: alles ausblenden + Umbau (bestätigen)“ (Bestandsnutzer: über
     „Standard-Presets wiederherstellen“).
+- **v0.4.1** (nach Nutzertest 2):
+  - Langes Drücken zur Auswahl **entfernt** (kollidierte mit Scrollen, da `pointercancel` nicht abgefangen, und mit
+    Chromes Touch-Drag&Drop). Stattdessen Knopf **☑** im Tabellenkopf (`toggleSelectMode`), im Auswahl-Modus sind
+    Zeilen nicht `draggable`. Strg/Shift+Klick am PC bleibt.
+  - Memo-Zeile ohne `colspan`: Mit ausgeblendeten Spalten (Handy) verschob `colspan` die Tabelle. Jetzt gleiche Zellen
+    wie andere Zeilen. Smoke-Test prüft gleiche Zeilenbreite bei 1280 und 390 px. Badge auf dem Handy nur „🔒“.
 
 **Nutzertest 1 (Android-Smartphone, Chrome), v0.1.0:**
 
 - ✅ Tonausgabe · ✅ Fade-Cue · ✅ Pause-Cue · ✅ Memo-Cue (Wunsch: auffälliger, umgesetzt in v0.2.0)
+
+**Nutzertest 2 (Smartphone), v0.4.0:**
+
+- ❌ Langes Drücken zur Auswahl kollidierte manchmal mit Scrollen und mit Drag & Drop → in v0.4.1 durch Knopf ☑ ersetzt
+- ❌ Memo-Zeilen unterschiedlich breit als andere Cues → in v0.4.1 behoben
+- (Desktop noch nicht getestet)
 
 **Implementiert, aber noch NICHT vom Nutzer getestet:**
 

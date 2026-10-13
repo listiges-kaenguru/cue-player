@@ -6,7 +6,7 @@ import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, cueDispl
 import { fmtTime, fmtDb, debounce, keyLabel, uid, MIN_DB } from './util.js';
 import { renderMarkdown, firstLine } from './md.js';
 
-export const APP_VERSION = '0.4.0';
+export const APP_VERSION = '0.4.1';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const COLORS = ['', '#b62324', '#bd561d', '#9e6a03', '#1a7f37', '#0f6e6e', '#1f6feb', '#6639ba', '#bf3989', '#57606a'];
@@ -27,9 +27,7 @@ const state = {
   wakeLock: null,
   selected: new Set(), // Mehrfachauswahl (Cue-IDs)
   selAnchor: null,
-  selectMode: false, // Touch: nach langem Drücken schaltet Antippen die Auswahl um
-  suppressClick: false,
-  longPressFired: false,
+  selectMode: false, // Auswahl-Modus (Knopf ☑): Antippen schaltet die Auswahl um
 };
 
 const cues = () => state.session.cues;
@@ -164,21 +162,21 @@ function renderList() {
       class: 'cue-row', 'data-id': cue.id, draggable: edit ? 'true' : null,
       onclick: (e) => onRowClick(e, cue.id),
       ondblclick: (e) => { if (!e.target.closest('button') && edit && !state.selected.size) openEditor(cue.id); },
-      onpointerdown: (e) => onRowPointerDown(e, cue.id),
-      oncontextmenu: (e) => { if (edit && state.longPressFired) e.preventDefault(); },
     };
     if (cue.type === 'memo') {
-      // Variante A: Kapitel-Trenner über die ganze Breite
+      // Variante A: Kapitel-Trenner. Gleiche Spalten wie andere Zeilen (kein colspan), sonst verrutscht die
+      // Tabelle, wenn auf schmalen Bildschirmen Spalten ausgeblendet sind.
       const row = h('tr', { ...rowAttrs, class: 'cue-row memo-row' },
         h('td', { class: 'c-num' }, i + 1),
-        h('td', { class: 'c-name', colSpan: 4 },
+        h('td', { class: 'c-name' },
           h('div', { class: 'nm' },
             h('span', { class: 'ic' }, CUE_TYPES.memo.icon),
             h('span', { class: 'title' }, label(cue)),
             h('span', { class: 'badges' },
-              cue.confirm && h('span', { class: 'badge', title: 'Bestätigung vor dem nächsten GO' }, '🔒 bestätigen'),
+              cue.confirm && h('span', { class: 'badge', title: 'Bestätigung vor dem nächsten GO' }, '🔒', h('span', { class: 'wide-only' }, ' bestätigen')),
               cue.notes?.trim() && cue.name && h('span', { class: 'has-text', title: 'Text im Regiebuch' }, '📖'),
               cue.hotkey && h('span', { class: 'badge' }, '⌨ ' + keyLabel(cue.hotkey))))),
+        h('td', { class: 'c-pre' }), h('td', { class: 'c-dur' }), h('td', { class: 'c-post' }),
         actions);
       if (cue.color) row.style.setProperty('--memo', cue.color);
       tbody.append(row);
@@ -563,32 +561,20 @@ async function renderPresetList() {
 
 function onRowClick(e, id) {
   if (e.target.closest('button')) return;
-  if (state.suppressClick) { state.suppressClick = false; return; }
   const edit = !settings().showMode;
   if (edit && (e.ctrlKey || e.metaKey)) { toggleSelect(id); return; }
   if (edit && e.shiftKey && state.selAnchor) { selectRange(state.selAnchor, id); return; }
-  if (state.selectMode && state.selected.size) { toggleSelect(id); return; }
+  if (state.selectMode) { toggleSelect(id); return; }
   clearSelection();
   state.selAnchor = id;
   setStandby(id);
 }
 
-function onRowPointerDown(e, id) {
-  if (settings().showMode || e.pointerType === 'mouse' || e.target.closest('button')) return;
-  state.longPressFired = false;
-  const x = e.clientX, y = e.clientY;
-  const cancel = () => { clearTimeout(t); window.removeEventListener('pointerup', cancel); window.removeEventListener('pointermove', move); };
-  const move = (ev) => { if (Math.hypot(ev.clientX - x, ev.clientY - y) > 10) cancel(); };
-  const t = setTimeout(() => {
-    cancel();
-    state.longPressFired = true;
-    state.suppressClick = true;
-    state.selectMode = true;
-    toggleSelect(id);
-    navigator.vibrate?.(15);
-  }, 550);
-  window.addEventListener('pointerup', cancel);
-  window.addEventListener('pointermove', move);
+/** Auswahl-Modus ein/aus (Knopf ☑ im Tabellenkopf; vor allem für Touch-Geräte). */
+function toggleSelectMode() {
+  if (state.selectMode) { clearSelection(); return; }
+  state.selectMode = true;
+  updateSelection();
 }
 
 function toggleSelect(id) {
@@ -621,11 +607,19 @@ function updateSelection() {
   const ids = new Set(cues().map((c) => c.id));
   state.selected.forEach((id) => { if (!ids.has(id)) state.selected.delete(id); });
   if (settings().showMode) state.selected.clear();
-  state.rows.forEach((r, id) => r.row.classList.toggle('sel', state.selected.has(id)));
+  if (settings().showMode) state.selectMode = false;
+  const edit = !settings().showMode;
+  state.rows.forEach((r, id) => {
+    r.row.classList.toggle('sel', state.selected.has(id));
+    // Im Auswahl-Modus kein Drag & Drop, damit Antippen eindeutig bleibt.
+    r.row.draggable = edit && !state.selectMode;
+  });
+  $('#cue-rows').classList.toggle('selecting', state.selectMode);
+  $('#btn-select').classList.toggle('active', state.selectMode);
   const n = state.selected.size;
-  if (!n) state.selectMode = false;
-  $('#sel-bar').hidden = !n;
-  $('#sel-count').textContent = `${n} Cue${n === 1 ? '' : 's'} ausgewählt`;
+  $('#sel-bar').hidden = !n && !state.selectMode;
+  $('#sel-count').textContent = n ? `${n} Cue${n === 1 ? '' : 's'} ausgewählt` : 'Cues zum Auswählen antippen';
+  ['#sel-preset', '#sel-clone', '#sel-delete'].forEach((q) => { $(q).disabled = !n; });
 }
 
 async function selectionToPreset() {
@@ -1118,6 +1112,7 @@ function bindUI() {
   $('#sel-clone').addEventListener('click', cloneSelection);
   $('#sel-delete').addEventListener('click', deleteSelection);
   $('#sel-clear').addEventListener('click', clearSelection);
+  $('#btn-select').addEventListener('click', toggleSelectMode);
 
   $('#btn-layout').addEventListener('click', () => {
     settings().layout = settings().layout === 'cart' ? 'list' : 'cart';
