@@ -15,6 +15,7 @@ einzigen Codebasis, ohne Store, offline-fähig, installierbar wie eine normale A
 |---|---|
 | [docs/INSTALLATION.md](docs/INSTALLATION.md) | Installation auf Android, Windows, Linux; eigenes Hosting; Entwicklung |
 | [docs/BENUTZERHANDBUCH.md](docs/BENUTZERHANDBUCH.md) | Bedienung: Cues anlegen, Show fahren, Trigger, MIDI, Export |
+| [docs/STAND.md](docs/STAND.md) | Entwicklungsstand, ToDo-Liste, bekannte Schwächen, Tests |
 
 ## Funktionen
 
@@ -79,6 +80,7 @@ js/model.js            Datenmodell (Session, Cue-Typen, Standardwerte)
 js/storage.js          IndexedDB-Speicher, Export/Import (.cueshow)
 js/midi.js             Web-MIDI-Anbindung
 js/util.js             Hilfsfunktionen (Timer, dB-Umrechnung, Fade-Kurven)
+tests/smoke.mjs        Browser-Smoke-Test (Playwright)
 icons/                 App-Icons
 docs/                  Anleitungen
 ```
