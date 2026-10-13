@@ -66,6 +66,11 @@ class Runner {
     if (!this.playing) return;
     this.playing = false;
     this.stopping = false;
+    if (this.paused) {
+      // Aktion endete während des Pause-Fades: Pause aufheben, sonst bliebe der Cue „pausiert“ hängen.
+      this.paused = false;
+      this.postTimer?.resume();
+    }
     const cue = this.cue;
     if (natural && cue?.nextAction === 'follow') {
       this.postTimer = new Timer((cue.postWait || 0) * 1000, () => this._postDone());
@@ -73,21 +78,23 @@ class Runner {
     this.changed();
   }
 
-  pause() {
+  /** fade: Ausblendzeit in Sekunden (nur Audio-Cues). */
+  pause(fade = 0) {
     if (!this.active || this.paused) return;
     this.preTimer?.pause();
     this.postTimer?.pause();
-    if (this.playing) this.pauseAction();
+    if (this.playing) this.pauseAction(fade);
     this.paused = true;
     this.changed();
   }
 
-  resume() {
+  /** fade: Einblendzeit in Sekunden (nur Audio-Cues). */
+  resume(fade = 0) {
     if (!this.paused) return;
     this.paused = false;
     this.preTimer?.resume();
     this.postTimer?.resume();
-    if (this.playing) this.resumeAction();
+    if (this.playing) this.resumeAction(fade);
     this.changed();
   }
 
@@ -260,26 +267,32 @@ class AudioRunner extends Runner {
   _finish(natural) {
     clearTimeout(this.stopH);
     clearTimeout(this.pauseH);
+    this.pauseH = null;
     this.token++;
     this.el?.pause();
     this.ended(natural);
   }
 
-  pauseAction() {
+  pauseAction(fade = 0) {
     if (!this.chain) { this.token++; return; }
     const ctx = this.engine.ctx;
-    this.envBeforePause = this.chain.env.gain.value;
-    rampParam(ctx, this.chain.env.gain, 0, DECLICK, 'linear');
-    this.pauseH = setTimeout(() => this.el?.pause(), DECLICK * 1000 + 10);
+    // Läuft noch ein Pause-Fade (schnelles Pause/Weiter/Pause), den ursprünglichen Pegel behalten.
+    if (!this.pauseH) this.envBeforePause = this.chain.env.gain.value;
+    const f = Math.max(DECLICK, fade);
+    rampParam(ctx, this.chain.env.gain, 0, f, fade > 0 ? this.cue.fadeCurve : 'linear');
+    clearTimeout(this.pauseH);
+    this.pauseH = setTimeout(() => { this.pauseH = null; this.el?.pause(); }, f * 1000 + 10);
   }
 
-  resumeAction() {
+  resumeAction(fade = 0) {
     clearTimeout(this.pauseH);
+    this.pauseH = null;
     if (!this.chain) { this.start(); return; }
     const ctx = this.engine.ctx;
     this.fadingOut = false;
-    this.el.play().catch(() => {});
-    rampParam(ctx, this.chain.env.gain, Math.max(0.0001, this.envBeforePause ?? 1), DECLICK * 2, 'linear');
+    if (this.el.paused) this.el.play().catch(() => {});
+    const f = Math.max(DECLICK * 2, fade);
+    rampParam(ctx, this.chain.env.gain, Math.max(0.0001, this.envBeforePause ?? 1), f, fade > 0 ? this.cue.fadeCurve : 'linear');
   }
 
   stopAction(fade, immediate) {
@@ -364,7 +377,7 @@ class PauseRunner extends Runner {
     targets.forEach((r) => {
       if (!r || r === this || !r.active) return;
       const doPause = cue.mode === 'pause' || (cue.mode === 'toggle' && !r.paused);
-      doPause ? r.pause() : r.resume();
+      doPause ? r.pause(cue.fadeOut || 0) : r.resume(cue.fadeIn || 0);
     });
     this.ended(true);
   }
@@ -479,14 +492,14 @@ export class Engine extends Emitter {
   }
 
   stop(id, fade = 0) { this.runners.get(id)?.stop(fade); }
-  pause(id) { this.runners.get(id)?.pause(); }
-  resume(id) { this.runners.get(id)?.resume(); }
+  pause(id, fade = 0) { this.runners.get(id)?.pause(fade); }
+  resume(id, fade = 0) { this.runners.get(id)?.resume(fade); }
 
   active() { return [...this.runners.values()].filter((r) => r.active); }
 
   stopAll(fade = 0) { this.active().forEach((r) => r.stop(fade)); }
-  pauseAll() { this.active().forEach((r) => r.pause()); }
-  resumeAll() { this.active().forEach((r) => r.resume()); }
+  pauseAll(fade = 0) { this.active().forEach((r) => r.pause(fade)); }
+  resumeAll(fade = 0) { this.active().forEach((r) => r.resume(fade)); }
 
   setMaster(db) {
     if (!this.master) return;

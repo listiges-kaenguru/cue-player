@@ -149,6 +149,17 @@ Startet einen anderen Cue (nützlich, um mehrere Cues von einer Stelle aus auszu
 
 Pausiert, setzt fort oder schaltet um – für einen Cue oder alle laufenden.
 
+| Feld | Bedeutung |
+|---|---|
+| Ziel-Cue | Ein bestimmter Cue oder (leer) alle laufenden Cues. |
+| Aktion | *Umschalten* (laufende pausieren, pausierte fortsetzen), *Pausieren* oder *Fortsetzen*. |
+| Fade beim Pausieren | Audio wird über diese Zeit ausgeblendet und erst dann angehalten. 0 = sofort. |
+| Fade beim Fortsetzen | Audio setzt leise ein und wird über diese Zeit eingeblendet. 0 = sofort. |
+
+Die Fades verwenden die Fade-Kurve des jeweiligen Audio-Cues. Der Cue gilt sofort als „pausiert“,
+der Ton blendet aber noch aus. Beispiel: Musik bei einer Szenenunterbrechung über 2 s ausblenden
+und später mit 3 s wieder einblenden, an derselben Stelle.
+
 ### ⎍ MIDI
 
 Sendet eine MIDI-Nachricht (Note On/Off, Control Change, Program Change) – z. B. um ein
@@ -208,7 +219,7 @@ die durch Auto-Continue/-Follow ohnehin ausgelöst werden. Das nächste GO triff
    - **Stop alle** oder **Esc** – alle Cues mit dem eingestellten Fade (Standard 1,5 s) ausblenden.
    - **Zweimal Esc** (innerhalb einer Sekunde) oder **Shift+Esc** – sofort stoppen.
    - **Pause** / **Weiter** – alle laufenden Cues anhalten / fortsetzen (inkl. laufender Pre- und
-     Post-Waits).
+     Post-Waits), mit dem eingestellten Pause-alle-Fade.
 6. **Master** – Gesamtlautstärke (−∞ bis +6 dB).
 
 **Tipp:** Die App beim ersten Antippen „aufwecken“ – Browser erlauben Audio erst nach einer
@@ -273,6 +284,7 @@ Website-Daten gelöscht, sind sie weg. Deshalb nach jeder Probe **exportieren**.
 |---|---|
 | GO-Sperre (ms) | Mindestabstand zwischen zwei GOs. 0 = aus. |
 | Stop-alle-Fade (s) | Ausblendzeit für „Stop alle“/Esc und die ■-Knöpfe im Aktiv-Bereich. |
+| Pause-alle-Fade (s) | Aus-/Einblendzeit für „Pause“/„Weiter“, die ❚❚-Knöpfe im Aktiv-Bereich und das Fortsetzen in der Cart-Ansicht. 0 = sofort. |
 | Cart-Spalten | Kacheln pro Zeile in der Cart-Ansicht. |
 | Bildschirm nicht abschalten | Verhindert, dass das Display während der Show ausgeht. |
 | Ausgabegerät | Soundkarte/Interface wählen (nur Chrome/Edge). |

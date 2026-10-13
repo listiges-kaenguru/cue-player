@@ -80,6 +80,44 @@ await page.click('#btn-go');
 await page.waitForTimeout(500);
 check('Nach Neuladen abspielbar', (await states())[0] === 'st-running');
 
+// --- Pause-Cue mit Fade ---
+const env = (i) => page.evaluate((i) => {
+  const { engine, state } = window.cuePlayer;
+  const r = engine.runners.get(state.session.cues[i].id);
+  return { gain: r.chain?.env.gain.value ?? null, elPaused: r.el?.paused ?? null, state: r.state, pos: r.el?.currentTime ?? 0 };
+}, i);
+await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
+await page.click('.cue-row >> nth=2');
+await page.click('#btn-add-cue');
+await page.click('[data-add="pause"]');
+await page.fill('#cue-form-body input[type=number] >> nth=1', '1'); // Fade beim Pausieren
+await page.fill('#cue-form-body input[type=number] >> nth=2', '1'); // Fade beim Fortsetzen
+await page.click('#cue-form .primary');
+await page.waitForTimeout(200);
+check('Pause-Cue angelegt', (await page.$$('.cue-row')).length === 4);
+await page.click('.cue-row >> nth=0');
+await page.click('#btn-go');
+await page.waitForTimeout(400);
+await page.click('.cue-row >> nth=3');
+await page.click('#btn-go');
+await page.waitForTimeout(500);
+let e = await env(0);
+check('Pause-Fade: blendet aus, spielt noch', e.state === 'paused' && e.gain > 0.01 && e.gain < 0.95 && e.elPaused === false, JSON.stringify(e));
+await page.waitForTimeout(800);
+e = await env(0);
+const posPaused = e.pos;
+check('Pause-Fade: danach angehalten', e.elPaused === true && e.gain < 0.01, JSON.stringify(e));
+await page.waitForTimeout(300);
+check('Pause-Fade: Position steht', (await env(0)).pos === posPaused);
+await page.click('.cue-row >> nth=3');
+await page.click('#btn-go');
+await page.waitForTimeout(450);
+e = await env(0);
+check('Pause-Fade: Fortsetzen blendet ein', e.state === 'running' && e.elPaused === false && e.gain > 0.01 && e.gain < 0.95, JSON.stringify(e));
+await page.waitForTimeout(800);
+e = await env(0);
+check('Pause-Fade: wieder volle Lautstärke', e.gain > 0.99, JSON.stringify(e));
+
 check('Keine Konsolenfehler', errors.length === 0, errors.join(' | '));
 await browser.close();
 process.exit(failed ? 1 : 0);

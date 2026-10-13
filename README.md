@@ -27,7 +27,7 @@ einzigen Codebasis, ohne Store, offline-fähig, installierbar wie eine normale A
 | Lautstärke (dB), Panorama, Start/Ende-Trimmung, Loop | ✅ | ✅ |
 | Fade-In / Fade-Out (linear / logarithmisch) | ✅ | ✅ |
 | Fade-Cue (Lautstärke eines laufenden Cues ändern) | ✅ | ✅ |
-| Stop-, Start-, Pause/Weiter-Cues | ✅ | ✅ |
+| Stop-, Start-, Pause/Weiter-Cues (Pause/Weiter mit Fade) | ✅ | ✅ |
 | Pre-Wait, Post-Wait, Auto-Continue, Auto-Follow | ✅ | ✅ |
 | Stop alle (mit Fade), Pause alle, Weiter | ✅ | ✅ |
 | Tastatur-Trigger pro Cue | ✅ | ✅ |

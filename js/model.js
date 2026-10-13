@@ -31,6 +31,7 @@ export function newSession(name = 'Neue Show') {
       cartColumns: 4,
       goLockMs: 300,
       stopAllFade: 1.5,
+      pauseAllFade: 0,
       masterDb: 0,
       midi: { enabled: false, go: '', stopAll: '' },
       wakeLock: true,
@@ -58,7 +59,7 @@ export function newCue(type, extra = {}) {
     fade: { target: '', volume: -60, duration: 3, fadeCurve: 'log', stopAfter: true },
     stop: { target: '', fade: 0 },
     start: { target: '' },
-    pause: { target: '', mode: 'toggle' },
+    pause: { target: '', mode: 'toggle', fadeOut: 0, fadeIn: 0 },
     midi: { output: '', msg: 'noteon', channel: 1, data1: 60, data2: 127 },
     memo: {},
   }[type];

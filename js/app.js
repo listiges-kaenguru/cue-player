@@ -290,7 +290,7 @@ function renderRunning() {
     const fill = h('div', { class: 'fill' });
     const txt = h('div', { class: 'txt' });
     const bar = h('div', { class: 'bar' }, fill, txt);
-    const pp = h('button', { title: 'Pause / Weiter', onclick: () => (r.paused ? r.resume() : r.pause()) }, '❚❚');
+    const pp = h('button', { title: 'Pause / Weiter', onclick: () => (r.paused ? r.resume(settings().pauseAllFade) : r.pause(settings().pauseAllFade)) }, '❚❚');
     list.append(h('div', { class: 'run-item' },
       h('div', { class: 'ri-head' },
         h('span', { class: 'ri-name' }, `${cues().indexOf(cue) + 1} · ${label(cue)}`),
@@ -335,7 +335,7 @@ function stopAll(immediate = false) {
 function cartPress(id) {
   engine.ensureContext();
   const r = engine.runner(id);
-  if (r.paused) r.resume();
+  if (r.paused) r.resume(settings().pauseAllFade);
   else if (r.active) r.stop(0);
   else engine.go(id);
 }
@@ -565,6 +565,8 @@ function openEditor(id) {
     add(h('h3', {}, 'Pause / Weiter'));
     add(field('Ziel-Cue', targetSelect(draft, cue.id, { allowAll: true })));
     add(field('Aktion', selectInput(draft, 'mode', [['toggle', 'Umschalten'], ['pause', 'Pausieren'], ['resume', 'Fortsetzen']])));
+    add(field('Fade beim Pausieren (s)', numInput(draft, 'fadeOut'), 'Ausblenden, bevor angehalten wird. 0 = sofort'));
+    add(field('Fade beim Fortsetzen (s)', numInput(draft, 'fadeIn'), 'Einblenden nach dem Fortsetzen. 0 = sofort. Es gilt die Fade-Kurve des jeweiligen Audio-Cues.'));
   } else if (cue.type === 'midi') {
     add(h('h3', {}, 'MIDI-Nachricht'));
     const outs = [['', 'Alle Ausgänge'], ...midi.outputs().map((o) => [o.id, o.name])];
@@ -665,6 +667,7 @@ async function openSettings() {
   add(h('h3', {}, 'Bedienung'));
   add(field('GO-Sperre (ms)', bindNum(s, 'goLockMs', { min: 0, max: 5000, step: 50 }), 'Verhindert versehentliches doppeltes Auslösen'));
   add(field('Stop-alle-Fade (s)', bindNum(s, 'stopAllFade', { min: 0, max: 30, step: 0.1 }), 'Esc / „Stop alle“. Zweimal drücken oder Shift = sofort.'));
+  add(field('Pause-alle-Fade (s)', bindNum(s, 'pauseAllFade', { min: 0, max: 30, step: 0.1 }), 'Aus-/Einblenden für „Pause“/„Weiter“ und die ❚❚-Knöpfe im Aktiv-Bereich.'));
   add(field('Cart-Spalten', bindNum(s, 'cartColumns', { min: 1, max: 12, step: 1 })));
   const wl = checkInput(s, 'wakeLock', 'Bildschirm nicht abschalten');
   wl.addEventListener('change', () => { save(); applyWakeLock(); });
@@ -767,8 +770,8 @@ function registerSW() {
 function bindUI() {
   $('#btn-go').addEventListener('click', go);
   $('#btn-stopall').addEventListener('click', (e) => stopAll(e.shiftKey));
-  $('#btn-pauseall').addEventListener('click', () => engine.pauseAll());
-  $('#btn-resumeall').addEventListener('click', () => engine.resumeAll());
+  $('#btn-pauseall').addEventListener('click', () => engine.pauseAll(settings().pauseAllFade));
+  $('#btn-resumeall').addEventListener('click', () => engine.resumeAll(settings().pauseAllFade));
   $('#master').addEventListener('input', (e) => {
     const db = parseFloat(e.target.value);
     settings().masterDb = db;
@@ -925,6 +928,9 @@ function onKeyDown(e) {
     hits.forEach((c) => engine.go(c.id));
   }
 }
+
+// Für automatisierte Tests und Fehlersuche in den DevTools.
+window.cuePlayer = { engine, state };
 
 bindUI();
 init();
