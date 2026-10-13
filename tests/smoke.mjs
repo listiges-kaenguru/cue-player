@@ -203,6 +203,82 @@ page.once('dialog', (d) => d.accept());
 await page.click('#btn-showmode');
 check('Schalter: Nachfrage bestätigt → Edit', (await showMode()) === 'false');
 
+// --- Neue Show für Memo-Bestätigung und Mehrfachauswahl ---
+page.once('dialog', (d) => d.accept('Test 2'));
+await page.click('#btn-sessions');
+await page.click('#ses-new');
+await page.waitForTimeout(400);
+await page.setInputFiles('#file-audio', [a, b]);
+await page.waitForFunction(() => document.querySelectorAll('.cue-row').length === 2);
+const cueData = () => page.evaluate(() => window.cuePlayer.state.session.cues.map((c) => ({ id: c.id, type: c.type, target: c.target, name: c.name })));
+const stateOf = (i) => page.evaluate((i) => { const { engine, state } = window.cuePlayer; return engine.runners.get(state.session.cues[i].id).state; }, i);
+
+// Memo mit Bestätigung zwischen Cue 1 und 2
+await page.click('.cue-row >> nth=0');
+await page.click('#btn-add-cue');
+await page.click('[data-add="memo"]');
+await page.fill('#cue-form-body input[type=text] >> nth=0', 'Umbau');
+await page.check('#cue-form-body input[type=checkbox] >> nth=0');
+await page.click('#cue-form .primary');
+await page.waitForTimeout(200);
+check('Memo-Bestätigung: Badge in der Liste', (await page.textContent('.memo-row')).includes('bestätigen'));
+await page.click('.cue-row >> nth=2');
+check('Memo-Bestätigung: GO-Taste markiert', await page.$eval('#btn-go', (b) => b.classList.contains('needs-confirm')));
+await page.click('#btn-go');
+await page.waitForTimeout(200);
+check('Memo-Bestätigung: Abfrage statt Start', (await page.$eval('#dlg-confirm', (d) => d.open)) && (await stateOf(2)) === 'idle');
+await page.keyboard.press('Escape');
+await page.waitForTimeout(200);
+check('Memo-Bestätigung: Abbrechen startet nichts', !(await page.$eval('#dlg-confirm', (d) => d.open)) && (await stateOf(2)) === 'idle');
+await page.click('#btn-go');
+await page.waitForSelector('#dlg-confirm[open]');
+await page.keyboard.press('Space');
+await page.waitForTimeout(300);
+check('Memo-Bestätigung: Leertaste bestätigt und startet', (await stateOf(2)) === 'running');
+await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
+
+// Fade auf Cue 1 als Cue 2 einfügen, dann Cue 1 + Fade auswählen
+await page.click('.cue-row >> nth=0');
+await page.click('#btn-add-cue');
+await page.click('[data-add="fade"]');
+await page.click('#cue-form .primary');
+await page.waitForTimeout(200);
+await page.click('.cue-row >> nth=0');
+await page.click('.cue-row >> nth=0', { modifiers: ['Control'] });
+await page.click('.cue-row >> nth=1', { modifiers: ['Control'] });
+check('Auswahl: Leiste mit 2 Cues', !(await page.$eval('#sel-bar', (e) => e.hidden)) && (await page.textContent('#sel-count')).startsWith('2'));
+page.once('dialog', (d) => d.accept('Zwei-Cue-Preset'));
+await page.click('#sel-preset');
+await page.waitForTimeout(300);
+await page.click('.cue-row >> nth=3'); // Standby: letzter Cue
+await page.click('#btn-add-cue');
+await page.waitForSelector('#add-menu:not([hidden]) [data-preset]');
+await page.click('#preset-menu [data-preset]:has-text("Zwei-Cue-Preset")');
+await page.waitForTimeout(300);
+let cd = await cueData();
+check('Mehr-Cue-Preset eingefügt, Fade zielt auf neue Audio-Kopie',
+  cd.length === 6 && cd[4].type === 'audio' && cd[5].type === 'fade' && cd[5].target === cd[4].id && cd[4].id !== cd[0].id, JSON.stringify(cd.map((c) => c.type)));
+
+await page.click('.cue-row >> nth=0');
+await page.click('.cue-row >> nth=1', { modifiers: ['Shift'] });
+await page.click('#sel-clone');
+await page.waitForTimeout(300);
+cd = await cueData();
+check('Auswahl klonen: Block dahinter, Verweis auf Kopie', cd.length === 8 && cd[3].target === cd[2].id && cd[2].name.includes('(Kopie)') === false, JSON.stringify(cd.map((c) => c.type)));
+page.once('dialog', (d) => d.accept());
+await page.click('#sel-delete');
+await page.waitForTimeout(300);
+check('Auswahl löschen', (await cueData()).length === 6);
+
+// Langes Drücken (Touch) startet die Auswahl
+const box = await page.locator('.cue-row >> nth=0').boundingBox();
+const px = box.x + box.width / 3, py = box.y + box.height / 2;
+await page.dispatchEvent('.cue-row >> nth=0', 'pointerdown', { pointerType: 'touch', clientX: px, clientY: py, bubbles: true });
+await page.waitForTimeout(700);
+await page.evaluate(() => window.dispatchEvent(new PointerEvent('pointerup', { pointerType: 'touch' })));
+check('Langes Drücken wählt aus', (await page.textContent('#sel-count')).startsWith('1'));
+await page.click('#sel-clear');
+
 check('Keine Konsolenfehler', errors.length === 0, errors.join(' | '));
 await browser.close();
 process.exit(failed ? 1 : 0);

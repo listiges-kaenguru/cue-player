@@ -1,6 +1,6 @@
 {
   "name": "cue-player",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "description": "Show-Player (PWA) für Theater, Events und Live-Sound",
   "type": "module",

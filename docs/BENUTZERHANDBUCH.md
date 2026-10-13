@@ -93,6 +93,12 @@ weiterhin einstellbar.
    geöffnet. Die Kopie ist unabhängig vom Original. Tasten- und MIDI-Trigger werden nicht mitkopiert,
    damit eine Taste nicht versehentlich zwei Cues auslöst. Name: „… (Kopie)“.
 6. **Löschen:** Im Editor unten links **Löschen**.
+7. **Mehrere Cues auf einmal** (Listenansicht, Edit-Modus):
+   - am PC: **Strg+Klick** wählt einzelne Cues aus oder ab, **Shift+Klick** wählt einen Bereich;
+   - auf Handy/Tablet: eine Zeile **lange drücken**. Danach schaltet jedes Antippen die Auswahl um.
+   Unten erscheint eine Leiste mit **Als Preset…**, **Klonen**, **Löschen** und **✕** (Auswahl aufheben).
+   Beim Klonen einer Auswahl zeigen Fades/Start/Stop innerhalb des Blocks auf die Kopien, nicht auf die Originale.
+   Ein normaler Klick/Tipp ohne Taste hebt die Auswahl auf und setzt den Standby.
 
 Alles wird **automatisch gespeichert**.
 
@@ -101,17 +107,25 @@ Alles wird **automatisch gespeichert**.
 Häufig gebrauchte Cues lassen sich als **Preset** speichern und mit zwei Tipps wieder einfügen.
 Presets gelten **für alle Shows** auf diesem Gerät.
 
-- **Einfügen:** **＋ Cue ▾** → Abschnitt **Presets** → Preset antippen. Der Cue wird hinter dem
-  Standby-Cue eingefügt. Fade- und Start-Presets zielen automatisch auf den Cue davor.
-- **Speichern:** Einen Cue fertig einstellen, im Editor **Als Preset…** antippen und einen Namen
-  vergeben. Gespeichert werden alle Einstellungen außer Tasten-/MIDI-Trigger und dem Ziel-Cue.
-  Auch Audio-Cues gehen, z. B. ein Standard-Jingle: Die Audiodatei bleibt dann im Gerät gespeichert.
+- **Einfügen:** **＋ Cue ▾** → Abschnitt **Presets** → Preset antippen. Die Cues werden hinter dem
+  Standby-Cue eingefügt. Presets aus mehreren Cues sind mit „(N Cues)“ gekennzeichnet.
+  Fade- und Start-Cues ohne eigenes Ziel zielen automatisch auf den Cue vor dem eingefügten Block.
+- **Speichern (ein Cue):** Cue fertig einstellen, im Editor **Als Preset…** antippen und einen Namen vergeben.
+- **Speichern (mehrere Cues):** Cues auswählen (siehe „Mehrere Cues auf einmal“ oben) und in der
+  Auswahl-Leiste **Als Preset…** antippen. Verweise *innerhalb* der Auswahl bleiben erhalten: Ein
+  Fade auf einen mitgespeicherten Audio-Cue zielt nach dem Einfügen auf dessen neue Kopie. Verweise
+  auf Cues *außerhalb* der Auswahl werden geleert.
+- Gespeichert werden alle Einstellungen außer Tasten-/MIDI-Trigger. Auch Audio-Cues gehen, z. B. ein
+  Standard-Jingle: Die Audiodatei bleibt dann im Gerät gespeichert.
 - **Verwalten:** **＋ Cue ▾** → **Presets verwalten…** → umbenennen oder löschen.
   **Standard-Presets wiederherstellen** ergänzt die mitgelieferten Vorlagen, falls sie gelöscht wurden.
 - **Ändern:** Preset einfügen, anpassen, unter gleichem Namen neu als Preset speichern und das alte löschen.
 
 Mitgeliefert werden: *Ausblenden 3 s + Stop*, *Musik unter Text (−15 dB, 3 s)*,
-*Pause/Weiter mit Fade 2 s*, *Alles ausblenden 5 s*.
+*Pause/Weiter mit Fade 2 s*, *Alles ausblenden 5 s* und als Mehr-Cue-Preset
+*Szenenwechsel: alles ausblenden + Umbau (bestätigen)* (Stop alle mit 3 s Fade, danach ein Memo
+„Umbau“ mit Bestätigung). Wer die App schon vorher genutzt hat, bekommt neue Standard-Presets über
+**Presets verwalten… → Standard-Presets wiederherstellen**.
 
 Hinweis: Presets werden (noch) nicht mit einer Show exportiert. Beim Wechsel auf ein anderes Gerät
 müssen sie dort neu angelegt werden.
@@ -214,6 +228,13 @@ Gliedert die Show und enthält Hinweise für die Technik. Spielt nichts ab.
   sichtbar. Ausnahme: Ein Memo mit Pre-Wait oder Auto-Continue/-Follow wird normal angefahren und
   kann so z. B. als Wartezeit vor dem nächsten Cue dienen. Mit ↑/↓ oder Antippen lässt sich ein Memo
   trotzdem auswählen.
+- **Bestätigung vor GO (optional):** Im Memo-Editor **„Vor dem nächsten GO bestätigen lassen“**
+  anhaken. Steht dieses Memo direkt vor dem Standby-Cue, wird die GO-Taste orange („🔒 bestätigen“).
+  Das GO startet dann noch nichts, sondern zeigt eine große Abfrage mit dem Memo-Text:
+  **Bestätigen & GO** (oder Leertaste bzw. MIDI-GO) startet den Cue, **Abbrechen** (oder Esc) nicht.
+  Gedacht für Stellen, an denen erst ein Zeichen abgewartet werden muss (Umbau, Freigabe, Einlass).
+  Cart-Kacheln sowie Tasten- und MIDI-Trigger einzelner Cues werden **nicht** blockiert. In der
+  Liste erkennt man solche Memos am Abzeichen „🔒 bestätigen“.
 
 **Formatierung (Markdown)** für Memo-Text und Notizen:
 

@@ -3,7 +3,7 @@
 Arbeitsnotizen, damit die Entwicklung jederzeit schnell weitergehen kann.
 **Bei jeder Sitzung aktualisieren** (Stand, erledigte/neue ToDos, Erkenntnisse aus Tests).
 
-## Stand (2026-10-13, v0.3.0)
+## Stand (2026-10-13, v0.4.0)
 
 PWA ohne Build-Schritt (Vanilla JS, ES-Module). Branch `ccr-c726005c-rg7agm`, noch nicht nach `main` gemergt, kein PR.
 
@@ -27,6 +27,16 @@ PWA ohne Build-Schritt (Vanilla JS, ES-Module). Branch `ccr-c726005c-rg7agm`, no
     Migration alter Cues/Presets über `migrateCue()` in `model.js` (in `normalizeSession` und `listPresets`).
   - Show/Edit als **Schalter** (orange ✎ Edit / grün ▶ Show), Einstellung „Vor dem Wechsel in den Edit-Modus nachfragen“
     (`settings.confirmEdit`, Standard an; gilt auch für Strg+E).
+- **v0.4.0** (Nutzerwunsch):
+  - Memo-Bestätigung: Memo-Feld `confirm`. `guardMemo()` in `app.js` prüft, ob ein solches Memo direkt vor dem Standby
+    steht (oder selbst Standby ist). `go()` öffnet dann `#dlg-confirm`, erst `go({ confirmed: true })` löst aus.
+    Leertaste/MIDI-GO bestätigen, Esc bricht ab. Cart/Hotkeys/MIDI-Trigger einzelner Cues werden nicht blockiert.
+  - Mehr-Cue-Presets: Format `{ id, name, cues: [...] }`. Alte Presets (`cue`) werden in `migratePreset()` umgewandelt.
+    Interne Ziele werden zu `'#<Index>'` (`cuesToTemplates`) und beim Einfügen aufgelöst (`instantiateCues`).
+  - Mehrfachauswahl in der Liste (Strg/Shift+Klick, Touch: lange drücken) mit Leiste: Als Preset…, Klonen (Block,
+    interne Verweise auf Kopien), Löschen. Nur Listenansicht und Edit-Modus.
+  - Neues Standard-Preset „Szenenwechsel: alles ausblenden + Umbau (bestätigen)“ (Bestandsnutzer: über
+    „Standard-Presets wiederherstellen“).
 
 **Nutzertest 1 (Android-Smartphone, Chrome), v0.1.0:**
 
@@ -34,7 +44,8 @@ PWA ohne Build-Schritt (Vanilla JS, ES-Module). Branch `ccr-c726005c-rg7agm`, no
 
 **Implementiert, aber noch NICHT vom Nutzer getestet:**
 
-- Alles aus v0.2.0 und v0.3.0 (Pause-Fade, Klonen, Memo/Regiebuch, Presets, Start/Stop-Cue, Show/Edit-Schalter), besonders auf dem Handy
+- Alles aus v0.2.0–v0.4.0 (Pause-Fade, Klonen, Memo/Regiebuch, Presets, Start/Stop-Cue, Show/Edit-Schalter, Memo-Bestätigung,
+  Mehr-Cue-Presets, Mehrfachauswahl inkl. langem Drücken auf echtem Touchscreen), besonders auf dem Handy
 - Android: Installation als App, Latenz, Wake Lock, Hintergrundverhalten
 - Windows/Linux-Installation als App, Desktop-Darstellung allgemein
 - MIDI mit echter Hardware (Lernen, Trigger, MIDI-Cues)
@@ -48,39 +59,15 @@ PWA ohne Build-Schritt (Vanilla JS, ES-Module). Branch `ccr-c726005c-rg7agm`, no
 ### Vom Nutzer gewünscht
 
 Erledigt in v0.2.0: Pause-Cue mit Fade · Memo-Darstellung A+C mit Markdown · Presets (global) · Klonen.
+Erledigt in v0.3.0: Start/Stop-Cue zusammengelegt · Show/Edit-Schalter mit Nachfrage.
+Erledigt in v0.4.0: Memo-Bestätigung vor GO · Mehr-Cue-Presets mit Mehrfachauswahl.
 
-Offen, in dieser Reihenfolge:
+Nutzer-Entscheidung: **LiSP-Import später**. Nutzer testet v0.2.0–v0.4.0 noch, Ergebnisse oben unter „Nutzertest“ eintragen.
 
-Entscheidungen des Nutzers (2026-10-13, nach v0.2.0): **Mehr-Cue-Presets: ja** · **Memo-Bestätigung vor GO: ja (optional)** ·
-**LiSP-Import: später**. Nutzer testet v0.2.0 noch, Ergebnisse oben unter „Nutzertest“ eintragen.
+Offen:
 
-Nächste Schritte, in dieser Reihenfolge:
-
-- [ ] **Memo: optionale Bestätigung vor GO.**
-  Vorschlag zur Umsetzung:
-  - `model.js`: Memo-Feld `confirm: false` (Checkbox im Editor „Vor dem nächsten GO bestätigen“) und optional `confirmText`.
-  - Verhalten: Steht ein Memo mit `confirm` direkt vor dem Standby-Cue (bzw. ist es selbst Standby), löst das **erste GO
-    nicht aus**, sondern zeigt eine deutliche Abfrage (großes Overlay mit Memo-Titel/Text, Knöpfe „Bestätigen & GO“ / „Abbrechen“).
-    Leertaste/MIDI-GO im Overlay = bestätigen. Esc = abbrechen. Nach der Bestätigung gilt sie nur für dieses eine GO.
-  - Cart, Hotkeys und Direkt-Trigger einzelner Cues: **nicht** blockieren (nur der GO-Ablauf).
-  - In der Liste ein Schloss-Symbol 🔒 am Memo-Trenner, im Regiebuch Hinweis „Bestätigung erforderlich“.
-  - GO-Taste zeigt bei anstehender Bestätigung z. B. „GO (bestätigen)“ in Orange.
-  - Smoke-Test: GO → Overlay sichtbar, Cue läuft nicht; Bestätigen → Cue läuft.
-
-- [ ] **Mehr-Cue-Presets.**
-  Vorschlag zur Umsetzung:
-  - Preset-Format erweitern: `{ id, name, cues: [...] }`. Alte Presets mit `cue` beim Lesen in `cues: [cue]` umwandeln
-    (in `listPresets` oder `model.js`).
-  - **Ziele innerhalb des Presets erhalten:** Beim Speichern Ziel-IDs, die auf Cues *innerhalb* der Auswahl zeigen, in
-    Platzhalter umschreiben (`target: '#2'` = 2. Cue im Preset). Ziele *außerhalb* → leer. Beim Einfügen neue IDs vergeben
-    und Platzhalter auflösen. Leere Fade-/Start-Ziele zeigen wie bisher auf den Cue vor dem eingefügten Block.
-  - **Auswahl mehrerer Cues** wird dafür gebraucht (steht ohnehin auf der Roadmap): Mehrfachauswahl in der Liste
-    (Desktop: Strg/Shift+Klick; Handy: „Auswählen“-Modus mit Checkboxen). Aktionen für die Auswahl: „Als Preset…“,
-    Klonen, Löschen. Einfacher Zwischenschritt, falls nötig: „Als Preset…“ im Editor mit Feld „+ folgende N Cues“.
-  - Menü: Mehr-Cue-Presets mit Anzahl anzeigen („◢■ Ausblenden & Stop (2 Cues)“).
-  - Mitgeliefertes Beispiel: „Szenenwechsel“ = Fade −∞ 3 s (+Stop) → Memo „Umbau“ mit Bestätigung → leerer Platzhalter?
-    (mit Nutzer abstimmen, welche Standard-Abfolgen sinnvoll sind).
-  - Weiterhin offen: Presets exportieren/importieren bzw. mit `.cueshow` weitergeben. Preset direkt bearbeiten.
+- [ ] **Presets – Ausbau (bei Bedarf):** Presets exportieren/importieren bzw. mit `.cueshow` weitergeben (heute nur lokal);
+  Preset direkt bearbeiten (heute: einfügen, ändern, neu speichern, altes löschen); Mehrfachauswahl auch in der Cart-Ansicht?
 
 - [ ] **Memo:** Zustand des Regiebuchs (auf-/zugeklappt) merken (klein, bei Gelegenheit).
 
@@ -135,7 +122,7 @@ Nächste Schritte, in dieser Reihenfolge:
 
 ### Roadmap (aus README)
 
-- [ ] Gruppen-Cues, Mehrfachauswahl
+- [ ] Gruppen-Cues (Mehrfachauswahl ist seit v0.4.0 da)
 - [ ] Vorhören auf zweitem Ausgang
 - [ ] Video-Cues (Vollbild, zweiter Bildschirm)
 - [ ] Tauri-Desktop-Build (OSC, Netzwerk-Fernsteuerung, Projektordner statt Browser-Speicher)

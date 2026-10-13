@@ -2,11 +2,11 @@
 import { Engine } from './engine.js';
 import { Midi, midiLabel } from './midi.js';
 import * as store from './storage.js';
-import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, cueDisplayName, cueToPreset, defaultPresets } from './model.js';
+import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, cueDisplayName, cueToPreset, cuesToPreset, cuesToTemplates, instantiateCues, defaultPresets } from './model.js';
 import { fmtTime, fmtDb, debounce, keyLabel, uid, MIN_DB } from './util.js';
 import { renderMarkdown, firstLine } from './md.js';
 
-export const APP_VERSION = '0.3.0';
+export const APP_VERSION = '0.4.0';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const COLORS = ['', '#b62324', '#bd561d', '#9e6a03', '#1a7f37', '#0f6e6e', '#1f6feb', '#6639ba', '#bf3989', '#57606a'];
@@ -25,6 +25,11 @@ const state = {
   runItems: new Map(),
   runningDirty: true,
   wakeLock: null,
+  selected: new Set(), // Mehrfachauswahl (Cue-IDs)
+  selAnchor: null,
+  selectMode: false, // Touch: nach langem Drücken schaltet Antippen die Auswahl um
+  suppressClick: false,
+  longPressFired: false,
 };
 
 const cues = () => state.session.cues;
@@ -157,8 +162,10 @@ function renderList() {
       h('button', { title: 'Bearbeiten', onclick: () => openEditor(cue.id) }, '✎'));
     const rowAttrs = {
       class: 'cue-row', 'data-id': cue.id, draggable: edit ? 'true' : null,
-      onclick: (e) => { if (!e.target.closest('button')) setStandby(cue.id); },
-      ondblclick: (e) => { if (!e.target.closest('button') && edit) openEditor(cue.id); },
+      onclick: (e) => onRowClick(e, cue.id),
+      ondblclick: (e) => { if (!e.target.closest('button') && edit && !state.selected.size) openEditor(cue.id); },
+      onpointerdown: (e) => onRowPointerDown(e, cue.id),
+      oncontextmenu: (e) => { if (edit && state.longPressFired) e.preventDefault(); },
     };
     if (cue.type === 'memo') {
       // Variante A: Kapitel-Trenner über die ganze Breite
@@ -169,6 +176,7 @@ function renderList() {
             h('span', { class: 'ic' }, CUE_TYPES.memo.icon),
             h('span', { class: 'title' }, label(cue)),
             h('span', { class: 'badges' },
+              cue.confirm && h('span', { class: 'badge', title: 'Bestätigung vor dem nächsten GO' }, '🔒 bestätigen'),
               cue.notes?.trim() && cue.name && h('span', { class: 'has-text', title: 'Text im Regiebuch' }, '📖'),
               cue.hotkey && h('span', { class: 'badge' }, '⌨ ' + keyLabel(cue.hotkey))))),
         actions);
@@ -199,6 +207,7 @@ function renderList() {
     tbody.append(row);
     state.rows.set(cue.id, { row, bar, fill, txt, lastState: null });
   });
+  updateSelection();
   updateStandbyMarks();
 }
 
@@ -262,7 +271,7 @@ function renderMemoPanel() {
       const text = h('div', { class: 'md' });
       text.innerHTML = renderMarkdown(c.notes); // sicher: renderMarkdown escaped jedes HTML
       body.append(h('div', { class: 'memo-item' },
-        h('div', { class: 'memo-lbl' }, memo ? `Memo · Cue ${n}` : `Hinweis zu Cue ${n} (Standby)`),
+        h('div', { class: 'memo-lbl' }, memo ? `Memo · Cue ${n}${c.confirm ? ' · 🔒 Bestätigung vor GO' : ''}` : `Hinweis zu Cue ${n} (Standby)`),
         memo && c.name && h('div', { class: 'memo-title' }, c.name),
         !memo && h('div', { class: 'memo-title' }, label(c)),
         text));
@@ -280,7 +289,9 @@ function updateSideVisibility() {
 function updateGo() {
   const cue = cues().find((c) => c.id === state.standbyId);
   const i = cues().indexOf(cue);
-  $('#go-next').textContent = cue ? `${i + 1} · ${label(cue)}` : 'Ende der Liste';
+  const guard = guardMemo();
+  $('#btn-go').classList.toggle('needs-confirm', !!guard);
+  $('#go-next').textContent = cue ? `${guard ? '🔒 bestätigen · ' : ''}${i + 1} · ${label(cue)}` : 'Ende der Liste';
 }
 
 function progressText(p) {
@@ -386,9 +397,34 @@ function setStandby(id) {
   state.rows.get(id)?.row.scrollIntoView({ block: 'nearest' });
 }
 
-function go() {
+/** Memo mit Bestätigung, das vor dem Standby-Cue steht (oder selbst Standby ist). */
+function guardMemo() {
+  const list = cues();
+  const i = list.findIndex((c) => c.id === state.standbyId);
+  if (i < 0) return null;
+  if (list[i].type === 'memo' && list[i].confirm) return list[i];
+  for (let k = i - 1; k >= 0 && list[k].type === 'memo'; k--) if (list[k].confirm) return list[k];
+  return null;
+}
+
+function openConfirm(memo) {
+  const dlg = $('#dlg-confirm');
+  if (dlg.open) return;
+  const list = cues();
+  const next = list.find((c) => c.id === state.standbyId);
+  $('#confirm-title').textContent = label(memo);
+  $('#confirm-text').innerHTML = renderMarkdown(memo.notes); // sicher: escaped
+  $('#confirm-next').textContent = next ? `Danach startet: ${list.indexOf(next) + 1} · ${label(next)}` : '';
+  dlg.returnValue = '';
+  dlg.onclose = () => { if (dlg.returnValue === 'ok') go({ confirmed: true }); };
+  dlg.showModal();
+}
+
+function go({ confirmed = false } = {}) {
   const now = performance.now();
   if (now < state.goLockedUntil) return;
+  const guard = guardMemo();
+  if (guard && !confirmed) { openConfirm(guard); return; }
   state.goLockedUntil = now + (settings().goLockMs || 0);
   const list = cues();
   const i = list.findIndex((c) => c.id === state.standbyId);
@@ -471,15 +507,19 @@ async function ensureDefaultPresets() {
 async function insertPreset(id) {
   const p = (await store.listPresets()).find((x) => x.id === id);
   if (!p) return;
-  const cue = { ...newCue(p.cue.type), ...structuredClone(p.cue), id: uid() };
-  // Wie bei neuen Cues: Fade/Start zielen auf den Cue davor.
-  const prev = cues()[insertIndex() - 1];
-  if ('target' in cue && !cue.target && prev && (cue.type === 'fade' || (cue.type === 'startstop' && cue.mode === 'start'))) cue.target = prev.id;
-  cues().splice(insertIndex(), 0, cue);
-  engine.cueChanged(cue.id);
+  // Wie bei neuen Cues: Fade/Start ohne Ziel zielen auf den Cue vor dem eingefügten Block.
+  const at = insertIndex();
+  const created = instantiateCues(p.cues, cues()[at - 1]?.id);
+  cues().splice(at, 0, ...created);
+  created.forEach((c) => engine.cueChanged(c.id));
   save();
   renderAll();
   toast(`Preset „${p.name}“ eingefügt`);
+}
+
+function presetLabel(p) {
+  const icons = [...new Set(p.cues.map((c) => CUE_TYPES[c.type]?.icon ?? ''))].slice(0, 3).join('');
+  return `${icons} ${p.name}${p.cues.length > 1 ? ` (${p.cues.length} Cues)` : ''}`;
 }
 
 async function renderPresetMenu() {
@@ -488,7 +528,7 @@ async function renderPresetMenu() {
   const presets = await store.listPresets().catch(() => []);
   box.append(h('div', { class: 'menu-sec' }, 'Presets'));
   if (!presets.length) box.append(h('div', { class: 'menu-sec menu-muted', style: { border: 'none', textTransform: 'none', letterSpacing: '0' } }, 'Noch keine Presets'));
-  presets.forEach((p) => box.append(h('button', { 'data-preset': p.id, title: 'Einfügen hinter dem Standby-Cue' }, `${CUE_TYPES[p.cue.type]?.icon ?? ''} ${p.name}`)));
+  presets.forEach((p) => box.append(h('button', { 'data-preset': p.id, title: 'Einfügen hinter dem Standby-Cue' }, presetLabel(p))));
   box.append(h('button', { 'data-manage': '1', class: 'menu-muted' }, '⚙ Presets verwalten…'));
 }
 
@@ -498,8 +538,8 @@ async function renderPresetList() {
   const presets = await store.listPresets();
   if (!presets.length) list.append(h('p', { class: 'muted' }, 'Keine Presets vorhanden.'));
   presets.forEach((p) => list.append(h('div', { class: 'ses' },
-    h('div', { class: 'ses-name' }, h('div', {}, `${CUE_TYPES[p.cue.type]?.icon ?? ''} ${p.name}`),
-      h('div', { class: 'ses-meta' }, CUE_TYPES[p.cue.type]?.label + (p.cue.mediaId ? ' · mit Audiodatei' : ''))),
+    h('div', { class: 'ses-name' }, h('div', {}, presetLabel(p)),
+      h('div', { class: 'ses-meta' }, p.cues.map((c) => CUE_TYPES[c.type]?.label).join(' → ') + (p.cues.some((c) => c.mediaId) ? ' · mit Audiodatei' : ''))),
     h('button', {
       type: 'button', onclick: async () => {
         const name = prompt('Neuer Name:', p.name);
@@ -516,6 +556,108 @@ async function renderPresetList() {
         renderPresetList();
       },
     }, 'Löschen'))));
+}
+
+// ---------------------------------------------------------------------------
+// Mehrfachauswahl (nur Listenansicht, Edit-Modus)
+
+function onRowClick(e, id) {
+  if (e.target.closest('button')) return;
+  if (state.suppressClick) { state.suppressClick = false; return; }
+  const edit = !settings().showMode;
+  if (edit && (e.ctrlKey || e.metaKey)) { toggleSelect(id); return; }
+  if (edit && e.shiftKey && state.selAnchor) { selectRange(state.selAnchor, id); return; }
+  if (state.selectMode && state.selected.size) { toggleSelect(id); return; }
+  clearSelection();
+  state.selAnchor = id;
+  setStandby(id);
+}
+
+function onRowPointerDown(e, id) {
+  if (settings().showMode || e.pointerType === 'mouse' || e.target.closest('button')) return;
+  state.longPressFired = false;
+  const x = e.clientX, y = e.clientY;
+  const cancel = () => { clearTimeout(t); window.removeEventListener('pointerup', cancel); window.removeEventListener('pointermove', move); };
+  const move = (ev) => { if (Math.hypot(ev.clientX - x, ev.clientY - y) > 10) cancel(); };
+  const t = setTimeout(() => {
+    cancel();
+    state.longPressFired = true;
+    state.suppressClick = true;
+    state.selectMode = true;
+    toggleSelect(id);
+    navigator.vibrate?.(15);
+  }, 550);
+  window.addEventListener('pointerup', cancel);
+  window.addEventListener('pointermove', move);
+}
+
+function toggleSelect(id) {
+  if (state.selected.has(id)) state.selected.delete(id); else state.selected.add(id);
+  state.selAnchor = id;
+  updateSelection();
+}
+
+function selectRange(fromId, toId) {
+  const list = cues();
+  let a = list.findIndex((c) => c.id === fromId);
+  let b = list.findIndex((c) => c.id === toId);
+  if (a < 0 || b < 0) return;
+  if (a > b) [a, b] = [b, a];
+  for (let k = a; k <= b; k++) state.selected.add(list[k].id);
+  updateSelection();
+}
+
+function clearSelection() {
+  if (!state.selected.size && !state.selectMode) return;
+  state.selected.clear();
+  state.selectMode = false;
+  updateSelection();
+}
+
+/** Ausgewählte Cues in Listenreihenfolge. */
+const selectedCues = () => cues().filter((c) => state.selected.has(c.id));
+
+function updateSelection() {
+  const ids = new Set(cues().map((c) => c.id));
+  state.selected.forEach((id) => { if (!ids.has(id)) state.selected.delete(id); });
+  if (settings().showMode) state.selected.clear();
+  state.rows.forEach((r, id) => r.row.classList.toggle('sel', state.selected.has(id)));
+  const n = state.selected.size;
+  if (!n) state.selectMode = false;
+  $('#sel-bar').hidden = !n;
+  $('#sel-count').textContent = `${n} Cue${n === 1 ? '' : 's'} ausgewählt`;
+}
+
+async function selectionToPreset() {
+  const list = selectedCues();
+  if (!list.length) return;
+  const name = prompt(`Name des Presets aus ${list.length} Cue(s) (gilt für alle Shows):`, label(list[0]));
+  if (!name) return;
+  await store.savePreset(cuesToPreset(list, name));
+  toast(`Preset „${name}“ mit ${list.length} Cue(s) gespeichert`);
+  clearSelection();
+}
+
+/** Klont die Auswahl als Block hinter den letzten ausgewählten Cue. Verweise innerhalb der Auswahl zeigen auf die Kopien. */
+function cloneSelection() {
+  const list = selectedCues();
+  if (!list.length) return;
+  const copies = instantiateCues(cuesToTemplates(list, { keepExternal: true }));
+  copies.forEach((c) => { if (c.name) c.name += ' (Kopie)'; });
+  const at = cues().indexOf(list[list.length - 1]) + 1;
+  cues().splice(at, 0, ...copies);
+  copies.forEach((c) => engine.cueChanged(c.id));
+  state.selected = new Set(copies.map((c) => c.id));
+  save();
+  renderAll();
+  toast(`${copies.length} Cue(s) geklont`);
+}
+
+function deleteSelection() {
+  const list = selectedCues();
+  if (!list.length || !confirm(`${list.length} Cue(s) löschen?`)) return;
+  list.forEach((c) => deleteCue(c.id));
+  clearSelection();
 }
 
 function moveCue(id, delta) {
@@ -727,6 +869,8 @@ function openEditor(id) {
   if (cue.type === 'memo') {
     add(h('h3', {}, 'Memo'));
     add(mdField('Text (Markdown)', 8));
+    add(field('Bestätigung', checkInput(draft, 'confirm', 'Vor dem nächsten GO bestätigen lassen'),
+      'Das GO für den Cue nach diesem Memo zeigt zuerst eine Abfrage (z. B. bei Umbau). Cart, Tasten- und MIDI-Trigger einzelner Cues sind davon nicht betroffen.'));
     add(h('div', { class: 'hint' }, 'Der Name erscheint als Zwischenüberschrift in der Liste, der Text im Regiebuch-Bereich, sobald das Memo oder der Cue danach im Standby steht.'));
   }
 
@@ -970,6 +1114,11 @@ function bindUI() {
   });
   document.addEventListener('click', () => { $('#add-menu').hidden = true; });
 
+  $('#sel-preset').addEventListener('click', selectionToPreset);
+  $('#sel-clone').addEventListener('click', cloneSelection);
+  $('#sel-delete').addEventListener('click', deleteSelection);
+  $('#sel-clear').addEventListener('click', clearSelection);
+
   $('#btn-layout').addEventListener('click', () => {
     settings().layout = settings().layout === 'cart' ? 'list' : 'cart';
     save();
@@ -1058,8 +1207,9 @@ function bindUI() {
   // MIDI
   midi.on('trigger', (key) => {
     if (state.learn?.kind === 'midi') { state.learn.apply(key); return; }
-    if (dialogOpen()) return;
     const s = settings().midi;
+    if ($('#dlg-confirm').open && key === s.go) { $('#dlg-confirm').close('ok'); return; }
+    if (dialogOpen()) return;
     if (key === s.go) go();
     if (key === s.stopAll) stopAll();
     cues().forEach((c) => { if (c.midiTrigger === key) engine.go(c.id); });
@@ -1082,6 +1232,11 @@ function onKeyDown(e) {
     if (e.code === 'Escape') { state.learn.apply(''); return; }
     if (['Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) { toast('Diese Taste ist reserviert', true); return; }
     state.learn.apply(e.code);
+    return;
+  }
+  if ($('#dlg-confirm').open && e.code === 'Space') {
+    e.preventDefault();
+    if (!e.repeat) $('#dlg-confirm').close('ok');
     return;
   }
   if (dialogOpen() || isTyping(e)) return;

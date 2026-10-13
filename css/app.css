@@ -186,6 +186,27 @@ main {
 .cue-row.memo-row.standby td.c-num { box-shadow: inset 4px 0 0 var(--standby); }
 .cart-btn.memo { border-style: dashed; border-color: var(--memo, #6639ba); background: color-mix(in srgb, var(--memo, #6639ba) 22%, var(--bg2)); }
 
+/* ---------- Mehrfachauswahl ---------- */
+.cue-row.sel td { background: #1f3a5f !important; }
+.cue-row.sel .c-num::before { content: "☑ "; color: var(--standby); }
+.sel-bar {
+  position: sticky; bottom: 0; z-index: 3;
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  margin: 8px; padding: 8px 10px; border-radius: var(--radius);
+  background: var(--bg3); border: 1px solid var(--standby); box-shadow: 0 6px 20px #0009;
+}
+.sel-count { font-weight: 600; margin-right: auto; }
+
+/* ---------- Bestätigung (Memo) ---------- */
+.dlg-confirm { border: 2px solid var(--warn); width: min(560px, calc(100vw - 24px)); }
+.confirm-lbl { color: var(--warn); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: 13px; margin-bottom: 6px; }
+.dlg-confirm h2 { font-size: 22px; }
+.confirm-next { color: var(--muted); margin: 12px 0 0; }
+.confirm-go { font-size: 18px; padding: 12px 22px; font-weight: 700; }
+.confirm-keys { font-size: 12px; margin: 8px 0 0; text-align: right; }
+.go.needs-confirm { background: #7a5200; border-color: var(--warn); }
+.go.needs-confirm:hover { background: #8d5f00; }
+
 /* ---------- Regiebuch-Panel ---------- */
 .memo-panel { background: var(--bg3); border: 1px solid var(--line); border-radius: var(--radius); }
 .memo-panel > summary {

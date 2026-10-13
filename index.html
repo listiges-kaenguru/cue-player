@@ -55,6 +55,13 @@
         </thead>
         <tbody id="cue-rows"></tbody>
       </table>
+      <div id="sel-bar" class="sel-bar" hidden>
+        <span id="sel-count" class="sel-count"></span>
+        <button id="sel-preset" title="Ausgewählte Cues als ein Preset speichern">Als Preset…</button>
+        <button id="sel-clone" title="Kopie der Auswahl dahinter einfügen">Klonen</button>
+        <button id="sel-delete" class="danger">Löschen</button>
+        <button id="sel-clear" title="Auswahl aufheben">✕</button>
+      </div>
       <div id="empty-hint" class="empty-hint">
         <p><strong>Noch keine Cues.</strong></p>
         <p>Audio-Dateien hierher ziehen oder <button class="linkbtn" id="btn-empty-add">Dateien auswählen</button>.</p>
@@ -121,6 +128,22 @@
         <button value="close" class="primary">Schließen</button>
       </div>
       <input id="file-import" type="file" accept=".cueshow,application/octet-stream" hidden>
+    </form>
+  </dialog>
+
+  <!-- Bestätigung vor GO (Memo) -->
+  <dialog id="dlg-confirm" class="dlg dlg-confirm">
+    <form method="dialog">
+      <div class="confirm-lbl">🔒 Bestätigung erforderlich</div>
+      <h2 id="confirm-title"></h2>
+      <div id="confirm-text" class="md"></div>
+      <p id="confirm-next" class="confirm-next"></p>
+      <div class="dlg-actions">
+        <button value="cancel">Abbrechen</button>
+        <span class="tb-spacer"></span>
+        <button value="ok" class="primary confirm-go" autofocus>Bestätigen &amp; GO</button>
+      </div>
+      <p class="muted confirm-keys">Leertaste = bestätigen · Esc = abbrechen</p>
     </form>
   </dialog>
 

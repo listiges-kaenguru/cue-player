@@ -6,7 +6,7 @@ Funktionsumfang des [Linux Show Player](https://www.linux-show-player.org/) (LSP
 Läuft als **Progressive Web App (PWA)** auf **Android, Windows und Linux** (und macOS) – aus einer
 einzigen Codebasis, ohne Store, offline-fähig, installierbar wie eine normale App.
 
-> **Status: Prototyp (v0.3.0).** Grundfunktionen sind da und getestet, für den Ernstfall bitte
+> **Status: Prototyp (v0.4.0).** Grundfunktionen sind da und getestet, für den Ernstfall bitte
 > vorher ausgiebig mit dem eigenen Gerät proben (siehe [Grenzen](#grenzen-des-prototyps)).
 
 ## Dokumentation
@@ -36,7 +36,9 @@ einzigen Codebasis, ohne Store, offline-fähig, installierbar wie eine normale A
 | Show-Modus (Bearbeiten sperren, Schalter mit optionaler Nachfrage) | ✅ | – |
 | Memo-Cues als Zwischenüberschrift, Regiebuch mit Markdown | ✅ | – |
 | Cues klonen | ✅ | ✅ |
-| Presets (Cue-Vorlagen für alle Shows) | ✅ | – |
+| Presets (Vorlagen aus einem oder mehreren Cues, für alle Shows) | ✅ | – |
+| Mehrfachauswahl (Klonen, Löschen, Als Preset) | ✅ | ✅ |
+| Memo mit Bestätigung vor dem nächsten GO | ✅ | – |
 | Ausgabegerät wählen | ✅ (Chrome/Edge) | ✅ |
 | Video-Cues, OSC, Kommando-Cues, Gruppen-Cues | ❌ (Roadmap) | ✅ |
 | Mehrkanal-Routing, JACK, Timecode | ❌ | ✅ |

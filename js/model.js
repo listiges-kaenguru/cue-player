@@ -61,16 +61,50 @@ export function newCue(type, extra = {}) {
     startstop: { target: '', mode: 'toggle', fade: 0 },
     pause: { target: '', mode: 'toggle', fadeOut: 0, fadeIn: 0 },
     midi: { output: '', msg: 'noteon', channel: 1, data1: 60, data2: 127 },
-    memo: {},
+    memo: { confirm: false },
   }[type];
   return { ...base, ...specific, ...extra };
 }
 
-/** Macht aus einem Cue eine Preset-Vorlage: ohne Identität, Trigger und festes Ziel. */
-export function cueToPreset(cue, name) {
-  const { id, hotkey, midiTrigger, ...rest } = structuredClone(cue);
-  if ('target' in rest) rest.target = '';
-  return { id: uid(), name, cue: rest, created: Date.now() };
+/**
+ * Macht aus Cues eine Vorlage (Preset oder Kopiervorlage): ohne Identität und Trigger.
+ * Ziele auf Cues innerhalb der Auswahl werden zu Platzhaltern '#<Index>', damit sie beim Einfügen erhalten bleiben.
+ * Ziele außerhalb: leer (Preset) bzw. unverändert (keepExternal, z. B. beim Klonen).
+ */
+export function cuesToTemplates(list, { keepExternal = false } = {}) {
+  const idx = new Map(list.map((c, i) => [c.id, i]));
+  return list.map((c) => {
+    const { id, hotkey, midiTrigger, ...rest } = structuredClone(c);
+    if ('target' in rest && rest.target) {
+      rest.target = idx.has(rest.target) ? `#${idx.get(rest.target)}` : (keepExternal ? rest.target : '');
+    }
+    return rest;
+  });
+}
+
+export function cuesToPreset(list, name) {
+  return { id: uid(), name, cues: cuesToTemplates(list), created: Date.now() };
+}
+
+export const cueToPreset = (cue, name) => cuesToPreset([cue], name);
+
+/** Erzeugt neue Cues aus Vorlagen. '#k'-Ziele zeigen danach auf die neuen Cues; leere Fade-/Start-Ziele auf prevId. */
+export function instantiateCues(templates, prevId = null) {
+  const created = templates.map((t) => ({ ...newCue(t.type), ...structuredClone(t), id: uid() }));
+  created.forEach((c) => {
+    if (!('target' in c)) return;
+    if (typeof c.target === 'string' && c.target.startsWith('#')) c.target = created[Number(c.target.slice(1))]?.id ?? '';
+    else if (!c.target && prevId && (c.type === 'fade' || (c.type === 'startstop' && c.mode === 'start'))) c.target = prevId;
+  });
+  return created;
+}
+
+/** Presets älterer Versionen (ein Cue unter `cue`) auf das Mehr-Cue-Format `cues` bringen. */
+export function migratePreset(p) {
+  if (!p.cues && p.cue) p.cues = [p.cue];
+  delete p.cue;
+  p.cues = (p.cues || []).map(migrateCue);
+  return p;
 }
 
 /** Standard-Presets beim ersten Start. */
@@ -80,6 +114,10 @@ export function defaultPresets() {
     cueToPreset(newCue('fade', { volume: -15, duration: 3, stopAfter: false }), 'Musik unter Text (−15 dB, 3 s)'),
     cueToPreset(newCue('pause', { mode: 'toggle', fadeOut: 2, fadeIn: 2 }), 'Pause/Weiter mit Fade 2 s'),
     cueToPreset(newCue('startstop', { target: '', mode: 'stop', fade: 5 }), 'Alles ausblenden 5 s'),
+    cuesToPreset([
+      newCue('startstop', { target: '', mode: 'stop', fade: 3 }),
+      newCue('memo', { name: 'Umbau', notes: '! Erst GO nach Freigabe durch die Bühne', confirm: true }),
+    ], 'Szenenwechsel: alles ausblenden + Umbau (bestätigen)'),
   ];
 }
 
