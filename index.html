@@ -21,8 +21,7 @@
         <button id="btn-add-cue" class="tb" title="Weiteren Cue hinzufügen">＋ Cue ▾</button>
         <div id="add-menu" class="menu" hidden>
           <button data-add="fade">◢ Fade</button>
-          <button data-add="stop">■ Stop</button>
-          <button data-add="start">▶ Start</button>
+          <button data-add="startstop">▶■ Start / Stop</button>
           <button data-add="pause">❚❚ Pause / Weiter</button>
           <button data-add="midi">⎍ MIDI senden</button>
           <button data-add="memo">✎ Memo</button>
@@ -32,7 +31,11 @@
     </div>
     <div class="tb-spacer"></div>
     <button id="btn-layout" class="tb" title="Ansicht wechseln (Liste / Cart)">▦ Cart</button>
-    <button id="btn-showmode" class="tb" title="Show-Modus: Bearbeiten sperren">🔓 Edit</button>
+    <button id="btn-showmode" class="mode-switch" role="switch" aria-checked="false" title="Umschalten zwischen Bearbeiten und Show-Modus (Strg+E)">
+      <span class="ms-opt ms-edit"><span class="ms-ic">✎</span><span class="ms-txt">Edit</span></span>
+      <span class="ms-track"><span class="ms-knob"></span></span>
+      <span class="ms-opt ms-show"><span class="ms-ic">▶</span><span class="ms-txt">Show</span></span>
+    </button>
     <button id="btn-settings" class="tb" title="Einstellungen">⚙</button>
     <input id="file-audio" type="file" accept="audio/*,video/*,.mp3,.wav,.ogg,.flac,.m4a,.aac,.opus,.webm" multiple hidden>
   </header>

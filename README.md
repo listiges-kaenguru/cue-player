@@ -6,7 +6,7 @@ Funktionsumfang des [Linux Show Player](https://www.linux-show-player.org/) (LSP
 Läuft als **Progressive Web App (PWA)** auf **Android, Windows und Linux** (und macOS) – aus einer
 einzigen Codebasis, ohne Store, offline-fähig, installierbar wie eine normale App.
 
-> **Status: Prototyp (v0.2.0).** Grundfunktionen sind da und getestet, für den Ernstfall bitte
+> **Status: Prototyp (v0.3.0).** Grundfunktionen sind da und getestet, für den Ernstfall bitte
 > vorher ausgiebig mit dem eigenen Gerät proben (siehe [Grenzen](#grenzen-des-prototyps)).
 
 ## Dokumentation
@@ -27,13 +27,13 @@ einzigen Codebasis, ohne Store, offline-fähig, installierbar wie eine normale A
 | Lautstärke (dB), Panorama, Start/Ende-Trimmung, Loop | ✅ | ✅ |
 | Fade-In / Fade-Out (linear / logarithmisch) | ✅ | ✅ |
 | Fade-Cue (Lautstärke eines laufenden Cues ändern) | ✅ | ✅ |
-| Stop-, Start-, Pause/Weiter-Cues (Pause/Weiter mit Fade) | ✅ | ✅ |
+| Start/Stop- und Pause/Weiter-Cues (je mit Umschalten und Fade) | ✅ | ✅ |
 | Pre-Wait, Post-Wait, Auto-Continue, Auto-Follow | ✅ | ✅ |
 | Stop alle (mit Fade), Pause alle, Weiter | ✅ | ✅ |
 | Tastatur-Trigger pro Cue | ✅ | ✅ |
 | MIDI-Trigger (Eingang) & MIDI-Cues (Ausgang) | ✅ (Web MIDI) | ✅ |
 | Mehrere Shows, Export/Import als eine Datei | ✅ (`.cueshow`) | ✅ (`.lsp`) |
-| Show-Modus (Bearbeiten sperren) | ✅ | – |
+| Show-Modus (Bearbeiten sperren, Schalter mit optionaler Nachfrage) | ✅ | – |
 | Memo-Cues als Zwischenüberschrift, Regiebuch mit Markdown | ✅ | – |
 | Cues klonen | ✅ | ✅ |
 | Presets (Cue-Vorlagen für alle Shows) | ✅ | – |

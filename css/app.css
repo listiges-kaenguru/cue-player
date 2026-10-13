@@ -78,6 +78,20 @@ button.small { padding: 2px 8px; font-size: 13px; }
 
 body.show-mode .edit-only { display: none !important; }
 
+/* Schalter Edit / Show */
+.mode-switch {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 4px 10px; border-radius: 20px; background: var(--bg3);
+}
+.mode-switch .ms-opt { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-weight: 600; font-size: 14px; }
+.mode-switch .ms-track { position: relative; width: 38px; height: 22px; border-radius: 11px; background: var(--warn); transition: background .15s; flex: none; }
+.mode-switch .ms-knob { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .15s; }
+.mode-switch[aria-checked="false"] .ms-edit { color: var(--warn); }
+.mode-switch[aria-checked="true"] .ms-track { background: var(--accent); }
+.mode-switch[aria-checked="true"] .ms-knob { left: 19px; }
+.mode-switch[aria-checked="true"] .ms-show { color: var(--accent); }
+.mode-switch[aria-checked="true"] { border-color: var(--accent-dk); }
+
 /* ---------- Main ---------- */
 main {
   display: grid;
@@ -281,6 +295,11 @@ main {
   body { font-size: 14px; }
   .session-name { width: auto; flex: 1; max-width: none; order: -1; flex-basis: calc(100% - 60px); }
   .tb { padding: 6px 9px; }
+  .mode-switch .ms-txt { display: none; }
+  .mode-switch { padding: 4px 7px; gap: 5px; }
+  .mode-switch .ms-track { width: 34px; }
+  .mode-switch[aria-checked="true"] .ms-knob { left: 15px; }
+  .topbar { gap: 5px; padding-left: 8px; padding-right: 8px; }
   .c-dur { width: 7.5em; }
   .c-act .wide-only { display: none; }
   .go { min-width: 0; flex: 1 1 100%; height: 64px; }

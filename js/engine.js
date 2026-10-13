@@ -354,18 +354,19 @@ class FadeRunner extends TimedRunner {
   }
 }
 
-class StopRunner extends Runner {
+/** Start/Stop-Cue. mode: 'start' | 'stop' | 'toggle' (läuft das Ziel → stoppen, sonst starten). Ziel leer = alle laufenden (nur Stop). */
+class StartStopRunner extends Runner {
   start() {
     const cue = this.cue;
-    const targets = cue.target ? [this.engine.runners.get(cue.target)] : [...this.engine.runners.values()];
-    targets.forEach((r) => { if (r && r !== this && r.active) r.stop(cue.fade); });
-    this.ended(true);
-  }
-}
-
-class StartRunner extends Runner {
-  start() {
-    if (this.cue.target) this.engine.go(this.cue.target);
+    const others = () => [...this.engine.runners.values()].filter((r) => r !== this && r.active);
+    if (!cue.target) {
+      if (cue.mode === 'start') this.engine.emit('info', `${this.engine.label(cue)}: kein Ziel-Cue gewählt`);
+      else others().forEach((r) => r.stop(cue.fade));
+    } else {
+      const target = this.engine.runner(cue.target);
+      const stop = cue.mode === 'stop' || (cue.mode === 'toggle' && target?.active && !target.paused);
+      if (stop) { if (target?.active) target.stop(cue.fade); } else this.engine.go(cue.target);
+    }
     this.ended(true);
   }
 }
@@ -396,7 +397,7 @@ class MidiRunner extends Runner {
   }
 }
 
-const RUNNERS = { audio: AudioRunner, fade: FadeRunner, stop: StopRunner, start: StartRunner, pause: PauseRunner, midi: MidiRunner, memo: Runner };
+const RUNNERS = { audio: AudioRunner, fade: FadeRunner, startstop: StartStopRunner, pause: PauseRunner, midi: MidiRunner, memo: Runner };
 
 // ---------------------------------------------------------------------------
 

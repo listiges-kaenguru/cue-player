@@ -172,6 +172,37 @@ await page.waitForSelector('#dlg-presets[open]');
 check('Presets-Dialog', (await page.$$('#preset-list .ses')).length === presetNames.length + 1);
 await page.click('#dlg-presets button[value=close]');
 
+// --- Start/Stop-Cue (Umschalten) ---
+await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
+await page.click('.cue-row >> nth=0');
+await page.click('#btn-add-cue');
+await page.click('[data-add="startstop"]');
+await page.click('#cue-form .primary');
+await page.waitForTimeout(200);
+const ss = await page.evaluate(() => { const c = window.cuePlayer.state.session.cues; return { type: c[1].type, mode: c[1].mode, ok: c[1].target === c[0].id }; });
+check('Start/Stop-Cue angelegt (Ziel = Cue davor)', ss.type === 'startstop' && ss.mode === 'toggle' && ss.ok, JSON.stringify(ss));
+const st0 = () => page.evaluate(() => { const { engine, state } = window.cuePlayer; return engine.runners.get(state.session.cues[0].id).state; });
+await page.click('.cue-row >> nth=1');
+await page.click('#btn-go');
+await page.waitForTimeout(300);
+check('Start/Stop: startet gestopptes Ziel', (await st0()) === 'running');
+await page.click('.cue-row >> nth=1');
+await page.waitForTimeout(350); // GO-Sperre
+await page.click('#btn-go');
+await page.waitForTimeout(300);
+check('Start/Stop: stoppt laufendes Ziel', (await st0()) === 'idle');
+
+// --- Show/Edit-Schalter mit Nachfrage ---
+const showMode = () => page.$eval('#btn-showmode', (b) => b.getAttribute('aria-checked'));
+await page.click('#btn-showmode');
+check('Schalter: Show-Modus an', (await showMode()) === 'true' && (await page.$eval('#btn-add-audio', (b) => b.offsetParent === null)));
+page.once('dialog', (d) => d.dismiss());
+await page.click('#btn-showmode');
+check('Schalter: Nachfrage abgelehnt → bleibt Show', (await showMode()) === 'true');
+page.once('dialog', (d) => d.accept());
+await page.click('#btn-showmode');
+check('Schalter: Nachfrage bestätigt → Edit', (await showMode()) === 'false');
+
 check('Keine Konsolenfehler', errors.length === 0, errors.join(' | '));
 await browser.close();
 process.exit(failed ? 1 : 0);

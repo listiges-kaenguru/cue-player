@@ -1,5 +1,6 @@
 // Persistenz im Browser (IndexedDB) sowie Export/Import von Shows als .cueshow-Datei.
 import { uid } from './util.js';
+import { migrateCue } from './model.js';
 
 const DB_NAME = 'cue-player';
 const DB_VERSION = 2; // 2: Store „presets“
@@ -80,6 +81,7 @@ export async function gcMedia() {
 // --- Presets (global, für alle Shows) ---
 export async function listPresets() {
   const all = await tx('presets', 'readonly', (s) => req2p(s.getAll()));
+  all.forEach((p) => { if (p.cue) p.cue = migrateCue(p.cue); });
   return all.sort((a, b) => a.name.localeCompare(b.name, 'de'));
 }
 export const savePreset = (p) => tx('presets', 'readwrite', (s) => s.put(JSON.parse(JSON.stringify(p))));

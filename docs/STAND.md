@@ -3,7 +3,7 @@
 Arbeitsnotizen, damit die Entwicklung jederzeit schnell weitergehen kann.
 **Bei jeder Sitzung aktualisieren** (Stand, erledigte/neue ToDos, Erkenntnisse aus Tests).
 
-## Stand (2026-10-13, v0.2.0)
+## Stand (2026-10-13, v0.3.0)
 
 PWA ohne Build-Schritt (Vanilla JS, ES-Module). Branch `ccr-c726005c-rg7agm`, noch nicht nach `main` gemergt, kein PR.
 
@@ -22,6 +22,11 @@ PWA ohne Build-Schritt (Vanilla JS, ES-Module). Branch `ccr-c726005c-rg7agm`, no
   - Presets (global, IndexedDB-Store `presets`, DB-Version 2): „Als Preset…“ im Editor, Einfügen über „＋ Cue ▾“,
     Verwalten-Dialog (umbenennen, löschen, Standard-Presets wiederherstellen), 4 Standard-Presets beim ersten Start.
     Audio-Presets behalten ihre Datei (`gcMedia` berücksichtigt Presets).
+- **v0.3.0** (Nutzerwunsch):
+  - Start- und Stop-Cue zu **einem** Typ `startstop` zusammengelegt (`mode`: toggle/start/stop, `fade` beim Stoppen), analog Pause/Weiter.
+    Migration alter Cues/Presets über `migrateCue()` in `model.js` (in `normalizeSession` und `listPresets`).
+  - Show/Edit als **Schalter** (orange ✎ Edit / grün ▶ Show), Einstellung „Vor dem Wechsel in den Edit-Modus nachfragen“
+    (`settings.confirmEdit`, Standard an; gilt auch für Strg+E).
 
 **Nutzertest 1 (Android-Smartphone, Chrome), v0.1.0:**
 
@@ -29,12 +34,12 @@ PWA ohne Build-Schritt (Vanilla JS, ES-Module). Branch `ccr-c726005c-rg7agm`, no
 
 **Implementiert, aber noch NICHT vom Nutzer getestet:**
 
-- Alles aus v0.2.0 (Pause-Fade, Klonen, Memo/Regiebuch, Presets), besonders auf dem Handy
+- Alles aus v0.2.0 und v0.3.0 (Pause-Fade, Klonen, Memo/Regiebuch, Presets, Start/Stop-Cue, Show/Edit-Schalter), besonders auf dem Handy
 - Android: Installation als App, Latenz, Wake Lock, Hintergrundverhalten
 - Windows/Linux-Installation als App, Desktop-Darstellung allgemein
 - MIDI mit echter Hardware (Lernen, Trigger, MIDI-Cues)
 - Ausgabegerät-Wahl (`AudioContext.setSinkId`)
-- Stop- und Start-Cues, Auto-Follow, Loop mit Trimmung, Fade-Out am Ende, Panorama (Code vorhanden, nicht einzeln geprüft)
+- Start/Stop-Cue mit Ziel „Alle“, Auto-Follow, Loop mit Trimmung, Fade-Out am Ende, Panorama (Code vorhanden, nicht einzeln geprüft)
 - Offline-Betrieb nach Installation, Update von v0.1.0 auf v0.2.0 (DB-Upgrade auf Version 2)
 - GitHub-Pages-Workflow (`.github/workflows/pages.yml`, nie gelaufen; Pages muss in den Repo-Einstellungen aktiviert werden)
 

@@ -6,7 +6,7 @@ import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, cueDispl
 import { fmtTime, fmtDb, debounce, keyLabel, uid, MIN_DB } from './util.js';
 import { renderMarkdown, firstLine } from './md.js';
 
-export const APP_VERSION = '0.2.0';
+export const APP_VERSION = '0.3.0';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const COLORS = ['', '#b62324', '#bd561d', '#9e6a03', '#1a7f37', '#0f6e6e', '#1f6feb', '#6639ba', '#bf3989', '#57606a'];
@@ -115,8 +115,9 @@ async function init() {
 function renderAll() {
   const s = settings();
   document.body.classList.toggle('show-mode', s.showMode);
-  $('#btn-showmode').textContent = s.showMode ? '🔒 Show' : '🔓 Edit';
-  $('#btn-showmode').title = s.showMode ? 'Show-Modus aktiv – klicken zum Bearbeiten' : 'Bearbeiten aktiv – klicken für Show-Modus (sperrt Änderungen)';
+  const sw = $('#btn-showmode');
+  sw.setAttribute('aria-checked', String(!!s.showMode));
+  sw.title = s.showMode ? 'Show-Modus aktiv (Bearbeiten gesperrt) – umschalten zum Bearbeiten (Strg+E)' : 'Bearbeiten aktiv – umschalten in den Show-Modus (Strg+E)';
   const cart = s.layout === 'cart';
   $('#list-view').hidden = cart;
   $('#cart-view').hidden = !cart;
@@ -450,7 +451,7 @@ function addCue(type) {
   const cue = newCue(type);
   // Sinnvolles Ziel vorbelegen: der Cue davor.
   const prev = cues()[insertIndex() - 1];
-  if ('target' in cue && prev && type !== 'stop' && type !== 'pause') cue.target = prev.id;
+  if ('target' in cue && prev && type !== 'pause') cue.target = prev.id;
   cues().splice(insertIndex(), 0, cue);
   engine.runner(cue.id);
   save();
@@ -473,7 +474,7 @@ async function insertPreset(id) {
   const cue = { ...newCue(p.cue.type), ...structuredClone(p.cue), id: uid() };
   // Wie bei neuen Cues: Fade/Start zielen auf den Cue davor.
   const prev = cues()[insertIndex() - 1];
-  if ('target' in cue && !cue.target && prev && (cue.type === 'fade' || cue.type === 'start')) cue.target = prev.id;
+  if ('target' in cue && !cue.target && prev && (cue.type === 'fade' || (cue.type === 'startstop' && cue.mode === 'start'))) cue.target = prev.id;
   cues().splice(insertIndex(), 0, cue);
   engine.cueChanged(cue.id);
   save();
@@ -691,13 +692,11 @@ function openEditor(id) {
     add(field('Dauer (s)', numInput(draft, 'duration')));
     add(field('Kurve', selectInput(draft, 'fadeCurve', [['log', 'Logarithmisch'], ['linear', 'Linear']])));
     add(field('Danach', checkInput(draft, 'stopAfter', 'Ziel-Cue nach dem Fade stoppen')));
-  } else if (cue.type === 'stop') {
-    add(h('h3', {}, 'Stop'));
-    add(field('Ziel-Cue', targetSelect(draft, cue.id, { allowAll: true })));
-    add(field('Fade-Out (s)', numInput(draft, 'fade')));
-  } else if (cue.type === 'start') {
-    add(h('h3', {}, 'Start'));
-    add(field('Ziel-Cue', targetSelect(draft, cue.id)));
+  } else if (cue.type === 'startstop') {
+    add(h('h3', {}, 'Start / Stop'));
+    add(field('Ziel-Cue', targetSelect(draft, cue.id, { allowAll: true }), '„Alle“ wirkt nur beim Stoppen.'));
+    add(field('Aktion', selectInput(draft, 'mode', [['toggle', 'Umschalten (läuft → stoppen, sonst starten)'], ['start', 'Starten'], ['stop', 'Stoppen']])));
+    add(field('Fade-Out beim Stoppen (s)', numInput(draft, 'fade'), '0 = sofort')); 
   } else if (cue.type === 'pause') {
     add(h('h3', {}, 'Pause / Weiter'));
     add(field('Ziel-Cue', targetSelect(draft, cue.id, { allowAll: true })));
@@ -832,6 +831,9 @@ async function openSettings() {
   add(field('GO-Sperre (ms)', bindNum(s, 'goLockMs', { min: 0, max: 5000, step: 50 }), 'Verhindert versehentliches doppeltes Auslösen'));
   add(field('Stop-alle-Fade (s)', bindNum(s, 'stopAllFade', { min: 0, max: 30, step: 0.1 }), 'Esc / „Stop alle“. Zweimal drücken oder Shift = sofort.'));
   add(field('Pause-alle-Fade (s)', bindNum(s, 'pauseAllFade', { min: 0, max: 30, step: 0.1 }), 'Aus-/Einblenden für „Pause“/„Weiter“ und die ❚❚-Knöpfe im Aktiv-Bereich.'));
+  const ce = checkInput(s, 'confirmEdit', 'Vor dem Wechsel vom Show- in den Edit-Modus nachfragen');
+  ce.addEventListener('change', save);
+  add(field('Show-Modus', ce));
   add(field('Cart-Spalten', bindNum(s, 'cartColumns', { min: 1, max: 12, step: 1 })));
   const wl = checkInput(s, 'wakeLock', 'Bildschirm nicht abschalten');
   wl.addEventListener('change', () => { save(); applyWakeLock(); });
@@ -1065,6 +1067,7 @@ function bindUI() {
 }
 
 function toggleShowMode() {
+  if (settings().showMode && settings().confirmEdit && !confirm('Show-Modus verlassen und Bearbeiten freigeben?')) return;
   settings().showMode = !settings().showMode;
   save();
   renderAll();

@@ -39,7 +39,7 @@ Inhalt:
 
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
-│ ☰  Meine Show   ＋Audio  ＋Cue▾            ▦ Cart  🔓 Edit  ⚙        │  ← Kopfleiste
+│ ☰  Meine Show   ＋Audio  ＋Cue▾      ▦ Cart  ✎ Edit ◯━ ▶ Show  ⚙     │  ← Kopfleiste
 ├────────────────────────────────────────────────────┬──────────────────┤
 │ #  Cue                   Pre    Dauer       Post   │ AKTIV            │
 │ 1  ♪ Einlassmusik               ███░░ 1:02  ↧ AF   │ 1 · Einlassmusik │
@@ -54,9 +54,9 @@ Inhalt:
 - **☰** – Shows verwalten (neu, öffnen, löschen, exportieren, importieren).
 - **Show-Name** – direkt anklicken und umbenennen.
 - **＋ Audio** – Audiodateien hinzufügen (mehrere auf einmal möglich).
-- **＋ Cue ▾** – Fade-, Stop-, Start-, Pause-, MIDI- oder Memo-Cue hinzufügen.
+- **＋ Cue ▾** – Fade-, Start/Stop-, Pause/Weiter-, MIDI- oder Memo-Cue oder ein Preset hinzufügen.
 - **▦ Cart / ☰ Liste** – zwischen Listen- und Button-Ansicht wechseln.
-- **🔓 Edit / 🔒 Show** – Show-Modus: sperrt alle Bearbeitungen, damit während der Vorstellung
+- **Schalter ✎ Edit / ▶ Show** – links (orange) = Bearbeiten, rechts (grün) = Show-Modus. Der Show-Modus sperrt alle Bearbeitungen, damit während der Vorstellung
   nichts versehentlich verändert wird.
 - **⚙** – Einstellungen.
 - **📖 Regiebuch** (rechts oben, auf dem Handy über GO) – Memo-Texte und Notizen zum nächsten Cue,
@@ -163,13 +163,21 @@ ihn fort.
 Beispiel „Musik unter Text ziehen“: Fade-Cue auf −15 dB, 3 s, *Danach stoppen* aus. Später ein
 zweiter Fade auf −∞ mit *Danach stoppen* an.
 
-### ■ Stop
+### ▶■ Start / Stop
 
-Stoppt einen Cue oder **alle laufenden Cues** (Ziel leer lassen), optional mit Fade-Out.
+Startet oder stoppt einen anderen Cue, aufgebaut wie der Pause/Weiter-Cue.
 
-### ▶ Start
+| Feld | Bedeutung |
+|---|---|
+| Ziel-Cue | Der gesteuerte Cue (vorbelegt: der Cue davor). „Alle laufenden Cues“ wirkt nur beim Stoppen. |
+| Aktion | *Umschalten* (Ziel läuft → stoppen, sonst starten; ein pausiertes Ziel wird fortgesetzt), *Starten* oder *Stoppen*. |
+| Fade-Out beim Stoppen | Ausblendzeit beim Stoppen. 0 = sofort. |
 
-Startet einen anderen Cue (nützlich, um mehrere Cues von einer Stelle aus auszulösen).
+Beispiele: *Stoppen* mit Ziel „Alle“ und 5 s Fade beendet die Szene. *Starten* löst mehrere Cues
+von einer Stelle aus. *Umschalten* auf einer Taste schaltet z. B. eine Regen-Schleife ein und wieder aus.
+
+Shows aus älteren Versionen mit getrennten Start- und Stop-Cues werden beim Öffnen automatisch
+umgewandelt.
 
 ### ❚❚ Pause / Weiter
 
@@ -266,7 +274,7 @@ die durch Auto-Continue/-Follow ohnehin ausgelöst werden. Das nächste GO triff
 
 ## 6. Die Show fahren
 
-1. Vor Beginn **🔒 Show-Modus** einschalten (Kopfleiste oder `Strg+E`). Damit sind Editor,
+1. Vor Beginn den **Schalter auf ▶ Show** stellen (Kopfleiste oder `Strg+E`). Damit sind Editor,
    Hinzufügen und Löschen gesperrt.
 2. **Standby setzen:** Zeile antippen, oder mit **↑ / ↓**. Standardmäßig steht der Standby auf Cue 1.
    Die GO-Taste zeigt unten an, welcher Cue als Nächstes kommt.
@@ -342,6 +350,7 @@ Website-Daten gelöscht, sind sie weg. Deshalb nach jeder Probe **exportieren**.
 | Einstellung | Bedeutung |
 |---|---|
 | GO-Sperre (ms) | Mindestabstand zwischen zwei GOs. 0 = aus. |
+| Show-Modus: nachfragen | Vor dem Wechsel vom Show- in den Edit-Modus wird nachgefragt (Standard: an), damit der Show-Modus nicht versehentlich verlassen wird. |
 | Stop-alle-Fade (s) | Ausblendzeit für „Stop alle“/Esc und die ■-Knöpfe im Aktiv-Bereich. |
 | Pause-alle-Fade (s) | Aus-/Einblendzeit für „Pause“/„Weiter“, die ❚❚-Knöpfe im Aktiv-Bereich und das Fortsetzen in der Cart-Ansicht. 0 = sofort. |
 | Cart-Spalten | Kacheln pro Zeile in der Cart-Ansicht. |
@@ -374,7 +383,7 @@ Die Einstellungen gelten **pro Show** und werden mit exportiert.
 - [ ] Show **exportiert** (Backup auf USB-Stick o. ä.).
 - [ ] Gerät am Netzteil, Benachrichtigungen aus (Flugmodus/Bitte nicht stören).
 - [ ] Richtiges **Ausgabegerät** gewählt, Master-Lautstärke geprüft.
-- [ ] **Show-Modus** 🔒 an.
+- [ ] Schalter auf **▶ Show** (grün).
 - [ ] Standby steht auf Cue 1.
 - [ ] Einmal in die App getippt (Audio „aufgeweckt“).
 
