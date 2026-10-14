@@ -4,9 +4,10 @@ import { Midi, midiLabel } from './midi.js';
 import * as store from './storage.js';
 import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, cueDisplayName, cueToPreset, cuesToPreset, cuesToTemplates, instantiateCues, defaultPresets } from './model.js';
 import { fmtTime, fmtDb, debounce, keyLabel, uid, MIN_DB } from './util.js';
-import { renderMarkdown, firstLine } from './md.js';
+import { renderMarkdown, renderDocument, firstLine } from './md.js';
 
-export const APP_VERSION = '0.4.1';
+export const APP_VERSION = '0.5.0';
+export const SOURCE_URL = 'https://github.com/listiges-kaenguru/cue-player';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const COLORS = ['', '#b62324', '#bd561d', '#9e6a03', '#1a7f37', '#0f6e6e', '#1f6feb', '#6639ba', '#bf3989', '#57606a'];
@@ -1036,10 +1037,43 @@ async function openSettings() {
 
   add(h('h3', {}, 'Info'));
   add(field('Version', h('span', {}, `Cue Player ${APP_VERSION}`)));
-  add(field('Tastatur', h('span', { class: 'muted' }, 'Leertaste = GO · Esc = Stop alle · ↑/↓ = Standby wählen · Strg+E = Edit/Show')));
+  add(field('Hilfe', h('button', { type: 'button', id: 'settings-help', onclick: () => { $('#dlg-settings').close(); openHelp(); } }, '? Benutzerhandbuch öffnen'), 'Auch über ? oben rechts oder die Taste F1.'));
+  add(field('Lizenz', h('a', { id: 'link-license', href: `${SOURCE_URL}/blob/HEAD/LICENSE`, target: '_blank', rel: 'noopener' }, 'GNU AGPL v3 oder später'),
+    'Freie Software: Sie dürfen sie nutzen, ändern und weitergeben. Wer eine geänderte Fassung im Netz anbietet, muss deren Quelltext bereitstellen.'));
+  add(field('Quelltext', h('a', { id: 'link-source', href: SOURCE_URL, target: '_blank', rel: 'noopener' }, SOURCE_URL.replace('https://', ''))));
+  add(field('Tastatur', h('span', { class: 'muted' }, 'Leertaste = GO · Esc = Stop alle · ↑/↓ = Standby wählen · Strg+E = Edit/Show · F1 = Hilfe')));
 
   const dlg = $('#dlg-settings');
   if (!dlg.open) dlg.showModal();
+}
+
+// ---------------------------------------------------------------------------
+// Hilfe: Benutzerhandbuch aus docs/BENUTZERHANDBUCH.md (vom Service Worker offline vorgehalten)
+
+const HELP_FILE = 'docs/BENUTZERHANDBUCH.md';
+
+async function openHelp() {
+  const body = $('#help-body');
+  if (!body.dataset.loaded) {
+    try {
+      const res = await fetch(HELP_FILE);
+      if (!res.ok) throw new Error(res.status);
+      body.innerHTML = renderDocument(await res.text(), { prefix: 'hilfe-' }); // sicher: escaped jedes HTML
+      body.dataset.loaded = '1';
+    } catch {
+      body.textContent = '';
+      body.append(h('p', {}, 'Das Benutzerhandbuch konnte nicht geladen werden. Online lesen: ',
+        h('a', { href: `${SOURCE_URL}/blob/HEAD/${HELP_FILE}`, target: '_blank', rel: 'noopener' }, 'Benutzerhandbuch auf GitHub')));
+    }
+  }
+  const dlg = $('#dlg-help');
+  if (!dlg.open) dlg.showModal();
+}
+
+function scrollHelpTo(anchor) {
+  const el = anchor ? document.getElementById(`hilfe-${anchor}`) : null;
+  if (el) el.scrollIntoView({ block: 'start' });
+  else $('#help-body').scrollTop = 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -1121,6 +1155,14 @@ function bindUI() {
   });
   $('#btn-showmode').addEventListener('click', toggleShowMode);
   $('#btn-settings').addEventListener('click', openSettings);
+  $('#btn-help').addEventListener('click', openHelp);
+  $('#help-top').addEventListener('click', () => scrollHelpTo(''));
+  $('#help-body').addEventListener('click', (e) => {
+    const a = e.target.closest('a[data-anchor]');
+    if (!a) return;
+    e.preventDefault();
+    scrollHelpTo(a.dataset.anchor);
+  });
 
   $('#btn-sessions').addEventListener('click', async () => { await renderSessions(); $('#dlg-sessions').showModal(); });
   $('#ses-new').addEventListener('click', async () => {
@@ -1225,13 +1267,19 @@ function onKeyDown(e) {
     e.preventDefault();
     e.stopPropagation();
     if (e.code === 'Escape') { state.learn.apply(''); return; }
-    if (['Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) { toast('Diese Taste ist reserviert', true); return; }
+    if (['Space', 'ArrowUp', 'ArrowDown', 'F1'].includes(e.code)) { toast('Diese Taste ist reserviert', true); return; }
     state.learn.apply(e.code);
     return;
   }
   if ($('#dlg-confirm').open && e.code === 'Space') {
     e.preventDefault();
     if (!e.repeat) $('#dlg-confirm').close('ok');
+    return;
+  }
+  // F1 = Hilfe, außer eine ältere Show nutzt F1 noch als Cue-Hotkey (dann hat der Cue Vorrang).
+  if (e.code === 'F1' && !cues().some((c) => c.hotkey === 'F1')) {
+    e.preventDefault();
+    if (!dialogOpen()) openHelp();
     return;
   }
   if (dialogOpen() || isTyping(e)) return;

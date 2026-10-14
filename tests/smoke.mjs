@@ -289,6 +289,31 @@ for (const w of [1280, 390]) {
 }
 await page.setViewportSize({ width: 1280, height: 800 });
 
+// Lizenz und Quelltext-Link in den Einstellungen
+await page.click('#btn-settings');
+await page.waitForSelector('#dlg-settings[open] #link-source');
+const links = await page.$$eval('#link-license, #link-source', (as) => as.map((a) => a.href));
+check('Einstellungen: Lizenz- und Quelltext-Link', links.length === 2 && links.every((u) => u.startsWith('https://github.com/')) && links[0].endsWith('/LICENSE'), JSON.stringify(links));
+await page.click('#dlg-settings button[value=close]');
+
+// Hilfe: Benutzerhandbuch im Dialog
+await page.click('#btn-help');
+await page.waitForSelector('#dlg-help[open] #help-body h2');
+const help = await page.$eval('#help-body', (b) => ({ h2: b.querySelectorAll('h2').length, tables: b.querySelectorAll('table').length, pre: b.querySelectorAll('pre').length,
+  broken: [...b.querySelectorAll('a[data-anchor]')].filter((a) => !document.getElementById('hilfe-' + a.dataset.anchor)).map((a) => a.dataset.anchor) }));
+check('Hilfe: Handbuch gerendert, alle Sprungmarken gültig', help.h2 >= 13 && help.tables >= 5 && help.pre >= 1 && help.broken.length === 0, JSON.stringify(help));
+await page.click('#help-body a[data-anchor="11-tastenkürzel"]');
+await page.waitForTimeout(200);
+const jump = await page.evaluate(() => { const b = document.getElementById('help-body'); return Math.abs(document.getElementById('hilfe-11-tastenkürzel').getBoundingClientRect().top - b.getBoundingClientRect().top); });
+check('Hilfe: Link im Inhalt springt zum Abschnitt', jump < 40, String(jump));
+await page.keyboard.press('Escape');
+check('Hilfe: Esc schließt nur die Hilfe', !(await page.$eval('#dlg-help', (d) => d.open)));
+await page.keyboard.press('F1');
+check('Hilfe: F1 öffnet', await page.$eval('#dlg-help', (d) => d.open));
+await page.click('#dlg-help button[value=close]');
+const docXss = await page.evaluate(async () => (await import('./js/md.js')).renderDocument('[x](javascript:alert(1)) <img src=x onerror=alert(1)>\n| a |\n|---|\n| <b>b</b> |'));
+check('Hilfe-Renderer escaped HTML und blockiert javascript:-Links', !/<img|<b>|href="javascript/.test(docXss), docXss);
+
 check('Keine Konsolenfehler', errors.length === 0, errors.join(' | '));
 await browser.close();
 process.exit(failed ? 1 : 0);

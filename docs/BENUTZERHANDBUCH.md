@@ -39,7 +39,7 @@ Inhalt:
 
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
-│ ☰  Meine Show   ＋Audio  ＋Cue▾      ▦ Cart  ✎ Edit ◯━ ▶ Show  ⚙     │  ← Kopfleiste
+│ ☰  Meine Show   ＋Audio  ＋Cue▾      ▦ Cart  ✎ Edit ◯━ ▶ Show  ?  ⚙  │  ← Kopfleiste
 ├────────────────────────────────────────────────────┬──────────────────┤
 │ #  Cue                   Pre    Dauer       Post   │ AKTIV            │
 │ 1  ♪ Einlassmusik               ███░░ 1:02  ↧ AF   │ 1 · Einlassmusik │
@@ -58,6 +58,8 @@ Inhalt:
 - **▦ Cart / ☰ Liste** – zwischen Listen- und Button-Ansicht wechseln.
 - **Schalter ✎ Edit / ▶ Show** – links (orange) = Bearbeiten, rechts (grün) = Show-Modus. Der Show-Modus sperrt alle Bearbeitungen, damit während der Vorstellung
   nichts versehentlich verändert wird.
+- **?** – diese Hilfe (Benutzerhandbuch) öffnen, auch mit **F1**. Funktioniert offline; Links im
+  Inhaltsverzeichnis springen zum Abschnitt, **↑ Inhalt** wieder nach oben.
 - **⚙** – Einstellungen.
 - **📖 Regiebuch** (rechts oben, auf dem Handy über GO) – Memo-Texte und Notizen zum nächsten Cue,
   siehe [Memo](#-memo).
@@ -78,6 +80,7 @@ weiterhin einstellbar.
 2. **Audiodateien hinzufügen:**
    - **＋ Audio** antippen und Dateien auswählen, **oder**
    - am PC Dateien aus dem Dateimanager in das Fenster **ziehen**.
+
    Neue Cues werden **hinter dem Standby-Cue** eingefügt. Unterstützt werden alle Formate, die der
    Browser abspielen kann (MP3, WAV, OGG, FLAC, M4A/AAC, Opus, WebM).
    Die Dateien werden **in die App kopiert** – die Originale können danach verschoben werden.
@@ -334,7 +337,7 @@ Soundeffekte oder Einspieler, die in beliebiger Reihenfolge gebraucht werden.
 Jeder Cue kann zusätzlich zur GO-Taste **direkt** ausgelöst werden:
 
 - **Taste:** Im Editor bei *Taste* auf **Lernen** klicken und die gewünschte Taste drücken
-  (z. B. `F1`, `A`, `1`). **✕** entfernt die Zuordnung. Leertaste und Pfeiltasten sind reserviert.
+  (z. B. `F2`, `A`, `1`). **✕** entfernt die Zuordnung. Leertaste, Pfeiltasten und F1 (Hilfe) sind reserviert.
   Mehrere Cues können dieselbe Taste haben – sie starten dann gemeinsam.
 - **MIDI:** Bei *MIDI* auf **Lernen** klicken und am MIDI-Gerät eine Taste/einen Pad/Regler
   betätigen. Erkannt werden Note On, Control Change (Wert > 0) und Program Change.
@@ -381,6 +384,7 @@ Website-Daten gelöscht, sind sie weg. Deshalb nach jeder Probe **exportieren**.
 | MIDI verwenden | Web MIDI aktivieren (der Browser fragt nach Erlaubnis). |
 | GO / Stop alle per MIDI | Globale MIDI-Trigger. |
 | Speicher | Belegung anzeigen, dauerhaften Speicher anfordern, unbenutzte Dateien löschen. |
+| Info | Version, Hilfe öffnen, Lizenz (GNU AGPL v3) und Link zum Quelltext. |
 
 Die Einstellungen gelten **pro Show** und werden mit exportiert.
 
@@ -395,6 +399,7 @@ Die Einstellungen gelten **pro Show** und werden mit exportiert.
 | **Esc Esc** / **Shift+Esc** | Alle sofort stoppen |
 | **↑ / ↓** | Standby verschieben |
 | **Strg+E** | Edit-/Show-Modus umschalten |
+| **F1** | Hilfe (dieses Handbuch) öffnen |
 | *eigene Tasten* | Cue-Hotkeys (im Editor festgelegt) |
 
 ---

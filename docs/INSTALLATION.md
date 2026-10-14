@@ -62,7 +62,8 @@ App kommt aus dem Offline-Cache.
 
 ### Variante C: Eigener Webserver
 
-Den Inhalt des Repositorys (alle Dateien außer `.git`/`.github`/`docs`) in ein Verzeichnis eines
+Den Inhalt des Repositorys (alle Dateien außer `.git`/`.github`/`tests`; aus `docs` wird nur
+`docs/BENUTZERHANDBUCH.md` gebraucht, die eingebaute Hilfe) in ein Verzeichnis eines
 HTTPS-Webservers kopieren (nginx, Apache, Caddy …). Es gibt keinen Build-Schritt und keine
 Server-Logik – es sind nur statische Dateien. Unterordner (`https://example.org/cue/`) funktionieren.
 
