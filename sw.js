@@ -1,5 +1,5 @@
 // Service Worker: hält die App offline verfügbar (Cache-First für die App-Dateien).
-const VERSION = 'cue-player-v0.5.0';
+const VERSION = 'cue-player-v0.5.1';
 const ASSETS = [
   './',
   'index.html',
@@ -13,10 +13,10 @@ const ASSETS = [
   'js/model.js',
   'js/storage.js',
   'js/util.js',
-  'icons/icon.svg',
-  'icons/icon-192.png',
-  'icons/icon-512.png',
-  'icons/icon-maskable-512.png',
+  'img/icon.svg',
+  'img/icon-192.png',
+  'img/icon-512.png',
+  'img/icon-maskable-512.png',
 ];
 
 self.addEventListener('install', (e) => {

@@ -40,6 +40,16 @@ await page.setInputFiles('#file-audio', [a, b]);
 await page.waitForFunction(() => document.querySelectorAll('.cue-row').length === 2);
 check('Audio-Cues angelegt', true);
 
+// Manifest-Icons: ladbar und nicht unter /icons/ (Apache-Standard-Alias überdeckt den Ordner)
+const iconCheck = await page.evaluate(async () => {
+  const m = await (await fetch('manifest.webmanifest')).json();
+  return Promise.all(m.icons.map(async (i) => {
+    const r = await fetch(i.src, { cache: 'no-store' });
+    return { src: i.src, ok: r.ok && /^image\//.test(r.headers.get('content-type') || '') && !/^\/?icons\//.test(i.src) };
+  }));
+});
+check('Manifest-Icons ladbar', iconCheck.every((i) => i.ok), JSON.stringify(iconCheck.filter((i) => !i.ok)));
+
 await page.click('#btn-add-cue');
 await page.click('[data-add="fade"]');
 await page.fill('#cue-form-body input[type=number] >> nth=1', '0.55'); // Dauer

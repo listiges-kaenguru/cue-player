@@ -3,10 +3,10 @@
 Arbeitsnotizen, damit die Entwicklung jederzeit schnell weitergehen kann.
 **Bei jeder Sitzung aktualisieren** (Stand, erledigte/neue ToDos, Erkenntnisse aus Tests).
 
-## Stand (2026-10-14, v0.5.0)
+## Stand (2026-10-14, v0.5.1)
 
 PWA ohne Build-Schritt (Vanilla JS, ES-Module). Entwicklung auf Branch `ccr-c726005c-rg7agm`; `main` wurde am 2026-10-14
-auf dem Stand v0.4.1 angelegt, v0.4.2 + v0.5.0 per PR #1 gemergt. **Release v0.5.0** (erstes Release) erstellt.
+auf dem Stand v0.4.1 angelegt, v0.4.2 + v0.5.0 per PR #1 gemergt, v0.5.1 per PR #2. **Releases:** v0.5.0 (erstes), v0.5.1 (Icon-Fix).
 GitHub Pages ist noch nicht aktiviert (Deploy-Läufe auf `main` schlagen deshalb fehl), Repo ist privat.
 Workflow-Änderungen per SSH pushen (gh-Token ohne `workflow`-Scope).
 
@@ -60,6 +60,11 @@ Workflow-Änderungen per SSH pushen (gh-Token ohne `workflow`-Scope).
   (`slugify`, Präfix `hilfe-`), Klicks im Inhaltsverzeichnis scrollen im Dialog. Memo-Renderer unverändert.
   F1 ist beim Hotkey-Lernen reserviert; hat eine ältere Show F1 als Cue-Hotkey, gewinnt der Cue.
   **Beim Bearbeiten des Handbuchs** prüft der Smoke-Test, dass alle Sprungmarken auflösen.
+- **v0.5.1** (Fehler vom Nutzer): Chromium (Linux) installierte die App mit grauem „C“ statt Icon. Ursache: Der
+  Server `cue-player.schmaralde.de` (Apache) hat den Standard-`Alias /icons/ /usr/share/httpd/icons/`, alle
+  `icons/*`-Anfragen gingen ins Apache-Symbolverzeichnis → 404. Ordner in **`img/`** umbenannt (Manifest,
+  `index.html`, `sw.js`, Pages-Workflow). Smoke-Test prüft, dass alle Manifest-Icons als Bild laden und nicht unter
+  `icons/` liegen. Bereits installierte Apps behalten das Ersatz-Icon → deinstallieren und neu installieren.
 
 **Nutzertest 1 (Android-Smartphone, Chrome), v0.1.0:**
 

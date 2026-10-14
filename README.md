@@ -6,7 +6,7 @@ Funktionsumfang des [Linux Show Player](https://www.linux-show-player.org/) (LSP
 Läuft als **Progressive Web App (PWA)** auf **Android, Windows und Linux** (und macOS) – aus einer
 einzigen Codebasis, ohne Store, offline-fähig, installierbar wie eine normale App.
 
-> **Status: Prototyp (v0.5.0).** Grundfunktionen sind da und getestet, für den Ernstfall bitte
+> **Status: Prototyp (v0.5.1).** Grundfunktionen sind da und getestet, für den Ernstfall bitte
 > vorher ausgiebig mit dem eigenen Gerät proben (siehe [Grenzen](#grenzen-des-prototyps)).
 
 ## Dokumentation
@@ -88,7 +88,7 @@ js/midi.js             Web-MIDI-Anbindung
 js/md.js               Markdown-Renderer für Memos und die eingebaute Hilfe (sicher, ohne Bibliothek)
 js/util.js             Hilfsfunktionen (Timer, dB-Umrechnung, Fade-Kurven)
 tests/smoke.mjs        Browser-Smoke-Test (Playwright)
-icons/                 App-Icons
+img/                   App-Icons (nicht „icons/“: Apache-Standard-Alias)
 docs/                  Anleitungen (BENUTZERHANDBUCH.md wird auch als Hilfe in der App angezeigt)
 ```
 

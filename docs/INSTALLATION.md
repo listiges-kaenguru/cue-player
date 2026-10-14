@@ -70,6 +70,10 @@ Server-Logik – es sind nur statische Dateien. Unterordner (`https://example.or
 Empfohlener MIME-Typ für das Manifest: `application/manifest+json` (die meisten Server machen das
 automatisch).
 
+Die App-Icons liegen bewusst in `img/` und nicht in `icons/`: Apache leitet `/icons/` in der
+Standard-Konfiguration auf seine eigenen Symbole um (`Alias /icons/ …`), dann fänden Browser die
+App-Icons nicht.
+
 ---
 
 ## 2. Android
@@ -136,6 +140,10 @@ Voraussetzung: **Chromium**, **Google Chrome**, **Brave** oder **Microsoft Edge*
   (`snap connect chromium:alsa`, bzw. bei Flatpak `--device=all`).
 - Audio läuft über PulseAudio/PipeWire. Mit PipeWire lässt sich die Ausgabe der App mit
   `qpwgraph`/`helvum` frei routen – auch auf mehrkanalige Interfaces.
+- Zeigt die installierte App nur einen grauen Buchstaben statt des Icons, konnte der Browser die
+  Icons bei der Installation nicht laden (z. B. Version vor 0.5.1 auf einem Apache-Server). Die App
+  deinstallieren und nach dem Update neu installieren – das Icon wird nur bei der Installation
+  übernommen.
 
 ---
 
