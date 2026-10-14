@@ -3,7 +3,7 @@
 Arbeitsnotizen, damit die Entwicklung jederzeit schnell weitergehen kann.
 **Bei jeder Sitzung aktualisieren** (Stand, erledigte/neue ToDos, Erkenntnisse aus Tests).
 
-## Stand (2026-10-13, v0.4.1)
+## Stand (2026-10-14, v0.4.2)
 
 PWA ohne Build-Schritt (Vanilla JS, ES-Module). Branch `ccr-c726005c-rg7agm`, noch nicht nach `main` gemergt, kein PR.
 
@@ -43,6 +43,12 @@ PWA ohne Build-Schritt (Vanilla JS, ES-Module). Branch `ccr-c726005c-rg7agm`, no
     Zeilen nicht `draggable`. Strg/Shift+Klick am PC bleibt.
   - Memo-Zeile ohne `colspan`: Mit ausgeblendeten Spalten (Handy) verschob `colspan` die Tabelle. Jetzt gleiche Zellen
     wie andere Zeilen. Smoke-Test prüft gleiche Zeilenbreite bei 1280 und 390 px. Badge auf dem Handy nur „🔒“.
+
+- **v0.4.2:** Lizenz **AGPL-3.0-or-later** (`LICENSE` = unveränderter GNU-Text, `license`/`repository` in `package.json`,
+  Abschnitt „Lizenz“ im README). In ⚙ Einstellungen → Info Links zu Lizenz und Quelltext (`SOURCE_URL` in `app.js`,
+  zeigt auf `github.com/listiges-kaenguru/cue-player`, Lizenz über `blob/HEAD/LICENSE`, funktioniert also auch vor dem
+  Merge nach `main`). Pages-Workflow kopiert `LICENSE` mit. Noch offen: Copyright-Zeile (Name des Rechteinhabers)
+  im README bzw. in den Quelldateien, falls gewünscht.
 
 **Nutzertest 1 (Android-Smartphone, Chrome), v0.1.0:**
 
@@ -185,6 +191,9 @@ mkdir -p node_modules && ln -sf /opt/node22/lib/node_modules/playwright node_mod
 npx http-server -p 8080 -c-1 -s &
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/smoke.mjs
 ```
+
+Lokal (Fedora, Browser aus `~/.cache/ms-playwright`): `npm install`, dann Server starten und
+`CHROMIUM_PATH=$(ls -d ~/.cache/ms-playwright/chromium-*/chrome-linux*/ | head -1)chrome node tests/smoke.mjs`.
 
 Achtung: Den Server nicht mit `pkill -f http-server` beenden, das beendet auch die eigene Shell.
 Besser: `kill $(lsof -t -i:8080)` oder `fuser -k 8080/tcp`.

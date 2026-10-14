@@ -6,7 +6,8 @@ import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, cueDispl
 import { fmtTime, fmtDb, debounce, keyLabel, uid, MIN_DB } from './util.js';
 import { renderMarkdown, firstLine } from './md.js';
 
-export const APP_VERSION = '0.4.1';
+export const APP_VERSION = '0.4.2';
+export const SOURCE_URL = 'https://github.com/listiges-kaenguru/cue-player';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const COLORS = ['', '#b62324', '#bd561d', '#9e6a03', '#1a7f37', '#0f6e6e', '#1f6feb', '#6639ba', '#bf3989', '#57606a'];
@@ -1036,6 +1037,9 @@ async function openSettings() {
 
   add(h('h3', {}, 'Info'));
   add(field('Version', h('span', {}, `Cue Player ${APP_VERSION}`)));
+  add(field('Lizenz', h('a', { id: 'link-license', href: `${SOURCE_URL}/blob/HEAD/LICENSE`, target: '_blank', rel: 'noopener' }, 'GNU AGPL v3 oder später'),
+    'Freie Software: Sie dürfen sie nutzen, ändern und weitergeben. Wer eine geänderte Fassung im Netz anbietet, muss deren Quelltext bereitstellen.'));
+  add(field('Quelltext', h('a', { id: 'link-source', href: SOURCE_URL, target: '_blank', rel: 'noopener' }, SOURCE_URL.replace('https://', ''))));
   add(field('Tastatur', h('span', { class: 'muted' }, 'Leertaste = GO · Esc = Stop alle · ↑/↓ = Standby wählen · Strg+E = Edit/Show')));
 
   const dlg = $('#dlg-settings');

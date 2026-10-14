@@ -278,6 +278,7 @@ main {
 .dlg-actions.wrap { flex-wrap: wrap; }
 .form-grid { display: grid; grid-template-columns: 11em 1fr; gap: 8px 12px; align-items: center; }
 .form-grid .full { grid-column: 1 / -1; }
+.form-grid a { color: var(--standby); overflow-wrap: anywhere; }
 .form-grid h3 { grid-column: 1 / -1; margin: 10px 0 0; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); border-bottom: 1px solid var(--line); padding-bottom: 4px; }
 .form-grid label { color: var(--muted); font-size: 14px; }
 .form-grid input[type=text], .form-grid input[type=number], .form-grid select, .form-grid textarea {

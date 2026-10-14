@@ -289,6 +289,13 @@ for (const w of [1280, 390]) {
 }
 await page.setViewportSize({ width: 1280, height: 800 });
 
+// Lizenz und Quelltext-Link in den Einstellungen
+await page.click('#btn-settings');
+await page.waitForSelector('#dlg-settings[open] #link-source');
+const links = await page.$$eval('#link-license, #link-source', (as) => as.map((a) => a.href));
+check('Einstellungen: Lizenz- und Quelltext-Link', links.length === 2 && links.every((u) => u.startsWith('https://github.com/')) && links[0].endsWith('/LICENSE'), JSON.stringify(links));
+await page.click('#dlg-settings button[value=close]');
+
 check('Keine Konsolenfehler', errors.length === 0, errors.join(' | '));
 await browser.close();
 process.exit(failed ? 1 : 0);

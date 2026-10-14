@@ -6,7 +6,7 @@ Funktionsumfang des [Linux Show Player](https://www.linux-show-player.org/) (LSP
 Läuft als **Progressive Web App (PWA)** auf **Android, Windows und Linux** (und macOS) – aus einer
 einzigen Codebasis, ohne Store, offline-fähig, installierbar wie eine normale App.
 
-> **Status: Prototyp (v0.4.1).** Grundfunktionen sind da und getestet, für den Ernstfall bitte
+> **Status: Prototyp (v0.4.2).** Grundfunktionen sind da und getestet, für den Ernstfall bitte
 > vorher ausgiebig mit dem eigenen Gerät proben (siehe [Grenzen](#grenzen-des-prototyps)).
 
 ## Dokumentation
@@ -109,6 +109,16 @@ Android speicherschonend.
 - **Android:** App im Vordergrund lassen. Die App hält den Bildschirm wach (abschaltbar). Energiesparmodus
   für den Browser deaktivieren.
 - **Fehlt noch:** Video, OSC, Gruppen-Cues, Kommando-Cues, Undo, Mehrkanal-Routing, Pegelanzeige.
+
+## Lizenz
+
+Cue Player ist freie Software unter der **GNU Affero General Public License, Version 3 oder später**
+(AGPL-3.0-or-later), siehe [LICENSE](LICENSE). Sie dürfen das Programm nutzen, verändern und
+weitergeben. Wer eine veränderte Fassung anderen – auch nur über das Netz – zur Verfügung stellt,
+muss ihnen den vollständigen Quelltext dieser Fassung unter derselben Lizenz anbieten.
+
+Die App verlinkt ihren Quelltext unter **⚙ Einstellungen → Info**. Wer eine eigene, veränderte Fassung
+bereitstellt, passt dort `SOURCE_URL` in `js/app.js` an das eigene Repository an.
 
 ## Roadmap (Vorschlag)
 
