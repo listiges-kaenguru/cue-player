@@ -144,7 +144,12 @@ await page.click('.cue-row >> nth=0');
 await page.click('#btn-add-cue');
 await page.click('[data-add="memo"]');
 await page.fill('#cue-form-body input[type=text] >> nth=0', 'Umbau');
-await page.fill('#cue-form-body textarea >> nth=0', '! **Achtung** <img src=x onerror=alert(1)>\n- Punkt');
+await page.fill('#cue-form-body textarea >> nth=0', '# Kopf\n! **Achtung** <img src=x onerror=alert(1)>\n- Punkt');
+const mdStyle = (sel) => page.$$eval(sel, (els) => els.map((e) => {
+  const c = getComputedStyle(e);
+  return [e.tagName, c.fontSize, c.fontWeight, c.textTransform, c.color, c.borderBottomWidth, c.marginTop, c.marginBottom].join(' ');
+}));
+const previewStyle = await mdStyle('.md-preview > *');
 await page.click('#cue-form .primary');
 await page.waitForTimeout(200);
 check('Memo als Trenner in der Liste', await page.$eval('.cue-row >> nth=1', (r) => r.classList.contains('memo-row')));
@@ -155,6 +160,8 @@ const sbTitle = await page.$eval('.cue-row.standby .title', (t) => t.textContent
 check('GO überspringt passives Memo', sbTitle !== 'Umbau', sbTitle);
 const panel = await page.$eval('#memo-panel', (d) => ({ hidden: d.hidden, html: d.querySelector('#memo-body').innerHTML }));
 check('Regiebuch zeigt Memo', !panel.hidden && panel.html.includes('<strong>Achtung</strong>') && panel.html.includes('<li>Punkt</li>'));
+const regieStyle = await mdStyle('#memo-body .md > *');
+check('Regiebuch formatiert wie die Vorschau', JSON.stringify(regieStyle) === JSON.stringify(previewStyle), JSON.stringify({ previewStyle, regieStyle }));
 check('Regiebuch escaped HTML', !panel.html.includes('<img') && panel.html.includes('&lt;img'));
 await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
 

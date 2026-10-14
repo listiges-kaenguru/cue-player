@@ -6,7 +6,7 @@ import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, cueDispl
 import { fmtTime, fmtDb, debounce, keyLabel, uid, MIN_DB } from './util.js';
 import { renderMarkdown, renderDocument, firstLine } from './md.js';
 
-export const APP_VERSION = '0.5.1';
+export const APP_VERSION = '0.5.2';
 export const SOURCE_URL = 'https://github.com/listiges-kaenguru/cue-player';
 
 const $ = (sel, root = document) => root.querySelector(sel);
