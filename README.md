@@ -6,7 +6,7 @@ Funktionsumfang des [Linux Show Player](https://www.linux-show-player.org/) (LSP
 Läuft als **Progressive Web App (PWA)** auf **Android, Windows und Linux** (und macOS) – aus einer
 einzigen Codebasis, ohne Store, offline-fähig, installierbar wie eine normale App.
 
-> **Status: Prototyp (v0.5.2).** Grundfunktionen sind da und getestet, für den Ernstfall bitte
+> **Status: Prototyp (v0.5.3).** Grundfunktionen sind da und getestet, für den Ernstfall bitte
 > vorher ausgiebig mit dem eigenen Gerät proben (siehe [Grenzen](#grenzen-des-prototyps)).
 
 ## Dokumentation
