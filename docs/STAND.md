@@ -72,7 +72,7 @@ Workflow-Änderungen per SSH pushen (gh-Token ohne `workflow`-Scope).
   von Vorschau und Regiebuch.
 - **v0.5.3:** Optionaler Impressum-Link in ⚙ → Info aus **`site.json`** (`{ "legal": { "url", "label" } }`, nur http(s)).
   Im Repo leer (`{}`), damit Selbst-Hoster kein fremdes Impressum erben; die Demo-Instanz bekommt ihre befüllte
-  Datei aus dem Projekt `get-cue-player` (`demo/site.json`). `site.json` steht in `ASSETS` (muss auf jedem Server
+  Datei aus dem Deploy-Projekt `../demo-cueplayer` (`site.json`, `scripts/build.sh`). `site.json` steht in `ASSETS` (muss auf jedem Server
   existieren) und im Pages-Workflow. Smoke-Test prüft beide Fälle (ohne Angaben kein Link, mit Angaben Link).
   Hintergrund: Demo zieht nach `demo-cueplayer.schmaralde.de`, Homepage `get-cueplayer.schmaralde.de` (Projekt
   `../get-cue-player`) mit `impressum.html` für beide.
