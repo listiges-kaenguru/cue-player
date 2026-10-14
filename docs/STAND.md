@@ -75,7 +75,7 @@ Workflow-Änderungen per SSH pushen (gh-Token ohne `workflow`-Scope).
   Datei aus dem Deploy-Projekt `../demo-cueplayer` (`site.json`, `scripts/build.sh`). `site.json` steht in `ASSETS` (muss auf jedem Server
   existieren) und im Pages-Workflow. Smoke-Test prüft beide Fälle (ohne Angaben kein Link, mit Angaben Link).
   Hintergrund: Demo zieht nach `demo-cueplayer.schmaralde.de`, Homepage `get-cueplayer.schmaralde.de` (Projekt
-  `../get-cue-player`) mit `impressum.html` für beide.
+  `../get-cueplayer`) mit `impressum.html` für beide.
 
 **Nutzertest 1 (Android-Smartphone, Chrome), v0.1.0:**
 
