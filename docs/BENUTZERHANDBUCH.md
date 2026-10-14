@@ -244,7 +244,7 @@ Gliedert die Show und enthält Hinweise für die Technik. Spielt nichts ab.
 
 | Eingabe | Ergebnis |
 |---|---|
-| `# Überschrift`, `## …`, `### …` | Überschriften in drei Größen |
+| `# Überschrift`, `## …`, `### …` | Überschriften: `#` als Abschnittskopf (klein, grau, mit Linie), `##` groß, `###` kleiner |
 | `**fett**`, `*kursiv*`, `~~durchgestrichen~~`, `==markiert==` | Hervorhebungen |
 | `- Punkt` oder `* Punkt` | Aufzählung |
 | `1. Schritt` | Nummerierte Liste |

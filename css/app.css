@@ -223,7 +223,12 @@ main {
 .memo-item .memo-title { font-size: 18px; font-weight: 700; margin: 2px 0 4px; }
 .md { font-size: 15px; line-height: 1.45; }
 .md h3, .md h4, .md h5 { margin: 8px 0 4px; }
-.md h3 { font-size: 18px; } .md h4 { font-size: 16px; } .md h5 { font-size: 14px; color: var(--muted); }
+.md:not(.doc) h3 { /* # Überschrift: wie die Abschnittsköpfe im Editor (so sah die Vorschau schon immer aus) */
+  margin: 10px 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+  border-bottom: 1px solid var(--line); padding-bottom: 4px;
+}
+.md:not(.doc) > h3:first-child { margin-top: 0; }
+.md h4 { font-size: 16px; } .md h5 { font-size: 14px; color: var(--muted); }
 .md p { margin: 4px 0; }
 .md ul, .md ol { margin: 4px 0; padding-left: 20px; }
 .md blockquote { margin: 4px 0; padding-left: 10px; border-left: 3px solid var(--line); color: var(--muted); }
@@ -300,7 +305,7 @@ main {
 .form-grid { display: grid; grid-template-columns: 11em 1fr; gap: 8px 12px; align-items: center; }
 .form-grid .full { grid-column: 1 / -1; }
 .form-grid a { color: var(--standby); overflow-wrap: anywhere; }
-.form-grid h3 { grid-column: 1 / -1; margin: 10px 0 0; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+.form-grid > h3 { grid-column: 1 / -1; margin: 10px 0 0; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); border-bottom: 1px solid var(--line); padding-bottom: 4px; }
 .form-grid label { color: var(--muted); font-size: 14px; }
 .form-grid input[type=text], .form-grid input[type=number], .form-grid select, .form-grid textarea {
   background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%;

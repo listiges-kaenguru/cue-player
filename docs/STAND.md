@@ -3,10 +3,10 @@
 Arbeitsnotizen, damit die Entwicklung jederzeit schnell weitergehen kann.
 **Bei jeder Sitzung aktualisieren** (Stand, erledigte/neue ToDos, Erkenntnisse aus Tests).
 
-## Stand (2026-10-14, v0.5.1)
+## Stand (2026-10-14, v0.5.2)
 
 PWA ohne Build-Schritt (Vanilla JS, ES-Module). Entwicklung auf Branch `ccr-c726005c-rg7agm`; `main` wurde am 2026-10-14
-auf dem Stand v0.4.1 angelegt, v0.4.2 + v0.5.0 per PR #1 gemergt, v0.5.1 per PR #2. **Releases:** v0.5.0 (erstes), v0.5.1 (Icon-Fix).
+auf dem Stand v0.4.1 angelegt, v0.4.2 + v0.5.0 per PR #1 gemergt, v0.5.1 per PR #2, v0.5.2 per PR #3. **Releases:** v0.5.0 (erstes), v0.5.1 (Icon-Fix), v0.5.2 (Regiebuch-Überschriften).
 GitHub Pages ist noch nicht aktiviert (Deploy-Läufe auf `main` schlagen deshalb fehl), Repo ist privat.
 Workflow-Änderungen per SSH pushen (gh-Token ohne `workflow`-Scope).
 
@@ -65,6 +65,11 @@ Workflow-Änderungen per SSH pushen (gh-Token ohne `workflow`-Scope).
   `icons/*`-Anfragen gingen ins Apache-Symbolverzeichnis → 404. Ordner in **`img/`** umbenannt (Manifest,
   `index.html`, `sw.js`, Pages-Workflow). Smoke-Test prüft, dass alle Manifest-Icons als Bild laden und nicht unter
   `icons/` liegen. Bereits installierte Apps behalten das Ersatz-Icon → deinstallieren und neu installieren.
+- **v0.5.2** (Nutzerwunsch): Regiebuch sieht wieder aus wie die Editor-Vorschau. Unterschied war nur `# Überschrift`:
+  In der Vorschau griff `.form-grid h3` (Abschnittskopf: klein, grau, Großbuchstaben, Linie), im Regiebuch `.md h3`
+  (18 px fett). Jetzt hat `.md:not(.doc) h3` überall das Aussehen des Abschnittskopfs, `.form-grid > h3` gilt nur noch
+  für die eigenen Editor-Köpfe. Die Hilfe (`.md.doc`) ist ausgenommen. Smoke-Test vergleicht die berechneten Stile
+  von Vorschau und Regiebuch.
 
 **Nutzertest 1 (Android-Smartphone, Chrome), v0.1.0:**
 
