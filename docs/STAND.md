@@ -3,9 +3,10 @@
 Arbeitsnotizen, damit die Entwicklung jederzeit schnell weitergehen kann.
 **Bei jeder Sitzung aktualisieren** (Stand, erledigte/neue ToDos, Erkenntnisse aus Tests).
 
-## Stand (2026-10-14, v0.4.2)
+## Stand (2026-10-14, v0.5.0)
 
-PWA ohne Build-Schritt (Vanilla JS, ES-Module). Branch `ccr-c726005c-rg7agm`, noch nicht nach `main` gemergt, kein PR.
+PWA ohne Build-Schritt (Vanilla JS, ES-Module). Entwicklung auf Branch `ccr-c726005c-rg7agm`; `main` wurde am 2026-10-14
+auf dem Stand v0.4.1 angelegt, v0.4.2 + v0.5.0 kommen per PR dorthin. Nach dem Merge: Release v0.5.0 erstellen.
 
 **Fertig und automatisiert getestet** (`tests/smoke.mjs`, 22+ Prüfungen, Chromium headless):
 
@@ -48,7 +49,15 @@ PWA ohne Build-Schritt (Vanilla JS, ES-Module). Branch `ccr-c726005c-rg7agm`, no
   Abschnitt „Lizenz“ im README). In ⚙ Einstellungen → Info Links zu Lizenz und Quelltext (`SOURCE_URL` in `app.js`,
   zeigt auf `github.com/listiges-kaenguru/cue-player`, Lizenz über `blob/HEAD/LICENSE`, funktioniert also auch vor dem
   Merge nach `main`). Pages-Workflow kopiert `LICENSE` mit. Noch offen: Copyright-Zeile (Name des Rechteinhabers)
-  im README bzw. in den Quelldateien, falls gewünscht.
+  im README bzw. in den Quelldateien, falls gewünscht. **Achtung:** Das Repo ist privat – der Quelltext-Link erfüllt
+  die AGPL erst, wenn Nutzer der App den Quelltext tatsächlich abrufen können (Repo öffentlich machen).
+- **v0.5.0** (Nutzerwunsch): **Eingebaute Hilfe.** Knopf **?** (Handy: erste Zeile neben dem Show-Namen), **F1**,
+  oder ⚙ → Info → „Benutzerhandbuch öffnen“. Dialog `#dlg-help` lädt `docs/BENUTZERHANDBUCH.md` (in `ASSETS`, also
+  offline; Pages-Workflow kopiert die Datei mit) und rendert sie mit `renderDocument()` in `js/md.js`: Tabellen,
+  Codeblöcke, `Code`, Links (nur `#anker`/http(s)), `---`, verschachtelte Listen, `- [ ]`. Anker wie GitHub
+  (`slugify`, Präfix `hilfe-`), Klicks im Inhaltsverzeichnis scrollen im Dialog. Memo-Renderer unverändert.
+  F1 ist beim Hotkey-Lernen reserviert; hat eine ältere Show F1 als Cue-Hotkey, gewinnt der Cue.
+  **Beim Bearbeiten des Handbuchs** prüft der Smoke-Test, dass alle Sprungmarken auflösen.
 
 **Nutzertest 1 (Android-Smartphone, Chrome), v0.1.0:**
 
@@ -62,6 +71,7 @@ PWA ohne Build-Schritt (Vanilla JS, ES-Module). Branch `ccr-c726005c-rg7agm`, no
 
 **Implementiert, aber noch NICHT vom Nutzer getestet:**
 
+- Eingebaute Hilfe (v0.5.0) auf Handy und Desktop, offline nach Update
 - Alles aus v0.2.0–v0.4.0 (Pause-Fade, Klonen, Memo/Regiebuch, Presets, Start/Stop-Cue, Show/Edit-Schalter, Memo-Bestätigung,
   Mehr-Cue-Presets, Mehrfachauswahl inkl. langem Drücken auf echtem Touchscreen), besonders auf dem Handy
 - Android: Installation als App, Latenz, Wake Lock, Hintergrundverhalten

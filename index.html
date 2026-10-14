@@ -36,6 +36,7 @@
       <span class="ms-track"><span class="ms-knob"></span></span>
       <span class="ms-opt ms-show"><span class="ms-ic">▶</span><span class="ms-txt">Show</span></span>
     </button>
+    <button id="btn-help" class="tb" title="Hilfe / Benutzerhandbuch (F1)">?</button>
     <button id="btn-settings" class="tb" title="Einstellungen">⚙</button>
     <input id="file-audio" type="file" accept="audio/*,video/*,.mp3,.wav,.ogg,.flac,.m4a,.aac,.opus,.webm" multiple hidden>
   </header>
@@ -171,6 +172,17 @@
         <button value="close" class="primary">Schließen</button>
       </div>
     </form>
+  </dialog>
+
+  <!-- Hilfe: Benutzerhandbuch (docs/BENUTZERHANDBUCH.md) -->
+  <dialog id="dlg-help" class="dlg dlg-help">
+    <form method="dialog" class="help-head">
+      <h2>Hilfe</h2>
+      <span class="tb-spacer"></span>
+      <button type="button" id="help-top" title="Zum Inhaltsverzeichnis">↑ Inhalt</button>
+      <button value="close" class="primary">Schließen</button>
+    </form>
+    <div id="help-body" class="md doc"></div>
   </dialog>
 
   <div id="drop-overlay" class="drop-overlay" hidden>Dateien loslassen, um Audio-Cues anzulegen</div>

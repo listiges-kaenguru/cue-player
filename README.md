@@ -6,7 +6,7 @@ Funktionsumfang des [Linux Show Player](https://www.linux-show-player.org/) (LSP
 Läuft als **Progressive Web App (PWA)** auf **Android, Windows und Linux** (und macOS) – aus einer
 einzigen Codebasis, ohne Store, offline-fähig, installierbar wie eine normale App.
 
-> **Status: Prototyp (v0.4.2).** Grundfunktionen sind da und getestet, für den Ernstfall bitte
+> **Status: Prototyp (v0.5.0).** Grundfunktionen sind da und getestet, für den Ernstfall bitte
 > vorher ausgiebig mit dem eigenen Gerät proben (siehe [Grenzen](#grenzen-des-prototyps)).
 
 ## Dokumentation
@@ -40,6 +40,7 @@ einzigen Codebasis, ohne Store, offline-fähig, installierbar wie eine normale A
 | Mehrfachauswahl (Klonen, Löschen, Als Preset) | ✅ | ✅ |
 | Memo mit Bestätigung vor dem nächsten GO | ✅ | – |
 | Ausgabegerät wählen | ✅ (Chrome/Edge) | ✅ |
+| Eingebaute Hilfe (Benutzerhandbuch, offline, F1) | ✅ | – |
 | Video-Cues, OSC, Kommando-Cues, Gruppen-Cues | ❌ (Roadmap) | ✅ |
 | Mehrkanal-Routing, JACK, Timecode | ❌ | ✅ |
 
@@ -84,11 +85,11 @@ js/engine.js           Wiedergabe-Engine: Cue-Ablauf, Audio-Kette, Fades
 js/model.js            Datenmodell (Session, Cue-Typen, Standardwerte)
 js/storage.js          IndexedDB-Speicher, Export/Import (.cueshow)
 js/midi.js             Web-MIDI-Anbindung
-js/md.js               Markdown-Renderer (sicher, ohne Bibliothek)
+js/md.js               Markdown-Renderer für Memos und die eingebaute Hilfe (sicher, ohne Bibliothek)
 js/util.js             Hilfsfunktionen (Timer, dB-Umrechnung, Fade-Kurven)
 tests/smoke.mjs        Browser-Smoke-Test (Playwright)
 icons/                 App-Icons
-docs/                  Anleitungen
+docs/                  Anleitungen (BENUTZERHANDBUCH.md wird auch als Hilfe in der App angezeigt)
 ```
 
 **Audio-Kette pro Audio-Cue:**
