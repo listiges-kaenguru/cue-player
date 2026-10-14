@@ -74,6 +74,18 @@ Die App-Icons liegen bewusst in `img/` und nicht in `icons/`: Apache leitet `/ic
 Standard-Konfiguration auf seine eigenen Symbole um (`Alias /icons/ …`), dann fänden Browser die
 App-Icons nicht.
 
+**Impressum-Link (optional):** Die Datei `site.json` enthält Angaben des Betreibers. Im Repository
+ist sie leer (`{}`), damit eine selbst gehostete Kopie kein fremdes Impressum übernimmt. Für einen
+Link in ⚙ Einstellungen → Info die Datei auf dem eigenen Server so befüllen:
+
+```json
+{ "legal": { "url": "https://example.org/impressum.html", "label": "Impressum & Datenschutz" } }
+```
+
+`label` ist optional. Die Datei muss vorhanden sein (notfalls mit `{}`), sonst kann die App nicht
+offline installiert werden. Beim Aktualisieren der App die eigene `site.json` nicht überschreiben.
+Geänderte Angaben erscheinen bei installierten Apps mit dem nächsten App-Update.
+
 ---
 
 ## 2. Android

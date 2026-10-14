@@ -6,7 +6,7 @@ import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, cueDispl
 import { fmtTime, fmtDb, debounce, keyLabel, uid, MIN_DB } from './util.js';
 import { renderMarkdown, renderDocument, firstLine } from './md.js';
 
-export const APP_VERSION = '0.5.2';
+export const APP_VERSION = '0.5.3';
 export const SOURCE_URL = 'https://github.com/listiges-kaenguru/cue-player';
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -35,6 +35,13 @@ const cues = () => state.session.cues;
 const settings = () => state.session.settings;
 const label = (cue) => cueDisplayName(state.session, cue);
 engine.labelFn = label;
+
+// Angaben des Betreibers dieser Instanz aus site.json (z. B. Link zu Impressum & Datenschutz).
+// Im Repo ist die Datei leer, damit selbst gehostete Kopien kein fremdes Impressum übernehmen.
+let siteInfo = {};
+async function loadSiteInfo() {
+  try { siteInfo = (await (await fetch('site.json')).json()) ?? {}; } catch { siteInfo = {}; }
+}
 
 const save = debounce(() => store.saveSession(state.session).catch((e) => toast('Speichern fehlgeschlagen: ' + e.message, true)), 400);
 
@@ -109,6 +116,7 @@ async function init() {
   }
   await openSession(session);
   ensureDefaultPresets().catch((e) => console.warn('Presets:', e));
+  loadSiteInfo();
   requestAnimationFrame(frame);
   registerSW();
 }
@@ -1041,6 +1049,11 @@ async function openSettings() {
   add(field('Lizenz', h('a', { id: 'link-license', href: `${SOURCE_URL}/blob/HEAD/LICENSE`, target: '_blank', rel: 'noopener' }, 'GNU AGPL v3 oder später'),
     'Freie Software: Sie dürfen sie nutzen, ändern und weitergeben. Wer eine geänderte Fassung im Netz anbietet, muss deren Quelltext bereitstellen.'));
   add(field('Quelltext', h('a', { id: 'link-source', href: SOURCE_URL, target: '_blank', rel: 'noopener' }, SOURCE_URL.replace('https://', ''))));
+  const legal = siteInfo.legal;
+  if (legal && /^https?:\/\//.test(legal.url ?? '')) {
+    add(field('Impressum', h('a', { id: 'link-legal', href: legal.url, target: '_blank', rel: 'noopener' }, legal.label || 'Impressum & Datenschutz'),
+      'Angaben des Betreibers dieser Instanz.'));
+  }
   add(field('Tastatur', h('span', { class: 'muted' }, 'Leertaste = GO · Esc = Stop alle · ↑/↓ = Standby wählen · Strg+E = Edit/Show · F1 = Hilfe')));
 
   const dlg = $('#dlg-settings');

@@ -331,6 +331,23 @@ await page.click('#dlg-help button[value=close]');
 const docXss = await page.evaluate(async () => (await import('./js/md.js')).renderDocument('[x](javascript:alert(1)) <img src=x onerror=alert(1)>\n| a |\n|---|\n| <b>b</b> |'));
 check('Hilfe-Renderer escaped HTML und blockiert javascript:-Links', !/<img|<b>|href="javascript/.test(docXss), docXss);
 
+// Impressum-Link nur, wenn site.json des Betreibers einen enthält (im Repo leer → kein Link)
+await page.click('#btn-settings');
+await page.waitForSelector('#dlg-settings #link-source');
+check('Einstellungen: ohne site.json-Angaben kein Impressum-Link', !(await page.$('#link-legal')));
+await page.keyboard.press('Escape');
+const ctx2 = await browser.newContext({ serviceWorkers: 'block' });
+const page2 = await ctx2.newPage();
+page2.on('pageerror', (e) => errors.push(e.message));
+await page2.route('**/site.json', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ legal: { url: 'https://example.org/impressum.html' } }) }));
+await page2.goto(URL);
+await page2.waitForTimeout(500);
+await page2.click('#btn-settings');
+await page2.waitForSelector('#dlg-settings #link-source');
+const legal = await page2.$eval('#link-legal', (a) => [a.href, a.textContent]).catch(() => null);
+check('Einstellungen: Impressum-Link aus site.json', legal?.[0] === 'https://example.org/impressum.html' && legal[1] === 'Impressum & Datenschutz', JSON.stringify(legal));
+await ctx2.close();
+
 check('Keine Konsolenfehler', errors.length === 0, errors.join(' | '));
 await browser.close();
 process.exit(failed ? 1 : 0);

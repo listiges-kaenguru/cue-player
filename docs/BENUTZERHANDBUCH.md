@@ -384,7 +384,7 @@ Website-Daten gelöscht, sind sie weg. Deshalb nach jeder Probe **exportieren**.
 | MIDI verwenden | Web MIDI aktivieren (der Browser fragt nach Erlaubnis). |
 | GO / Stop alle per MIDI | Globale MIDI-Trigger. |
 | Speicher | Belegung anzeigen, dauerhaften Speicher anfordern, unbenutzte Dateien löschen. |
-| Info | Version, Hilfe öffnen, Lizenz (GNU AGPL v3) und Link zum Quelltext. |
+| Info | Version, Hilfe öffnen, Lizenz (GNU AGPL v3) und Link zum Quelltext. Hat der Betreiber der Instanz ein Impressum hinterlegt, steht hier auch der Link dazu. |
 
 Die Einstellungen gelten **pro Show** und werden mit exportiert.
 

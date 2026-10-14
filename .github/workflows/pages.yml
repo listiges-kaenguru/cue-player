@@ -25,7 +25,7 @@ jobs:
       - name: Prepare site
         run: |
           mkdir _site
-          cp -r index.html manifest.webmanifest sw.js LICENSE css js img _site/
+          cp -r index.html manifest.webmanifest sw.js site.json LICENSE css js img _site/
           mkdir _site/docs
           cp docs/BENUTZERHANDBUCH.md _site/docs/
       - uses: actions/configure-pages@v5
