@@ -6,7 +6,9 @@ Arbeitsnotizen, damit die Entwicklung jederzeit schnell weitergehen kann.
 ## Stand (2026-10-14, v0.5.0)
 
 PWA ohne Build-Schritt (Vanilla JS, ES-Module). Entwicklung auf Branch `ccr-c726005c-rg7agm`; `main` wurde am 2026-10-14
-auf dem Stand v0.4.1 angelegt, v0.4.2 + v0.5.0 kommen per PR dorthin. Nach dem Merge: Release v0.5.0 erstellen.
+auf dem Stand v0.4.1 angelegt, v0.4.2 + v0.5.0 per PR #1 gemergt. **Release v0.5.0** (erstes Release) erstellt.
+GitHub Pages ist noch nicht aktiviert (Deploy-Läufe auf `main` schlagen deshalb fehl), Repo ist privat.
+Workflow-Änderungen per SSH pushen (gh-Token ohne `workflow`-Scope).
 
 **Fertig und automatisiert getestet** (`tests/smoke.mjs`, 22+ Prüfungen, Chromium headless):
 
