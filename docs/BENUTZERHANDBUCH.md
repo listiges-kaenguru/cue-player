@@ -26,7 +26,7 @@ Inhalt:
 
 | Begriff | Bedeutung |
 |---|---|
-| **Show** | Eine Sammlung von Cues mit eigenen Einstellungen (entspricht einer „Session“ in Linux Show Player). |
+| **Show** | Eine Sammlung von Cues mit eigenen Einstellungen. |
 | **Cue** | Ein Eintrag in der Liste: spielt eine Datei ab oder führt eine Aktion aus. |
 | **Standby** | Der Cue, der beim nächsten **GO** ausgelöst wird. Blau markiert mit ▸. |
 | **GO** | Löst den Standby-Cue aus und setzt den Standby auf den nächsten Cue. |

@@ -3,10 +3,10 @@
 Arbeitsnotizen, damit die Entwicklung jederzeit schnell weitergehen kann.
 **Bei jeder Sitzung aktualisieren** (Stand, erledigte/neue ToDos, Erkenntnisse aus Tests).
 
-## Stand (2026-10-14, v0.5.3)
+## Stand (2026-10-15, v0.5.4)
 
 PWA ohne Build-Schritt (Vanilla JS, ES-Module). Entwicklung auf Branch `ccr-c726005c-rg7agm`; `main` wurde am 2026-10-14
-auf dem Stand v0.4.1 angelegt, v0.4.2 + v0.5.0 per PR #1 gemergt, v0.5.1 per PR #2, v0.5.2 per PR #3, v0.5.3 per PR #4. **Releases:** v0.5.0 (erstes), v0.5.1 (Icon-Fix), v0.5.2 (Regiebuch-Überschriften), v0.5.3 (Impressum-Link).
+auf dem Stand v0.4.1 angelegt, v0.4.2 + v0.5.0 per PR #1 gemergt, v0.5.1 per PR #2, v0.5.2 per PR #3, v0.5.3 per PR #4, v0.5.4 per PR #6. **Releases:** v0.5.0 (erstes), v0.5.1 (Icon-Fix), v0.5.2 (Regiebuch-Überschriften), v0.5.3 (Impressum-Link), v0.5.4 (Linux-Show-Player-Hinweise nur noch in der README).
 GitHub Pages ist noch nicht aktiviert (Deploy-Läufe auf `main` schlagen deshalb fehl), Repo ist privat.
 Workflow-Änderungen per SSH pushen (gh-Token ohne `workflow`-Scope).
 
@@ -76,6 +76,9 @@ Workflow-Änderungen per SSH pushen (gh-Token ohne `workflow`-Scope).
   existieren) und im Pages-Workflow. Smoke-Test prüft beide Fälle (ohne Angaben kein Link, mit Angaben Link).
   Hintergrund: Demo zieht nach `demo-cueplayer.schmaralde.de`, Homepage `get-cueplayer.schmaralde.de` (Projekt
   `../get-cueplayer`) mit `impressum.html` für beide.
+
+- **v0.5.4** (Nutzerwunsch): Hinweise auf Linux Show Player aus App (Handbuch, Grundbegriff „Show“) und Homepage
+  entfernt. Nur die README erwähnt ihn noch, im Abschnitt „Entstehung“; die Funktionstabelle hat keine Vergleichsspalte mehr.
 
 **Nutzertest 1 (Android-Smartphone, Chrome), v0.1.0:**
 
