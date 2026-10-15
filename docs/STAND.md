@@ -80,6 +80,11 @@ Workflow-Änderungen per SSH pushen (gh-Token ohne `workflow`-Scope).
 - **v0.5.4** (Nutzerwunsch): Hinweise auf Linux Show Player aus App (Handbuch, Grundbegriff „Show“) und Homepage
   entfernt. Nur die README erwähnt ihn noch, im Abschnitt „Entstehung“; die Funktionstabelle hat keine Vergleichsspalte mehr.
 
+- **Unveröffentlicht (kommt mit dem nächsten Release):** `sw.js` lädt beim Installieren alle `ASSETS` mit
+  `cache: 'reload'`, also am HTTP-Cache vorbei. Vorher konnten alte JS/CSS-Dateien aus dem Browser-Cache im Cache
+  der neuen Version landen. `INSTALLATION.md` empfiehlt `Cache-Control: no-cache` (Apache-`.htaccess`); die
+  Demo-Instanz setzt das ab sofort für alle Dateien (`../demo-cueplayer/htaccess`).
+
 **Nutzertest 1 (Android-Smartphone, Chrome), v0.1.0:**
 
 - ✅ Tonausgabe · ✅ Fade-Cue · ✅ Pause-Cue · ✅ Memo-Cue (Wunsch: auffälliger, umgesetzt in v0.2.0)
