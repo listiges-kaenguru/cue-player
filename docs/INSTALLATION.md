@@ -74,6 +74,16 @@ Die App-Icons liegen bewusst in `img/` und nicht in `icons/`: Apache leitet `/ic
 Standard-Konfiguration auf seine eigenen Symbole um (`Alias /icons/ …`), dann fänden Browser die
 App-Icons nicht.
 
+**Cache-Header (empfohlen):** Damit neue Versionen sofort ankommen, sollte der Server bei allen
+Dateien `Cache-Control: no-cache` senden (der Browser fragt dann jedes Mal kurz nach, unveränderte
+Dateien kommen als „304 Not Modified“). Bei Apache genügt eine `.htaccess` im App-Ordner:
+
+```apache
+<IfModule mod_headers.c>
+  Header set Cache-Control "no-cache"
+</IfModule>
+```
+
 **Impressum-Link (optional):** Die Datei `site.json` enthält Angaben des Betreibers. Im Repository
 ist sie leer (`{}`), damit eine selbst gehostete Kopie kein fremdes Impressum übernimmt. Für einen
 Link in ⚙ Einstellungen → Info die Datei auf dem eigenen Server so befüllen:
