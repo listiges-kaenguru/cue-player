@@ -9,7 +9,7 @@ auch **ohne Internet**.
 
 Inhalt:
 
-1. [Bereitstellen](#1-bereitstellen) – GitHub Pages (empfohlen), lokal, eigener Server
+1. [Bereitstellen](#1-bereitstellen) – GitHub Pages, lokal, eigener Server
 2. [Installieren auf Android](#2-android)
 3. [Installieren auf Windows](#3-windows)
 4. [Installieren auf Linux](#4-linux)
@@ -21,16 +21,20 @@ Inhalt:
 
 ## 1. Bereitstellen
 
-### Variante A: GitHub Pages (empfohlen, kostenlos, HTTPS inklusive)
+### Variante A: GitHub Pages (kostenlos, HTTPS inklusive)
 
-Das Repository enthält bereits einen Workflow (`.github/workflows/pages.yml`), der die App bei jedem
-Push auf `main` veröffentlicht.
+Dafür brauchst du eine **eigene Kopie des Repositorys auf GitHub** (Fork). Sie enthält einen Workflow
+(`.github/workflows/pages.yml`), der die App bei jedem Push auf `main` veröffentlicht. In der
+Download-ZIP (Release-Archiv) ist dieser Workflow nicht enthalten – mit der ZIP Variante B oder C
+nutzen.
 
-1. Auf GitHub im Repository: **Settings → Pages**.
-2. Unter **Build and deployment → Source** „**GitHub Actions**“ wählen.
-3. Den Code auf den Branch `main` bringen (Merge des Pull Requests) – oder unter **Actions →
-   „Deploy to GitHub Pages“ → Run workflow** manuell starten.
-4. Nach ca. einer Minute ist die App erreichbar unter
+1. Das Repository auf GitHub **forken** (Schaltfläche **Fork** oben rechts).
+2. Im eigenen Fork: **Settings → Pages**.
+3. Unter **Build and deployment → Source** „**GitHub Actions**“ wählen.
+4. Unter **Actions** die Workflows erlauben (bei Forks sind sie anfangs abgeschaltet) und
+   **„Deploy to GitHub Pages“ → Run workflow** starten. Danach veröffentlicht jeder Push auf `main`
+   die App automatisch.
+5. Nach ca. einer Minute ist die App erreichbar unter
    `https://<benutzername>.github.io/<repository>/`
    (hier z. B. `https://listiges-kaenguru.github.io/cue-player/`).
 
@@ -62,8 +66,9 @@ App kommt aus dem Offline-Cache.
 
 ### Variante C: Eigener Webserver
 
-Den Inhalt des Repositorys (alle Dateien außer `.git`/`.github`/`tests`; aus `docs` wird nur
-`docs/BENUTZERHANDBUCH.md` gebraucht, die eingebaute Hilfe) in ein Verzeichnis eines
+Den Inhalt der entpackten Download-ZIP – oder des Repositorys (alle Dateien außer
+`.git`/`.github`/`tests`; aus `docs` wird nur `docs/BENUTZERHANDBUCH.md` gebraucht, die eingebaute
+Hilfe) – in ein Verzeichnis eines
 HTTPS-Webservers kopieren (nginx, Apache, Caddy …). Es gibt keinen Build-Schritt und keine
 Server-Logik – es sind nur statische Dateien. Unterordner (`https://example.org/cue/`) funktionieren.
 
