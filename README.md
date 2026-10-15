@@ -1,12 +1,11 @@
 # Cue Player
 
-Ein plattformübergreifender **Show-Player für Theater, Events und Live-Sound** – inspiriert vom
-Funktionsumfang des [Linux Show Player](https://www.linux-show-player.org/) (LSP).
+Ein plattformübergreifender **Show-Player für Theater, Events und Live-Sound**.
 
 Läuft als **Progressive Web App (PWA)** auf **Android, Windows und Linux** (und macOS) – aus einer
 einzigen Codebasis, ohne Store, offline-fähig, installierbar wie eine normale App.
 
-> **Status: Prototyp (v0.5.3).** Grundfunktionen sind da und getestet, für den Ernstfall bitte
+> **Status: Prototyp (v0.5.4).** Grundfunktionen sind da und getestet, für den Ernstfall bitte
 > vorher ausgiebig mit dem eigenen Gerät proben (siehe [Grenzen](#grenzen-des-prototyps)).
 
 ## Dokumentation
@@ -19,30 +18,36 @@ einzigen Codebasis, ohne Store, offline-fähig, installierbar wie eine normale A
 
 ## Funktionen
 
-| Bereich | Cue Player (Prototyp) | Linux Show Player |
-|---|---|---|
-| Cue-Liste mit GO-Taste & Standby | ✅ | ✅ |
-| Cart-Layout (Button-Raster) | ✅ | ✅ |
-| Audio-Cues (MP3, WAV, OGG, FLAC, M4A, Opus …) | ✅ | ✅ |
-| Lautstärke (dB), Panorama, Start/Ende-Trimmung, Loop | ✅ | ✅ |
-| Fade-In / Fade-Out (linear / logarithmisch) | ✅ | ✅ |
-| Fade-Cue (Lautstärke eines laufenden Cues ändern) | ✅ | ✅ |
-| Start/Stop- und Pause/Weiter-Cues (je mit Umschalten und Fade) | ✅ | ✅ |
-| Pre-Wait, Post-Wait, Auto-Continue, Auto-Follow | ✅ | ✅ |
-| Stop alle (mit Fade), Pause alle, Weiter | ✅ | ✅ |
-| Tastatur-Trigger pro Cue | ✅ | ✅ |
-| MIDI-Trigger (Eingang) & MIDI-Cues (Ausgang) | ✅ (Web MIDI) | ✅ |
-| Mehrere Shows, Export/Import als eine Datei | ✅ (`.cueshow`) | ✅ (`.lsp`) |
-| Show-Modus (Bearbeiten sperren, Schalter mit optionaler Nachfrage) | ✅ | – |
-| Memo-Cues als Zwischenüberschrift, Regiebuch mit Markdown | ✅ | – |
-| Cues klonen | ✅ | ✅ |
-| Presets (Vorlagen aus einem oder mehreren Cues, für alle Shows) | ✅ | – |
-| Mehrfachauswahl (Klonen, Löschen, Als Preset) | ✅ | ✅ |
-| Memo mit Bestätigung vor dem nächsten GO | ✅ | – |
-| Ausgabegerät wählen | ✅ (Chrome/Edge) | ✅ |
-| Eingebaute Hilfe (Benutzerhandbuch, offline, F1) | ✅ | – |
-| Video-Cues, OSC, Kommando-Cues, Gruppen-Cues | ❌ (Roadmap) | ✅ |
-| Mehrkanal-Routing, JACK, Timecode | ❌ | ✅ |
+| Bereich | Stand |
+|---|---|
+| Cue-Liste mit GO-Taste & Standby | ✅ |
+| Cart-Layout (Button-Raster) | ✅ |
+| Audio-Cues (MP3, WAV, OGG, FLAC, M4A, Opus …) | ✅ |
+| Lautstärke (dB), Panorama, Start/Ende-Trimmung, Loop | ✅ |
+| Fade-In / Fade-Out (linear / logarithmisch) | ✅ |
+| Fade-Cue (Lautstärke eines laufenden Cues ändern) | ✅ |
+| Start/Stop- und Pause/Weiter-Cues (je mit Umschalten und Fade) | ✅ |
+| Pre-Wait, Post-Wait, Auto-Continue, Auto-Follow | ✅ |
+| Stop alle (mit Fade), Pause alle, Weiter | ✅ |
+| Tastatur-Trigger pro Cue | ✅ |
+| MIDI-Trigger (Eingang) & MIDI-Cues (Ausgang) | ✅ (Web MIDI) |
+| Mehrere Shows, Export/Import als eine Datei | ✅ (`.cueshow`) |
+| Show-Modus (Bearbeiten sperren, Schalter mit optionaler Nachfrage) | ✅ |
+| Memo-Cues als Zwischenüberschrift, Regiebuch mit Markdown | ✅ |
+| Cues klonen | ✅ |
+| Presets (Vorlagen aus einem oder mehreren Cues, für alle Shows) | ✅ |
+| Mehrfachauswahl (Klonen, Löschen, Als Preset) | ✅ |
+| Memo mit Bestätigung vor dem nächsten GO | ✅ |
+| Ausgabegerät wählen | ✅ (Chrome/Edge) |
+| Eingebaute Hilfe (Benutzerhandbuch, offline, F1) | ✅ |
+| Video-Cues, OSC, Kommando-Cues, Gruppen-Cues | ❌ (Roadmap) |
+| Mehrkanal-Routing, JACK, Timecode | ❌ |
+
+## Entstehung
+
+Die Anregung kam vom [Linux Show Player](https://www.linux-show-player.org/). Bei der Arbeit damit fehlten mir
+einige Dinge, und ich wollte einen Show-Player, den ich unabhängig vom Gerät nutzen kann: unter Android
+genauso wie unter Windows oder Linux. Daraus ist der Cue Player entstanden.
 
 ## Warum PWA?
 
