@@ -8,6 +8,8 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+## [0.6.0] – 2026-10-17
+
 ### Hinzugefügt
 - **Versionsprüfung:** ⚙ Einstellungen → Info zeigt neben der Version, ob auf GitHub eine neuere erschienen ist
   (mit Link zum Release), sonst „(neueste Version)“. Die App fragt dafür die GitHub-API höchstens einmal am Tag und
