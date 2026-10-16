@@ -1,5 +1,5 @@
 // Web-MIDI: Eingänge als Trigger, Ausgänge für MIDI-Cues.
-import { Emitter } from './util.js';
+import { Emitter, clamp } from './util.js';
 
 export class Midi extends Emitter {
   constructor() {
@@ -52,7 +52,7 @@ export function midiLabel(key) {
 }
 
 export function midiBytes(cue) {
-  const ch = (Math.max(1, Math.min(16, cue.channel | 0)) - 1) & 0x0f;
+  const ch = (clamp(cue.channel | 0, 1, 16) - 1) & 0x0f;
   const d1 = cue.data1 & 0x7f;
   const d2 = cue.data2 & 0x7f;
   switch (cue.msg) {

@@ -38,10 +38,10 @@ async function tx(store, mode, fn) {
 }
 
 const req2p = (req) => new Promise((res, rej) => { req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error); });
+const getAll = (store) => tx(store, 'readonly', (s) => req2p(s.getAll()));
 
 export async function listSessions() {
-  const all = await tx('sessions', 'readonly', (s) => req2p(s.getAll()));
-  return all
+  return (await getAll('sessions'))
     .map(({ id, name, updated, cues }) => ({ id, name, updated, count: cues?.length ?? 0 }))
     .sort((a, b) => (b.updated || 0) - (a.updated || 0));
 }
@@ -67,11 +67,8 @@ export async function storeFile(file) {
 
 /** Löscht Mediendateien, die von keiner Session und keinem Preset mehr referenziert werden. */
 export async function gcMedia() {
-  const sessions = await tx('sessions', 'readonly', (s) => req2p(s.getAll()));
-  const presets = await listPresets();
-  const used = new Set();
-  sessions.forEach((se) => se.cues?.forEach((c) => c.mediaId && used.add(c.mediaId)));
-  presets.forEach((p) => p.cues.forEach((c) => c.mediaId && used.add(c.mediaId)));
+  const owners = [...await getAll('sessions'), ...await listPresets()];
+  const used = new Set(owners.flatMap((o) => o.cues ?? []).map((c) => c.mediaId).filter(Boolean));
   const keys = await tx('media', 'readonly', (s) => req2p(s.getAllKeys()));
   const unused = keys.filter((k) => !used.has(k));
   if (unused.length) await tx('media', 'readwrite', (s) => unused.forEach((k) => s.delete(k)));
@@ -80,7 +77,7 @@ export async function gcMedia() {
 
 // --- Presets (global, für alle Shows) ---
 export async function listPresets() {
-  const all = await tx('presets', 'readonly', (s) => req2p(s.getAll()));
+  const all = await getAll('presets');
   all.forEach(migratePreset);
   return all.sort((a, b) => a.name.localeCompare(b.name, 'de'));
 }

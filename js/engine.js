@@ -1,5 +1,5 @@
 // Wiedergabe-Engine: Cue-Ablauf (Pre-Wait, Post-Wait, Auto-Continue/-Follow) und Audio über Web Audio.
-import { Emitter, Timer, dbToGain, rampParam } from './util.js';
+import { Emitter, Timer, clamp, dbToGain, rampParam } from './util.js';
 import { midiBytes } from './midi.js';
 
 const DECLICK = 0.015; // s – kurze Rampe gegen Knackser bei Pause/Stop
@@ -48,11 +48,13 @@ class Runner {
     const cue = this.cue;
     this.playing = true;
     this.stopping = false;
-    if (cue.nextAction === 'continue') {
-      this.postTimer = new Timer((cue.postWait || 0) * 1000, () => this._postDone());
-    }
+    if (cue.nextAction === 'continue') this._startPostWait();
     this.changed();
     this.start();
+  }
+
+  _startPostWait() {
+    this.postTimer = new Timer((this.cue.postWait || 0) * 1000, () => this._postDone());
   }
 
   _postDone() {
@@ -71,10 +73,7 @@ class Runner {
       this.paused = false;
       this.postTimer?.resume();
     }
-    const cue = this.cue;
-    if (natural && cue?.nextAction === 'follow') {
-      this.postTimer = new Timer((cue.postWait || 0) * 1000, () => this._postDone());
-    }
+    if (natural && this.cue?.nextAction === 'follow') this._startPostWait();
     this.changed();
   }
 
@@ -141,7 +140,12 @@ class AudioRunner extends Runner {
     this.mediaId = null;
     this.error = '';
     this.mediaDuration = 0;
-    this.token = 0;
+    this.token = 0; // macht veraltete asynchrone Starts ungültig
+    this.ready = null;
+    this.fadingOut = false;
+    this.stopH = null; // Timeout bis zum Ende eines Stop-Fades
+    this.pauseH = null; // Timeout bis zum Anhalten nach einem Pause-Fade
+    this.envBeforePause = null;
   }
 
   /** Lädt die Datei in ein <audio>-Element (gestreamt, nicht komplett dekodiert – spart Speicher). */
@@ -203,7 +207,7 @@ class AudioRunner extends Runner {
   bounds() {
     const cue = this.cue;
     const dur = this.mediaDuration || cue.duration || 0;
-    const start = Math.min(Math.max(0, cue.start || 0), dur);
+    const start = clamp(cue.start || 0, 0, dur);
     const end = cue.end > 0 ? Math.min(cue.end, dur) : dur;
     return { start, end: Math.max(start, end) };
   }
@@ -275,11 +279,10 @@ class AudioRunner extends Runner {
 
   pauseAction(fade = 0) {
     if (!this.chain) { this.token++; return; }
-    const ctx = this.engine.ctx;
     // Läuft noch ein Pause-Fade (schnelles Pause/Weiter/Pause), den ursprünglichen Pegel behalten.
     if (!this.pauseH) this.envBeforePause = this.chain.env.gain.value;
     const f = Math.max(DECLICK, fade);
-    rampParam(ctx, this.chain.env.gain, 0, f, fade > 0 ? this.cue.fadeCurve : 'linear');
+    rampParam(this.engine.ctx, this.chain.env.gain, 0, f, fade > 0 ? this.cue.fadeCurve : 'linear');
     clearTimeout(this.pauseH);
     this.pauseH = setTimeout(() => { this.pauseH = null; this.el?.pause(); }, f * 1000 + 10);
   }
@@ -288,11 +291,10 @@ class AudioRunner extends Runner {
     clearTimeout(this.pauseH);
     this.pauseH = null;
     if (!this.chain) { this.start(); return; }
-    const ctx = this.engine.ctx;
     this.fadingOut = false;
     if (this.el.paused) this.el.play().catch(() => {});
     const f = Math.max(DECLICK * 2, fade);
-    rampParam(ctx, this.chain.env.gain, Math.max(0.0001, this.envBeforePause ?? 1), f, fade > 0 ? this.cue.fadeCurve : 'linear');
+    rampParam(this.engine.ctx, this.chain.env.gain, Math.max(0.0001, this.envBeforePause ?? 1), f, fade > 0 ? this.cue.fadeCurve : 'linear');
   }
 
   stopAction(fade, immediate) {
@@ -325,8 +327,8 @@ class AudioRunner extends Runner {
 
 // ---------------------------------------------------------------------------
 
+/** Basisklasse für Aktionen mit Dauer (z. B. Fade). */
 class TimedRunner extends Runner {
-  /** Hilfsklasse für Aktionen mit Dauer (z. B. Fade). */
   runFor(sec, onDone) {
     this.actTimer = new Timer(sec * 1000, () => { this.actTimer = null; onDone?.(); this.ended(true); });
   }
@@ -365,7 +367,8 @@ class StartStopRunner extends Runner {
     } else {
       const target = this.engine.runner(cue.target);
       const stop = cue.mode === 'stop' || (cue.mode === 'toggle' && target?.active && !target.paused);
-      if (stop) { if (target?.active) target.stop(cue.fade); } else this.engine.go(cue.target);
+      if (!stop) this.engine.go(cue.target);
+      else if (target?.active) target.stop(cue.fade);
     }
     this.ended(true);
   }
@@ -378,7 +381,8 @@ class PauseRunner extends Runner {
     targets.forEach((r) => {
       if (!r || r === this || !r.active) return;
       const doPause = cue.mode === 'pause' || (cue.mode === 'toggle' && !r.paused);
-      doPause ? r.pause(cue.fadeOut || 0) : r.resume(cue.fadeIn || 0);
+      if (doPause) r.pause(cue.fadeOut || 0);
+      else r.resume(cue.fadeIn || 0);
     });
     this.ended(true);
   }
@@ -412,7 +416,8 @@ export class Engine extends Emitter {
     this.runners = new Map();
     this.urls = new Map();
     this.labelFn = (c) => c.name || c.type;
-    setInterval(() => this._tick(), 20);
+    // Ende-Erkennung, Loop-Sprünge und Fade-Out am Ende der Audio-Cues
+    setInterval(() => this.runners.forEach((r) => r.tick?.()), 20);
   }
 
   /** Muss aus einer Benutzeraktion heraus aufgerufen werden (Autoplay-Richtlinien). */
@@ -436,13 +441,11 @@ export class Engine extends Emitter {
     this.urls.clear();
     this.session = session;
     if (this.master) this.setMaster(session.settings.masterDb);
-    session.cues.forEach((c) => this.runner(c.id));
-    // Audio vorladen
-    this.preloadAll();
-  }
-
-  preloadAll() {
-    this.session.cues.filter((c) => c.type === 'audio').forEach((c) => this.runner(c.id)?.prepare());
+    // Runner anlegen und Audio vorladen
+    session.cues.forEach((c) => {
+      const r = this.runner(c.id);
+      if (c.type === 'audio') r.prepare();
+    });
   }
 
   cue(id) { return this.session?.cues.find((c) => c.id === id); }
@@ -453,7 +456,7 @@ export class Engine extends Emitter {
     const cue = this.cue(id);
     if (!cue) return null;
     const Cls = RUNNERS[cue.type] || Runner;
-    if (r && !(r.constructor === Cls)) { r.dispose(); r = null; }
+    if (r && r.constructor !== Cls) { r.dispose(); r = null; }
     if (!r) { r = new Cls(this, id); this.runners.set(id, r); }
     return r;
   }
@@ -492,10 +495,6 @@ export class Engine extends Emitter {
     if (i >= 0 && i + 1 < cues.length) this.go(cues[i + 1].id);
   }
 
-  stop(id, fade = 0) { this.runners.get(id)?.stop(fade); }
-  pause(id, fade = 0) { this.runners.get(id)?.pause(fade); }
-  resume(id, fade = 0) { this.runners.get(id)?.resume(fade); }
-
   active() { return [...this.runners.values()].filter((r) => r.active); }
 
   stopAll(fade = 0) { this.active().forEach((r) => r.stop(fade)); }
@@ -511,9 +510,5 @@ export class Engine extends Emitter {
   async setSink(sinkId) {
     if (!this.ctx?.setSinkId) throw new Error('Ausgabegerät-Auswahl wird nicht unterstützt');
     await this.ctx.setSinkId(sinkId || '');
-  }
-
-  _tick() {
-    this.runners.forEach((r) => r.tick?.());
   }
 }
