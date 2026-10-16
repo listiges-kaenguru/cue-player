@@ -23,20 +23,18 @@ Inhalt:
 
 ### Variante A: GitHub Pages (kostenlos, HTTPS inklusive)
 
-Dafür brauchst du eine **eigene Kopie des Repositorys auf GitHub** (Fork). Sie enthält einen Workflow
-(`.github/workflows/pages.yml`), der die App bei jedem Push auf `main` veröffentlicht. In der
-Download-ZIP (Release-Archiv) ist dieser Workflow nicht enthalten – mit der ZIP Variante B oder C
-nutzen.
+Dafür brauchst du eine **eigene Kopie des Repositorys auf GitHub** (Fork oder ein eigenes Repository
+mit dem Inhalt der Download-ZIP). Ein Build-Schritt oder Workflow ist nicht nötig.
 
-1. Das Repository auf GitHub **forken** (Schaltfläche **Fork** oben rechts).
-2. Im eigenen Fork: **Settings → Pages**.
-3. Unter **Build and deployment → Source** „**GitHub Actions**“ wählen.
-4. Unter **Actions** die Workflows erlauben (bei Forks sind sie anfangs abgeschaltet) und
-   **„Deploy to GitHub Pages“ → Run workflow** starten. Danach veröffentlicht jeder Push auf `main`
-   die App automatisch.
+1. Das Repository auf GitHub **forken** (Schaltfläche **Fork** oben rechts) oder ein neues Repository
+   anlegen und den Inhalt der ZIP hochladen.
+2. Im Hauptordner eine leere Datei **`.nojekyll`** anlegen. Sonst verarbeitet GitHub die Markdown-Dateien
+   und die eingebaute Hilfe findet `docs/BENUTZERHANDBUCH.md` nicht.
+3. Im eigenen Repository: **Settings → Pages**.
+4. Unter **Build and deployment → Source** „**Deploy from a branch**“ wählen, Branch `main`,
+   Ordner `/ (root)`, **Save**.
 5. Nach ca. einer Minute ist die App erreichbar unter
-   `https://<benutzername>.github.io/<repository>/`
-   (hier z. B. `https://listiges-kaenguru.github.io/cue-player/`).
+   `https://<benutzername>.github.io/<repository>/`. Jeder Push auf `main` veröffentlicht sie neu.
 
 > Hinweis: Bei privaten Repositories ist GitHub Pages nur mit einem kostenpflichtigen GitHub-Plan
 > verfügbar. Alternativ Variante C nutzen (z. B. Netlify, Cloudflare Pages – dort einfach den
@@ -107,7 +105,7 @@ Geänderte Angaben erscheinen bei installierten Apps mit dem nächsten App-Updat
 
 Voraussetzung: **Google Chrome** (empfohlen) oder Microsoft Edge, Android 8 oder neuer.
 
-1. Die App-Adresse (z. B. `https://listiges-kaenguru.github.io/cue-player/`) in Chrome öffnen.
+1. Die App-Adresse (z. B. `https://demo-cueplayer.schmaralde.de/`) in Chrome öffnen.
 2. Chrome zeigt unten „**App installieren**“ – antippen. Falls nicht:
    Menü **⋮ → App installieren** (bzw. „Zum Startbildschirm hinzufügen“).
 3. Die App erscheint auf dem Startbildschirm und in der App-Übersicht und öffnet sich ohne
