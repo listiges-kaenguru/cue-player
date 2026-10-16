@@ -122,3 +122,40 @@ export function keyLabel(code) {
   if (!code) return '';
   return code.replace(/^Key/, '').replace(/^Digit/, '').replace(/^Numpad/, 'Num ');
 }
+
+// ---------------------------------------------------------------------------
+// Versionsprüfung gegen das neueste GitHub-Release
+
+/** SemVer ohne Vorabversionen vergleichen: < 0, 0 oder > 0 */
+export function compareVersions(a, b) {
+  const pa = a.split('.').map(Number), pb = b.split('.').map(Number);
+  for (let i = 0; i < 3; i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0);
+    if (d) return d;
+  }
+  return 0;
+}
+
+/** Versionsnummer aus einem Tag wie „v0.5.5“, sonst null */
+export function versionFromTag(tag) {
+  return typeof tag === 'string' ? /^v?(\d+\.\d+\.\d+)$/.exec(tag)?.[1] ?? null : null;
+}
+
+/**
+ * Neuestes Release von der GitHub-API, höchstens einmal am Tag abgefragt (Ergebnis im localStorage,
+ * auch Fehlschläge, damit ein gesperrtes Netz nicht bei jedem Öffnen erneut gefragt wird).
+ * Liefert die Versionsnummer oder null (offline, Limit, Fehler).
+ */
+export async function latestRelease(apiUrl, storeKey, maxAge = 24 * 3600 * 1000) {
+  try {
+    const c = JSON.parse(localStorage.getItem(storeKey) ?? 'null');
+    if (c && typeof c.checked === 'number' && Date.now() - c.checked < maxAge) return c.version ?? null;
+  } catch { /* neu fragen */ }
+  let version = null;
+  try {
+    const res = await fetch(apiUrl, { headers: { Accept: 'application/vnd.github+json' }, signal: AbortSignal.timeout(5000) });
+    if (res.ok) version = versionFromTag((await res.json()).tag_name);
+  } catch { /* offline */ }
+  try { localStorage.setItem(storeKey, JSON.stringify({ version, checked: Date.now() })); } catch { /* egal */ }
+  return version;
+}

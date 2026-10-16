@@ -3,11 +3,13 @@ import { Engine } from './engine.js';
 import { Midi, midiLabel } from './midi.js';
 import * as store from './storage.js';
 import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, cueDisplayName, cueToPreset, cuesToPreset, cuesToTemplates, instantiateCues, defaultPresets } from './model.js';
-import { fmtTime, fmtDb, debounce, keyLabel, uid, clamp, MIN_DB } from './util.js';
+import { fmtTime, fmtDb, debounce, keyLabel, uid, clamp, MIN_DB, compareVersions, latestRelease } from './util.js';
 import { renderMarkdown, renderDocument, firstLine } from './md.js';
 
-export const APP_VERSION = '0.5.5';
+export const APP_VERSION = '0.6.0';
 export const SOURCE_URL = 'https://github.com/listiges-kaenguru/cue-player';
+/** Versionsprüfung: einzige Verbindung nach außen, höchstens einmal am Tag beim Öffnen der Einstellungen */
+const RELEASE_API = 'https://api.github.com/repos/listiges-kaenguru/cue-player/releases/latest';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const COLORS = ['', '#b62324', '#bd561d', '#9e6a03', '#1a7f37', '#0f6e6e', '#1f6feb', '#6639ba', '#bf3989', '#57606a'];
@@ -1050,7 +1052,14 @@ async function openSettings() {
   add(field('Aufräumen', h('button', { type: 'button', onclick: async () => toast(`${await store.gcMedia()} unbenutzte Datei(en) gelöscht`) }, 'Unbenutzte Medien löschen')));
 
   add(h('h3', {}, 'Info'));
-  add(field('Version', h('span', {}, `Cue Player ${APP_VERSION}`)));
+  const updateInfo = h('span', { id: 'update-info', class: 'muted' }, 'Suche nach neuer Version …');
+  add(field('Version', h('div', { class: 'row' }, h('span', {}, `Cue Player ${APP_VERSION}`), updateInfo)));
+  latestRelease(RELEASE_API, 'cue-player-release').then((latest) => {
+    if (!latest) { updateInfo.textContent = ''; return; }
+    if (compareVersions(latest, APP_VERSION) <= 0) { updateInfo.textContent = '(neueste Version)'; return; }
+    updateInfo.replaceChildren(`Version ${latest} ist erschienen: `,
+      h('a', { href: `${SOURCE_URL}/releases/latest`, target: '_blank', rel: 'noopener' }, 'Release auf GitHub'));
+  });
   add(field('Hilfe', h('button', { type: 'button', id: 'settings-help', onclick: () => { $('#dlg-settings').close(); openHelp(); } }, '? Benutzerhandbuch öffnen'), 'Auch über ? oben rechts oder die Taste F1.'));
   add(field('Lizenz', h('a', { id: 'link-license', href: `${SOURCE_URL}/blob/HEAD/LICENSE`, target: '_blank', rel: 'noopener' }, 'GNU AGPL v3 oder später'),
     'Freie Software: Sie dürfen sie nutzen, ändern und weitergeben. Wer eine geänderte Fassung im Netz anbietet, muss deren Quelltext bereitstellen.'));

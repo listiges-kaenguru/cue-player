@@ -35,6 +35,9 @@ page.on('pageerror', (e) => errors.push(e.message));
 page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
 const states = () => page.$$eval('.cue-row', (r) => r.map((x) => [...x.classList].find((c) => c.startsWith('st-'))));
 
+// Versionsprüfung: GitHub-API nie echt fragen (Netz, Limit), sondern ein neueres Release vorspielen
+const fakeRelease = (r) => r.fulfill({ json: { tag_name: 'v99.0.0' }, headers: { 'access-control-allow-origin': '*' } });
+await page.route('https://api.github.com/**', fakeRelease);
 await page.goto(URL);
 await page.setInputFiles('#file-audio', [a, b]);
 await page.waitForFunction(() => document.querySelectorAll('.cue-row').length === 2);
@@ -311,6 +314,9 @@ await page.click('#btn-settings');
 await page.waitForSelector('#dlg-settings[open] #link-source');
 const links = await page.$$eval('#link-license, #link-source', (as) => as.map((a) => a.href));
 check('Einstellungen: Lizenz- und Quelltext-Link', links.length === 2 && links.every((u) => u.startsWith('https://github.com/')) && links[0].endsWith('/LICENSE'), JSON.stringify(links));
+await page.waitForFunction(() => document.querySelector('#update-info a'), null, { timeout: 5000 }).catch(() => {});
+const upd = await page.$eval('#update-info', (e) => [e.textContent, e.querySelector('a')?.href]);
+check('Einstellungen: Hinweis auf neueres GitHub-Release', upd[0].includes('99.0.0') && upd[1]?.endsWith('/releases/latest'), JSON.stringify(upd));
 await page.click('#dlg-settings button[value=close]');
 
 // Hilfe: Benutzerhandbuch im Dialog
@@ -339,6 +345,7 @@ await page.keyboard.press('Escape');
 const ctx2 = await browser.newContext({ serviceWorkers: 'block' });
 const page2 = await ctx2.newPage();
 page2.on('pageerror', (e) => errors.push(e.message));
+await page2.route('https://api.github.com/**', fakeRelease);
 await page2.route('**/site.json', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ legal: { url: 'https://example.org/impressum.html' } }) }));
 await page2.goto(URL);
 await page2.waitForTimeout(500);

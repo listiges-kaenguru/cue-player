@@ -14,7 +14,8 @@ Android/Windows/Linux. Homepage `../get-cueplayer`, Demo `../demo-cueplayer`.
 ## Regeln
 
 - Kommunikation, UI-Texte und Doku auf Deutsch.
-- Keine externen Laufzeit-Abhängigkeiten oder CDNs (Offline-Betrieb). Neue Dateien in `ASSETS` in `sw.js` eintragen,
+- Keine externen Laufzeit-Abhängigkeiten oder CDNs (Offline-Betrieb). Einzige Verbindung nach außen: die
+  Versionsprüfung (`latestRelease()` in `util.js`, GitHub-API, höchstens einmal am Tag). Neue Dateien in `ASSETS` in `sw.js` eintragen,
   bei Releases `VERSION` erhöhen (auch in `package.json`).
 - Nach Änderungen den Smoke-Test ausführen (`tests/smoke.mjs`, siehe unten) und bei Bedarf erweitern.
 - Nutzerdoku pflegen: `docs/BENUTZERHANDBUCH.md`, `docs/INSTALLATION.md`, Funktionstabelle in `README.md`.
