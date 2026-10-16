@@ -42,8 +42,18 @@ export function newSession(name = 'Neue Show') {
   };
 }
 
+/** Typspezifische Standardwerte (nur primitive Werte, daher gefahrlos per Spread kopierbar). */
+const CUE_DEFAULTS = {
+  audio: { mediaId: null, mediaName: '', duration: 0, volume: 0, pan: 0, start: 0, end: 0, fadeIn: 0, fadeOut: 0, fadeCurve: 'log', loop: false },
+  fade: { target: '', volume: -60, duration: 3, fadeCurve: 'log', stopAfter: true },
+  startstop: { target: '', mode: 'toggle', fade: 0 },
+  pause: { target: '', mode: 'toggle', fadeOut: 0, fadeIn: 0 },
+  midi: { output: '', msg: 'noteon', channel: 1, data1: 60, data2: 127 },
+  memo: { confirm: false },
+};
+
 export function newCue(type, extra = {}) {
-  const base = {
+  return {
     id: uid(),
     type,
     name: '',
@@ -54,16 +64,9 @@ export function newCue(type, extra = {}) {
     hotkey: '',
     midiTrigger: '',
     notes: '',
+    ...CUE_DEFAULTS[type],
+    ...extra,
   };
-  const specific = {
-    audio: { mediaId: null, mediaName: '', duration: 0, volume: 0, pan: 0, start: 0, end: 0, fadeIn: 0, fadeOut: 0, fadeCurve: 'log', loop: false },
-    fade: { target: '', volume: -60, duration: 3, fadeCurve: 'log', stopAfter: true },
-    startstop: { target: '', mode: 'toggle', fade: 0 },
-    pause: { target: '', mode: 'toggle', fadeOut: 0, fadeIn: 0 },
-    midi: { output: '', msg: 'noteon', channel: 1, data1: 60, data2: 127 },
-    memo: { confirm: false },
-  }[type];
-  return { ...base, ...specific, ...extra };
 }
 
 /**
@@ -137,8 +140,8 @@ export function normalizeSession(s) {
 
 export function cueDisplayName(session, cue) {
   if (cue.name) return cue.name;
-  const t = session.cues.find((c) => c.id === cue.target);
-  const tn = t ? `#${session.cues.indexOf(t) + 1}` : '';
+  const ti = session.cues.findIndex((c) => c.id === cue.target);
+  const tn = ti >= 0 ? `#${ti + 1}` : '';
   switch (cue.type) {
     case 'audio': return cue.mediaName || 'Audio (keine Datei)';
     case 'fade': return `Fade ${tn || '?'} → ${cue.volume <= -60 ? '−∞' : cue.volume + ' dB'}`;

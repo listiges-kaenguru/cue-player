@@ -87,6 +87,12 @@ Workflow-Änderungen per SSH pushen (gh-Token ohne `workflow`-Scope).
   wird. `INSTALLATION.md`: GitHub Pages (Variante A) setzt einen eigenen Fork voraus, mit der Download-ZIP gelten
   Variante B oder C. Die Anleitung auf get-cueplayer wird aus diesen Dateien erzeugt (`build-anleitung.mjs`).
 
+- **Refactoring (2026-10-16, nach v0.5.5, ohne Funktionsänderung):** Branch `refactoring`. Hilfsfunktionen in `app.js`
+  (`cueIndex`, `standbyIndex`, `numbered`, `baseName`, `progressPct`, `updateItem` für Liste/Cart, `memoRow`/`cueRow`),
+  `Runner._startPostWait()`, ungenutzte `Engine.stop/pause/resume(id)` und CSS `button.small`/`.form-grid .full` entfernt,
+  `clamp` aus `util.js` wird jetzt genutzt. Smoke-Test vorher/nachher identisch (56 OK); `md.js`-Ausgabe für alle Doku-Dateien
+  per Vergleichsskript als identisch geprüft. Beim nächsten Release `VERSION` in `sw.js` erhöhen (JS geändert).
+
 **Nutzertest 1 (Android-Smartphone, Chrome), v0.1.0:**
 
 - ✅ Tonausgabe · ✅ Fade-Cue · ✅ Pause-Cue · ✅ Memo-Cue (Wunsch: auffälliger, umgesetzt in v0.2.0)

@@ -3,7 +3,7 @@ import { Engine } from './engine.js';
 import { Midi, midiLabel } from './midi.js';
 import * as store from './storage.js';
 import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, cueDisplayName, cueToPreset, cuesToPreset, cuesToTemplates, instantiateCues, defaultPresets } from './model.js';
-import { fmtTime, fmtDb, debounce, keyLabel, uid, MIN_DB } from './util.js';
+import { fmtTime, fmtDb, debounce, keyLabel, uid, clamp, MIN_DB } from './util.js';
 import { renderMarkdown, renderDocument, firstLine } from './md.js';
 
 export const APP_VERSION = '0.5.5';
@@ -11,6 +11,8 @@ export const SOURCE_URL = 'https://github.com/listiges-kaenguru/cue-player';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const COLORS = ['', '#b62324', '#bd561d', '#9e6a03', '#1a7f37', '#0f6e6e', '#1f6feb', '#6639ba', '#bf3989', '#57606a'];
+const MODIFIER_KEYS = new Set(['ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight']);
+const RESERVED_KEYS = new Set(['Space', 'ArrowUp', 'ArrowDown', 'F1']);
 
 const midi = new Midi();
 const engine = new Engine({ loadMedia: async (id) => (await store.getMedia(id))?.blob ?? null, midi });
@@ -35,6 +37,12 @@ const cues = () => state.session.cues;
 const settings = () => state.session.settings;
 const label = (cue) => cueDisplayName(state.session, cue);
 engine.labelFn = label;
+const cueIndex = (id) => cues().findIndex((c) => c.id === id);
+const standbyIndex = () => cueIndex(state.standbyId);
+/** "Nummer · Name" eines Cues, wie in Liste, Zielauswahl und Aktiv-Bereich. */
+const numbered = (cue) => `${cues().indexOf(cue) + 1} · ${label(cue)}`;
+/** Dateiname ohne Endung (als Name neuer Audio-Cues). */
+const baseName = (fileName) => fileName.replace(/\.[^.]+$/, '');
 
 // Angaben des Betreibers dieser Instanz aus site.json (z. B. Link zu Impressum & Datenschutz).
 // Im Repo ist die Datei leer, damit selbst gehostete Kopien kein fremdes Impressum übernehmen.
@@ -172,50 +180,55 @@ function renderList() {
       onclick: (e) => onRowClick(e, cue.id),
       ondblclick: (e) => { if (!e.target.closest('button') && edit && !state.selected.size) openEditor(cue.id); },
     };
-    if (cue.type === 'memo') {
-      // Variante A: Kapitel-Trenner. Gleiche Spalten wie andere Zeilen (kein colspan), sonst verrutscht die
-      // Tabelle, wenn auf schmalen Bildschirmen Spalten ausgeblendet sind.
-      const row = h('tr', { ...rowAttrs, class: 'cue-row memo-row' },
-        h('td', { class: 'c-num' }, i + 1),
-        h('td', { class: 'c-name' },
-          h('div', { class: 'nm' },
-            h('span', { class: 'ic' }, CUE_TYPES.memo.icon),
-            h('span', { class: 'title' }, label(cue)),
-            h('span', { class: 'badges' },
-              cue.confirm && h('span', { class: 'badge', title: 'Bestätigung vor dem nächsten GO' }, '🔒', h('span', { class: 'wide-only' }, ' bestätigen')),
-              cue.notes?.trim() && cue.name && h('span', { class: 'has-text', title: 'Text im Regiebuch' }, '📖'),
-              cue.hotkey && h('span', { class: 'badge' }, '⌨ ' + keyLabel(cue.hotkey))))),
-        h('td', { class: 'c-pre' }), h('td', { class: 'c-dur' }), h('td', { class: 'c-post' }),
-        actions);
-      if (cue.color) row.style.setProperty('--memo', cue.color);
-      tbody.append(row);
-      state.rows.set(cue.id, { row, bar, fill, txt, lastState: null });
-      return;
-    }
-    const badges = h('span', { class: 'badges' },
-      cue.hotkey && h('span', { class: 'badge', title: 'Tastatur-Trigger' }, '⌨ ' + keyLabel(cue.hotkey)),
-      cue.midiTrigger && h('span', { class: 'badge', title: 'MIDI-Trigger' }, '🎹 ' + midiLabel(cue.midiTrigger)),
-      cue.type === 'audio' && engine.runners.get(cue.id)?.error && h('span', { class: 'badge err' }, '!'));
-    const post = cue.nextAction === 'none' ? (cue.postWait ? fmtTime(cue.postWait) : '') :
-      `${cue.nextAction === 'continue' ? '⤵ AC' : '↧ AF'}${cue.postWait ? ' ' + fmtTime(cue.postWait) : ''}`;
-    const row = h('tr', rowAttrs,
-      h('td', { class: 'c-num' }, i + 1),
-      h('td', { class: 'c-name' },
-        h('div', { class: 'nm' },
-          cue.color && h('span', { class: 'colorchip', style: { background: cue.color } }),
-          h('span', { class: 'ic', title: CUE_TYPES[cue.type]?.label }, CUE_TYPES[cue.type]?.icon),
-          h('span', { class: 'title' }, label(cue)),
-          badges),
-        cue.notes?.trim() && h('div', { class: 'notes', title: 'Vollständig im Regiebuch, wenn der Cue im Standby steht' }, firstLine(cue.notes) + (cue.notes.trim().includes('\n') ? ' …' : ''))),
-      h('td', { class: 'c-pre' }, cue.preWait ? fmtTime(cue.preWait) : ''),
-      h('td', { class: 'c-dur' }, bar),
-      h('td', { class: 'c-post' }, post),
-      actions);
+    const row = cue.type === 'memo' ? memoRow(cue, i, rowAttrs, actions) : cueRow(cue, i, rowAttrs, bar, actions);
     tbody.append(row);
     state.rows.set(cue.id, { row, bar, fill, txt, lastState: null });
   });
   updateSelection();
   updateStandbyMarks();
+}
+
+/**
+ * Variante A: Memo als Kapitel-Trenner. Gleiche Spalten wie andere Zeilen (kein colspan), sonst verrutscht die
+ * Tabelle, wenn auf schmalen Bildschirmen Spalten ausgeblendet sind.
+ */
+function memoRow(cue, i, rowAttrs, actions) {
+  const row = h('tr', { ...rowAttrs, class: 'cue-row memo-row' },
+    h('td', { class: 'c-num' }, i + 1),
+    h('td', { class: 'c-name' },
+      h('div', { class: 'nm' },
+        h('span', { class: 'ic' }, CUE_TYPES.memo.icon),
+        h('span', { class: 'title' }, label(cue)),
+        h('span', { class: 'badges' },
+          cue.confirm && h('span', { class: 'badge', title: 'Bestätigung vor dem nächsten GO' }, '🔒', h('span', { class: 'wide-only' }, ' bestätigen')),
+          cue.notes?.trim() && cue.name && h('span', { class: 'has-text', title: 'Text im Regiebuch' }, '📖'),
+          cue.hotkey && h('span', { class: 'badge' }, '⌨ ' + keyLabel(cue.hotkey))))),
+    h('td', { class: 'c-pre' }), h('td', { class: 'c-dur' }), h('td', { class: 'c-post' }),
+    actions);
+  if (cue.color) row.style.setProperty('--memo', cue.color);
+  return row;
+}
+
+function cueRow(cue, i, rowAttrs, bar, actions) {
+  const badges = h('span', { class: 'badges' },
+    cue.hotkey && h('span', { class: 'badge', title: 'Tastatur-Trigger' }, '⌨ ' + keyLabel(cue.hotkey)),
+    cue.midiTrigger && h('span', { class: 'badge', title: 'MIDI-Trigger' }, '🎹 ' + midiLabel(cue.midiTrigger)),
+    cue.type === 'audio' && engine.runners.get(cue.id)?.error && h('span', { class: 'badge err' }, '!'));
+  const wait = cue.postWait ? fmtTime(cue.postWait) : '';
+  const post = cue.nextAction === 'none' ? wait : `${cue.nextAction === 'continue' ? '⤵ AC' : '↧ AF'}${wait && ' ' + wait}`;
+  return h('tr', rowAttrs,
+    h('td', { class: 'c-num' }, i + 1),
+    h('td', { class: 'c-name' },
+      h('div', { class: 'nm' },
+        cue.color && h('span', { class: 'colorchip', style: { background: cue.color } }),
+        h('span', { class: 'ic', title: CUE_TYPES[cue.type]?.label }, CUE_TYPES[cue.type]?.icon),
+        h('span', { class: 'title' }, label(cue)),
+        badges),
+      cue.notes?.trim() && h('div', { class: 'notes', title: 'Vollständig im Regiebuch, wenn der Cue im Standby steht' }, firstLine(cue.notes) + (cue.notes.trim().includes('\n') ? ' …' : ''))),
+    h('td', { class: 'c-pre' }, cue.preWait ? fmtTime(cue.preWait) : ''),
+    h('td', { class: 'c-dur' }, bar),
+    h('td', { class: 'c-post' }, post),
+    actions);
 }
 
 function renderCart() {
@@ -259,7 +272,7 @@ function updateStandbyMarks() {
  */
 function renderMemoPanel() {
   const list = cues();
-  let i = list.findIndex((c) => c.id === state.standbyId);
+  let i = standbyIndex();
   if (i < 0) i = list.length;
   const items = [];
   for (let k = i - 1; k >= 0 && list[k].type === 'memo' && items.length < 3; k--) items.unshift(list[k]);
@@ -294,11 +307,10 @@ function updateSideVisibility() {
 }
 
 function updateGo() {
-  const cue = cues().find((c) => c.id === state.standbyId);
-  const i = cues().indexOf(cue);
+  const cue = cues()[standbyIndex()];
   const guard = guardMemo();
   $('#btn-go').classList.toggle('needs-confirm', !!guard);
-  $('#go-next').textContent = cue ? `${guard ? '🔒 bestätigen · ' : ''}${i + 1} · ${label(cue)}` : 'Ende der Liste';
+  $('#go-next').textContent = cue ? `${guard ? '🔒 bestätigen · ' : ''}${numbered(cue)}` : 'Ende der Liste';
 }
 
 function progressText(p) {
@@ -309,41 +321,34 @@ function progressText(p) {
   return `${fmtTime(p.elapsed)} / −${fmtTime(p.total - p.elapsed)}`;
 }
 
+/** Füllstand eines Fortschrittsbalkens (CSS-Länge). Ohne bekannte Dauer: voll. */
+const progressPct = (p) => (p.total ? `${Math.min(100, (p.elapsed / p.total) * 100)}%` : '100%');
+
+/**
+ * Zustand und Fortschritt einer Listenzeile bzw. Cart-Kachel aktualisieren.
+ * el: Element mit der Zustandsklasse, txt: Textfeld, dim: 'width' (Balken) oder 'height' (Kachel).
+ */
+function updateItem(id, item, el, txt, dim) {
+  const r = engine.runners.get(id);
+  const st = r?.state ?? 'idle';
+  if (st !== item.lastState) {
+    el.classList.remove('st-' + item.lastState);
+    el.classList.add('st-' + st);
+    if (item.bar) item.bar.className = 'bar st-' + st;
+    if (st === 'idle') { item.fill.style[dim] = '0'; txt.textContent = durationText(engine.cue(id)); }
+    item.lastState = st;
+  }
+  if (st !== 'idle') {
+    const p = r.progress();
+    item.fill.style[dim] = progressPct(p);
+    txt.textContent = progressText(p);
+  }
+}
+
 /** Wird pro Frame aufgerufen: Fortschrittsbalken und Status. */
 function frame() {
-  const update = (id, setState, setProgress) => {
-    const r = engine.runners.get(id);
-    const st = r?.state ?? 'idle';
-    setState(st);
-    if (st !== 'idle') setProgress(r.progress(), st);
-  };
-
-  state.rows.forEach((item, id) => {
-    update(id, (st) => {
-      if (st === item.lastState) return;
-      item.row.classList.remove('st-' + item.lastState);
-      item.row.classList.add('st-' + st);
-      item.bar.className = 'bar st-' + st;
-      if (st === 'idle') { item.fill.style.width = '0'; item.txt.textContent = durationText(engine.cue(id)); }
-      item.lastState = st;
-    }, (p) => {
-      item.fill.style.width = p.total ? `${Math.min(100, (p.elapsed / p.total) * 100)}%` : '100%';
-      item.txt.textContent = progressText(p);
-    });
-  });
-
-  state.tiles.forEach((item, id) => {
-    update(id, (st) => {
-      if (st === item.lastState) return;
-      item.tile.classList.remove('st-' + item.lastState);
-      item.tile.classList.add('st-' + st);
-      if (st === 'idle') { item.fill.style.height = '0'; item.time.textContent = durationText(engine.cue(id)); }
-      item.lastState = st;
-    }, (p) => {
-      item.fill.style.height = p.total ? `${Math.min(100, (p.elapsed / p.total) * 100)}%` : '100%';
-      item.time.textContent = progressText(p);
-    });
-  });
+  state.rows.forEach((item, id) => updateItem(id, item, item.row, item.txt, 'width'));
+  state.tiles.forEach((item, id) => updateItem(id, item, item.tile, item.time, 'height'));
 
   if (state.runningDirty) renderRunning();
   state.runItems.forEach((item, id) => {
@@ -351,13 +356,12 @@ function frame() {
     if (!r) return;
     const p = r.progress();
     item.bar.className = 'bar st-' + r.state;
-    item.fill.style.width = p.total ? `${Math.min(100, (p.elapsed / p.total) * 100)}%` : '100%';
+    item.fill.style.width = progressPct(p);
     item.txt.textContent = progressText(p);
     item.pp.textContent = r.paused ? '▶' : '❚❚';
   });
 
-  const locked = performance.now() < state.goLockedUntil;
-  $('#btn-go').classList.toggle('locked', locked);
+  $('#btn-go').classList.toggle('locked', performance.now() < state.goLockedUntil);
   requestAnimationFrame(frame);
 }
 
@@ -378,7 +382,7 @@ function renderRunning() {
     const pp = h('button', { title: 'Pause / Weiter', onclick: () => (r.paused ? r.resume(settings().pauseAllFade) : r.pause(settings().pauseAllFade)) }, '❚❚');
     list.append(h('div', { class: 'run-item' },
       h('div', { class: 'ri-head' },
-        h('span', { class: 'ri-name' }, `${cues().indexOf(cue) + 1} · ${label(cue)}`),
+        h('span', { class: 'ri-name' }, numbered(cue)),
         pp,
         h('button', { class: 'danger', title: 'Stop (mit Stop-alle-Fade)', onclick: () => r.stop(settings().stopAllFade) }, '■')),
       bar));
@@ -407,7 +411,7 @@ function setStandby(id) {
 /** Memo mit Bestätigung, das vor dem Standby-Cue steht (oder selbst Standby ist). */
 function guardMemo() {
   const list = cues();
-  const i = list.findIndex((c) => c.id === state.standbyId);
+  const i = standbyIndex();
   if (i < 0) return null;
   if (list[i].type === 'memo' && list[i].confirm) return list[i];
   for (let k = i - 1; k >= 0 && list[k].type === 'memo'; k--) if (list[k].confirm) return list[k];
@@ -417,11 +421,10 @@ function guardMemo() {
 function openConfirm(memo) {
   const dlg = $('#dlg-confirm');
   if (dlg.open) return;
-  const list = cues();
-  const next = list.find((c) => c.id === state.standbyId);
+  const next = cues()[standbyIndex()];
   $('#confirm-title').textContent = label(memo);
   $('#confirm-text').innerHTML = renderMarkdown(memo.notes); // sicher: escaped
-  $('#confirm-next').textContent = next ? `Danach startet: ${list.indexOf(next) + 1} · ${label(next)}` : '';
+  $('#confirm-next').textContent = next ? `Danach startet: ${numbered(next)}` : '';
   dlg.returnValue = '';
   dlg.onclose = () => { if (dlg.returnValue === 'ok') go({ confirmed: true }); };
   dlg.showModal();
@@ -434,7 +437,7 @@ function go({ confirmed = false } = {}) {
   if (guard && !confirmed) { openConfirm(guard); return; }
   state.goLockedUntil = now + (settings().goLockMs || 0);
   const list = cues();
-  const i = list.findIndex((c) => c.id === state.standbyId);
+  const i = standbyIndex();
   if (i < 0) return;
   engine.go(list[i].id);
   // Standby hinter die automatisch verketteten Cues setzen.
@@ -462,8 +465,9 @@ function cartPress(id) {
 // ---------------------------------------------------------------------------
 // Cues bearbeiten
 
+/** Neue Cues kommen hinter den Standby-Cue, ohne Standby ans Ende. */
 function insertIndex() {
-  const i = cues().findIndex((c) => c.id === state.standbyId);
+  const i = standbyIndex();
   return i < 0 ? cues().length : i + 1;
 }
 
@@ -476,7 +480,7 @@ async function addAudioFiles(files) {
   for (const f of files) {
     try {
       const rec = await store.storeFile(f);
-      const cue = newCue('audio', { mediaId: rec.id, mediaName: f.name.replace(/\.[^.]+$/, '') });
+      const cue = newCue('audio', { mediaId: rec.id, mediaName: baseName(f.name) });
       cues().splice(at++, 0, cue);
       engine.runner(cue.id).prepare();
       first ??= cue;
@@ -492,10 +496,11 @@ async function addAudioFiles(files) {
 
 function addCue(type) {
   const cue = newCue(type);
+  const at = insertIndex();
   // Sinnvolles Ziel vorbelegen: der Cue davor.
-  const prev = cues()[insertIndex() - 1];
+  const prev = cues()[at - 1];
   if ('target' in cue && prev && type !== 'pause') cue.target = prev.id;
-  cues().splice(insertIndex(), 0, cue);
+  cues().splice(at, 0, cue);
   engine.runner(cue.id);
   save();
   renderAll();
@@ -594,8 +599,8 @@ function toggleSelect(id) {
 
 function selectRange(fromId, toId) {
   const list = cues();
-  let a = list.findIndex((c) => c.id === fromId);
-  let b = list.findIndex((c) => c.id === toId);
+  let a = cueIndex(fromId);
+  let b = cueIndex(toId);
   if (a < 0 || b < 0) return;
   if (a > b) [a, b] = [b, a];
   for (let k = a; k <= b; k++) state.selected.add(list[k].id);
@@ -615,9 +620,11 @@ const selectedCues = () => cues().filter((c) => state.selected.has(c.id));
 function updateSelection() {
   const ids = new Set(cues().map((c) => c.id));
   state.selected.forEach((id) => { if (!ids.has(id)) state.selected.delete(id); });
-  if (settings().showMode) state.selected.clear();
-  if (settings().showMode) state.selectMode = false;
   const edit = !settings().showMode;
+  if (!edit) {
+    state.selected.clear();
+    state.selectMode = false;
+  }
   state.rows.forEach((r, id) => {
     r.row.classList.toggle('sel', state.selected.has(id));
     // Im Auswahl-Modus kein Drag & Drop, damit Antippen eindeutig bleibt.
@@ -665,7 +672,7 @@ function deleteSelection() {
 
 function moveCue(id, delta) {
   const list = cues();
-  const i = list.findIndex((c) => c.id === id);
+  const i = cueIndex(id);
   const j = i + delta;
   if (i < 0 || j < 0 || j >= list.length) return;
   [list[i], list[j]] = [list[j], list[i]];
@@ -675,10 +682,10 @@ function moveCue(id, delta) {
 
 function moveCueTo(id, beforeId) {
   const list = cues();
-  const i = list.findIndex((c) => c.id === id);
+  const i = cueIndex(id);
   if (i < 0 || id === beforeId) return;
   const [cue] = list.splice(i, 1);
-  const j = beforeId ? list.findIndex((c) => c.id === beforeId) : list.length;
+  const j = beforeId ? cueIndex(beforeId) : list.length;
   list.splice(j < 0 ? list.length : j, 0, cue);
   save();
   renderAll();
@@ -686,7 +693,7 @@ function moveCueTo(id, beforeId) {
 
 /** Fügt eine unabhängige Kopie direkt hinter dem Cue ein. Trigger werden nicht mitkopiert (sonst doppelte Auslösung). */
 function cloneCue(id) {
-  const i = cues().findIndex((c) => c.id === id);
+  const i = cueIndex(id);
   if (i < 0) return null;
   const copy = { ...structuredClone(cues()[i]), id: uid(), hotkey: '', midiTrigger: '' };
   if (copy.name) copy.name += ' (Kopie)';
@@ -698,7 +705,7 @@ function cloneCue(id) {
 }
 
 function deleteCue(id) {
-  const i = cues().findIndex((c) => c.id === id);
+  const i = cueIndex(id);
   if (i < 0) return;
   engine.removeCue(id);
   cues().splice(i, 1);
@@ -725,10 +732,9 @@ function textInput(draft, key, placeholder = '') {
   return h('input', { type: 'text', value: draft[key] ?? '', placeholder, oninput: (e) => { draft[key] = e.target.value; } });
 }
 
-function selectInput(draft, key, options, onchange) {
-  const sel = h('select', { onchange: (e) => { draft[key] = e.target.value; onchange?.(); } },
+function selectInput(draft, key, options) {
+  return h('select', { onchange: (e) => { draft[key] = e.target.value; } },
     options.map(([v, l]) => h('option', { value: v, selected: String(draft[key]) === String(v) }, l)));
-  return sel;
 }
 
 function checkInput(draft, key, text) {
@@ -745,14 +751,13 @@ function dbSlider(draft, key, max = 12) {
 function targetSelect(draft, selfId, { allowAll = false, onlyAudio = false } = {}) {
   const opts = cues()
     .filter((c) => c.id !== selfId && (!onlyAudio || c.type === 'audio'))
-    .map((c) => [c.id, `${cues().indexOf(c) + 1} · ${label(c)}`]);
-  if (allowAll) opts.unshift(['', '— Alle laufenden Cues —']);
-  else opts.unshift(['', '— bitte wählen —']);
-  return selectInput(draft, 'target', opts);
+    .map((c) => [c.id, numbered(c)]);
+  return selectInput(draft, 'target', [['', allowAll ? '— Alle laufenden Cues —' : '— bitte wählen —'], ...opts]);
 }
 
 function learnButton(kind, current, onSet) {
-  const lbl = h('span', {}, current ? (kind === 'key' ? keyLabel(current) : midiLabel(current)) : '—');
+  const fmt = kind === 'key' ? keyLabel : midiLabel;
+  const lbl = h('span', {}, current ? fmt(current) : '—');
   const btn = h('button', {
     type: 'button', class: 'learn',
     onclick: async () => {
@@ -767,7 +772,7 @@ function learnButton(kind, current, onSet) {
           state.learn = null;
           btn.classList.remove('active');
           btn.textContent = 'Lernen';
-          lbl.textContent = kind === 'key' ? keyLabel(v) : midiLabel(v);
+          lbl.textContent = fmt(v);
           onSet(v);
         },
       };
@@ -779,18 +784,19 @@ function learnButton(kind, current, onSet) {
 
 function openEditor(id) {
   if (settings().showMode) return;
-  const cue = cues().find((c) => c.id === id);
+  const index = cueIndex(id);
+  const cue = cues()[index];
   if (!cue) return;
   const draft = structuredClone(cue);
   const dlg = $('#dlg-cue');
   const body = $('#cue-form-body');
   body.textContent = '';
-  $('#cue-form-title').textContent = `Cue ${cues().indexOf(cue) + 1} · ${CUE_TYPES[cue.type].label}`;
+  $('#cue-form-title').textContent = `Cue ${index + 1} · ${CUE_TYPES[cue.type].label}`;
 
   const add = (...parts) => body.append(...parts.flat().filter(Boolean));
 
   add(field('Name', textInput(draft, 'name', label(cue))));
-  const pos = { value: cues().indexOf(cue) + 1 };
+  const pos = { value: index + 1 };
   add(field('Position', numInput(pos, 'value', { min: 1, max: cues().length, step: 1 }), 'Nummer in der Cue-Liste'));
   const colorRow = h('div', { class: 'colors' });
   const paintColors = () => {
@@ -813,7 +819,7 @@ function openEditor(id) {
         if (!f) return;
         const rec = await store.storeFile(f);
         draft.mediaId = rec.id;
-        draft.mediaName = f.name.replace(/\.[^.]+$/, '');
+        draft.mediaName = baseName(f.name);
         draft.duration = 0;
         fileName.textContent = draft.mediaName;
       },
@@ -841,7 +847,7 @@ function openEditor(id) {
     add(h('h3', {}, 'Start / Stop'));
     add(field('Ziel-Cue', targetSelect(draft, cue.id, { allowAll: true }), '„Alle“ wirkt nur beim Stoppen.'));
     add(field('Aktion', selectInput(draft, 'mode', [['toggle', 'Umschalten (läuft → stoppen, sonst starten)'], ['start', 'Starten'], ['stop', 'Stoppen']])));
-    add(field('Fade-Out beim Stoppen (s)', numInput(draft, 'fade'), '0 = sofort')); 
+    add(field('Fade-Out beim Stoppen (s)', numInput(draft, 'fade'), '0 = sofort'));
   } else if (cue.type === 'pause') {
     add(h('h3', {}, 'Pause / Weiter'));
     add(field('Ziel-Cue', targetSelect(draft, cue.id, { allowAll: true })));
@@ -907,7 +913,7 @@ function openEditor(id) {
     }
     Object.assign(cue, draft);
     const from = cues().indexOf(cue);
-    const to = Math.min(cues().length, Math.max(1, Math.round(pos.value))) - 1;
+    const to = clamp(Math.round(pos.value), 1, cues().length) - 1;
     if (from >= 0 && to !== from) cues().splice(to, 0, ...cues().splice(from, 1));
     engine.cueChanged(id);
     save();
@@ -1143,15 +1149,14 @@ function bindUI() {
     menu.hidden = !menu.hidden;
   });
   $('#add-menu').addEventListener('click', (e) => {
-    const p = e.target.closest('[data-preset]');
-    if (p) { $('#add-menu').hidden = true; insertPreset(p.dataset.preset); return; }
-    if (e.target.closest('[data-manage]')) {
-      $('#add-menu').hidden = true;
-      renderPresetList().then(() => $('#dlg-presets').showModal());
-      return;
-    }
-    const t = e.target.closest('[data-add]');
-    if (t) { $('#add-menu').hidden = true; addCue(t.dataset.add); }
+    const preset = e.target.closest('[data-preset]');
+    const manage = e.target.closest('[data-manage]');
+    const add = e.target.closest('[data-add]');
+    if (!preset && !manage && !add) return;
+    $('#add-menu').hidden = true;
+    if (preset) insertPreset(preset.dataset.preset);
+    else if (manage) renderPresetList().then(() => $('#dlg-presets').showModal());
+    else addCue(add.dataset.add);
   });
   document.addEventListener('click', () => { $('#add-menu').hidden = true; });
 
@@ -1250,7 +1255,11 @@ function bindUI() {
 
   // Engine-Ereignisse
   engine.on('change', () => { state.runningDirty = true; });
-  engine.on('duration', () => { save(); state.rows.forEach((r) => { r.lastState = null; }); state.tiles.forEach((t) => { t.lastState = null; }); });
+  engine.on('duration', () => {
+    save();
+    // Erzwingt beim nächsten Frame die Neuanzeige der Dauer.
+    [...state.rows.values(), ...state.tiles.values()].forEach((item) => { item.lastState = null; });
+  });
   engine.on('error', (msg) => toast(msg, true));
   engine.on('info', (msg) => toast(msg));
 
@@ -1276,11 +1285,11 @@ function toggleShowMode() {
 
 function onKeyDown(e) {
   if (state.learn?.kind === 'key') {
-    if (['ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight'].includes(e.code)) return;
+    if (MODIFIER_KEYS.has(e.code)) return;
     e.preventDefault();
     e.stopPropagation();
     if (e.code === 'Escape') { state.learn.apply(''); return; }
-    if (['Space', 'ArrowUp', 'ArrowDown', 'F1'].includes(e.code)) { toast('Diese Taste ist reserviert', true); return; }
+    if (RESERVED_KEYS.has(e.code)) { toast('Diese Taste ist reserviert', true); return; }
     state.learn.apply(e.code);
     return;
   }
@@ -1312,8 +1321,10 @@ function onKeyDown(e) {
     case 'ArrowUp': {
       e.preventDefault();
       const list = cues();
-      const i = list.findIndex((c) => c.id === state.standbyId);
-      const j = e.code === 'ArrowDown' ? (i < 0 ? 0 : Math.min(list.length - 1, i + 1)) : (i < 0 ? list.length - 1 : Math.max(0, i - 1));
+      const i = standbyIndex();
+      const down = e.code === 'ArrowDown';
+      // Ohne Standby: bei ↓ zum ersten, bei ↑ zum letzten Cue.
+      const j = i < 0 ? (down ? 0 : list.length - 1) : clamp(i + (down ? 1 : -1), 0, list.length - 1);
       if (list[j]) setStandby(list[j].id);
       return;
     }

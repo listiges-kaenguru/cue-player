@@ -6,6 +6,7 @@
 
 const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 const esc = (s) => s.replace(/[&<>"']/g, (c) => ESC[c]);
+const toLines = (src) => String(src || '').replace(/\r\n?/g, '\n').split('\n');
 
 function inline(s) {
   return s
@@ -18,7 +19,7 @@ function inline(s) {
 }
 
 export function renderMarkdown(src) {
-  const lines = String(src || '').replace(/\r\n?/g, '\n').split('\n');
+  const lines = toLines(src);
   let html = '';
   let list = null;
   let para = [];
@@ -84,7 +85,7 @@ function docInline(s) {
 }
 
 export function renderDocument(src, { prefix = 'doc-' } = {}) {
-  const lines = String(src || '').replace(/\r\n?/g, '\n').split('\n');
+  const lines = toLines(src);
   const used = new Map();
   let html = '';
   let para = [];
@@ -95,7 +96,7 @@ export function renderDocument(src, { prefix = 'doc-' } = {}) {
     para = [];
   };
   const closeLists = (toIndent = -1) => {
-    while (lists.length && lists[lists.length - 1].indent > toIndent) html += `</li></${lists.pop().type}>`;
+    while (lists.at(-1)?.indent > toIndent) html += `</li></${lists.pop().type}>`;
   };
   const block = () => { flushPara(); closeLists(); };
   const isItem = (l) => /^\s*([-*]|\d+[.)])\s+/.test(l);
@@ -144,13 +145,12 @@ export function renderDocument(src, { prefix = 'doc-' } = {}) {
       const indent = m[1].length;
       const type = /\d/.test(m[2]) ? 'ol' : 'ul';
       closeLists(indent);
-      const top = lists[lists.length - 1];
-      if (top && top.indent === indent && top.type !== type) { html += `</li></${lists.pop().type}>`; }
+      if (lists.at(-1)?.indent === indent && lists.at(-1).type !== type) html += `</li></${lists.pop().type}>`;
       let text = esc(m[3]);
       let cls = '';
       const task = text.match(/^\[([ xX])\]\s+(.*)$/);
       if (task) { text = `${task[1] === ' ' ? '☐' : '☑'} ${task[2]}`; cls = ' class="task"'; }
-      if (lists.length && lists[lists.length - 1].indent === indent) html += `</li><li${cls}>`;
+      if (lists.at(-1)?.indent === indent) html += `</li><li${cls}>`;
       else { lists.push({ type, indent }); html += `<${type}><li${cls}>`; }
       html += docInline(text);
       continue;

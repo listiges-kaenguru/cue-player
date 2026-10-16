@@ -42,7 +42,6 @@ button:hover { border-color: #4a5063; }
 button:active { transform: translateY(1px); }
 button.primary { background: var(--accent-dk); border-color: var(--accent); }
 button.danger, .danger { color: var(--danger); }
-button.small { padding: 2px 8px; font-size: 13px; }
 .muted { color: var(--muted); }
 [hidden] { display: none !important; }
 
@@ -303,7 +302,6 @@ main {
 .doc th, .doc td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; }
 .doc th { background: var(--bg3); }
 .form-grid { display: grid; grid-template-columns: 11em 1fr; gap: 8px 12px; align-items: center; }
-.form-grid .full { grid-column: 1 / -1; }
 .form-grid a { color: var(--standby); overflow-wrap: anywhere; }
 .form-grid > h3 { grid-column: 1 / -1; margin: 10px 0 0; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); border-bottom: 1px solid var(--line); padding-bottom: 4px; }
 .form-grid label { color: var(--muted); font-size: 14px; }
