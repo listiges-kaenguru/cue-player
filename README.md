@@ -14,7 +14,9 @@ einzigen Codebasis, ohne Store, offline-fähig, installierbar wie eine normale A
 |---|---|
 | [docs/INSTALLATION.md](docs/INSTALLATION.md) | Installation auf Android, Windows, Linux; eigenes Hosting; Entwicklung |
 | [docs/BENUTZERHANDBUCH.md](docs/BENUTZERHANDBUCH.md) | Bedienung: Cues anlegen, Show fahren, Trigger, MIDI, Export |
-| [docs/STAND.md](docs/STAND.md) | Entwicklungsstand, ToDo-Liste, bekannte Schwächen, Tests |
+| [CHANGELOG.md](CHANGELOG.md) | Änderungen je Version |
+| [IDEEN.md](IDEEN.md) | ToDo, Ideen, bekannte Schwächen, Tests |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Mitwirken: Fehler melden, Code beitragen |
 
 ## Funktionen
 
@@ -129,7 +131,9 @@ bereitstellt, passt dort `SOURCE_URL` in `js/app.js` an das eigene Repository an
 ## Roadmap (Vorschlag)
 
 1. Pegelanzeige (VU) und Vorhören auf zweitem Ausgang
-2. Gruppen-Cues, Undo/Redo, Mehrfachauswahl
+2. Gruppen-Cues, Undo/Redo
 3. Video-Cues (Vollbild auf zweitem Bildschirm)
 4. Tauri-Desktop-Build (OSC, Netzwerk-Fernsteuerung, Ordner statt Browser-Speicher)
 5. Capacitor-Android-Build (APK, Hintergrund-Wiedergabe als Foreground-Service)
+
+Ausführlich in [IDEEN.md](IDEEN.md).
