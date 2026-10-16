@@ -384,9 +384,12 @@ Website-Daten gelöscht, sind sie weg. Deshalb nach jeder Probe **exportieren**.
 | MIDI verwenden | Web MIDI aktivieren (der Browser fragt nach Erlaubnis). |
 | GO / Stop alle per MIDI | Globale MIDI-Trigger. |
 | Speicher | Belegung anzeigen, dauerhaften Speicher anfordern, unbenutzte Dateien löschen. |
-| Info | Version, Hilfe öffnen, Lizenz (GNU AGPL v3) und Link zum Quelltext. Hat der Betreiber der Instanz ein Impressum hinterlegt, steht hier auch der Link dazu. |
+| Info | Version (mit Hinweis, wenn auf GitHub eine neuere erschienen ist), Hilfe öffnen, Lizenz (GNU AGPL v3) und Link zum Quelltext. Hat der Betreiber der Instanz ein Impressum hinterlegt, steht hier auch der Link dazu. |
 
 Die Einstellungen gelten **pro Show** und werden mit exportiert.
+
+Beim Öffnen der Einstellungen fragt die App höchstens einmal am Tag bei GitHub nach der neuesten Version. Das ist
+die einzige Verbindung nach außen; ohne Internet bleibt der Hinweis einfach weg.
 
 ---
 

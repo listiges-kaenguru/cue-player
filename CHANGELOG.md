@@ -8,6 +8,13 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+### Hinzugefügt
+- **Versionsprüfung:** ⚙ Einstellungen → Info zeigt neben der Version, ob auf GitHub eine neuere erschienen ist
+  (mit Link zum Release), sonst „(neueste Version)“. Die App fragt dafür die GitHub-API höchstens einmal am Tag und
+  nur beim Öffnen der Einstellungen (Ergebnis im `localStorage`, Schlüssel `cue-player-release`); ohne Netz bleibt
+  die Zeile leer. Smoke-Test spielt ein Release vor, statt GitHub zu fragen. Version 0.6.0 in `sw.js`, `app.js`,
+  `package.json`.
+
 ### Geändert
 - Code aufgeräumt, ohne Funktionsänderung: Hilfsfunktionen in `app.js` (`cueIndex`, `standbyIndex`, `numbered`,
   `baseName`, `progressPct`, `updateItem` für Liste/Cart, `memoRow`/`cueRow`), `Runner._startPostWait()`;

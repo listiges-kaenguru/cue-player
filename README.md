@@ -42,6 +42,7 @@ einzigen Codebasis, ohne Store, offline-fähig, installierbar wie eine normale A
 | Memo mit Bestätigung vor dem nächsten GO | ✅ |
 | Ausgabegerät wählen | ✅ (Chrome/Edge) |
 | Eingebaute Hilfe (Benutzerhandbuch, offline, F1) | ✅ |
+| Hinweis auf neue Version (GitHub-Release, höchstens einmal am Tag) | ✅ |
 | Video-Cues, OSC, Kommando-Cues, Gruppen-Cues | ❌ (Roadmap) |
 | Mehrkanal-Routing, JACK, Timecode | ❌ |
 
