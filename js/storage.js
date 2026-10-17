@@ -111,12 +111,34 @@ export async function exportShow(session) {
   return new Blob([MAGIC, len, header, ...blobs], { type: 'application/octet-stream' });
 }
 
+const isObj = (v) => typeof v === 'object' && v !== null && !Array.isArray(v);
+const isSize = (v) => Number.isSafeInteger(v) && v >= 0;
+
+/** Prüft Header und Medienangaben einer .cueshow vollständig, bevor etwas gespeichert wird. */
+function validShow(header, dataSize) {
+  if (!isObj(header) || header.format !== 1) return false;
+  const s = header.session;
+  if (!isObj(s) || !Array.isArray(s.cues) || !s.cues.every((c) => isObj(c) && typeof c.type === 'string')) return false;
+  if (s.settings !== undefined && !isObj(s.settings)) return false;
+  return Array.isArray(header.media) && header.media.every((m) => isObj(m) && typeof m.id === 'string'
+    && isSize(m.offset) && isSize(m.length) && m.offset + m.length <= dataSize);
+}
+
 export async function importShow(file) {
+  const invalid = () => new Error('Keine gültige .cueshow-Datei');
+  if (file.size < 12) throw invalid();
   const head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
-  if (new TextDecoder().decode(head.slice(0, 8)) !== MAGIC) throw new Error('Keine gültige .cueshow-Datei');
+  if (new TextDecoder().decode(head.slice(0, 8)) !== MAGIC) throw invalid();
   const hlen = new DataView(head.buffer).getUint32(8, true);
-  const header = JSON.parse(new TextDecoder().decode(await file.slice(12, 12 + hlen).arrayBuffer()));
+  if (hlen > file.size - 12) throw invalid();
+  let header;
+  try {
+    header = JSON.parse(new TextDecoder().decode(await file.slice(12, 12 + hlen).arrayBuffer()));
+  } catch {
+    throw invalid();
+  }
   const base = 12 + hlen;
+  if (!validShow(header, file.size - base)) throw invalid();
   // Neue Media-IDs vergeben, damit Importe bestehende Shows nie überschreiben.
   const idMap = new Map();
   for (const m of header.media) {

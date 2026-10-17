@@ -12,6 +12,12 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 - Cue-Farben werden nur noch als `#rgb`/`#rrggbb` übernommen. Eine präparierte `.cueshow` konnte über eine
   Farbe wie `url(https://…)` beim Anzeigen einen fremden Server anfragen (und so verraten, wer die Show wann öffnet).
 
+### Behoben
+- **Import:** Eine `.cueshow` wird vollständig geprüft (Kennung, Headerlänge, Format, Aufbau der Show, Lage der
+  Mediendaten), bevor etwas gespeichert wird. Bisher blieben bei kaputten Dateien Audiodateien verwaist im Speicher, und
+  verfälschte Dateien (unsinnige Headerlänge, Medien außerhalb der Datei, fremde Formatversion) wurden angenommen.
+  Fehlermeldung einheitlich „Keine gültige .cueshow-Datei“.
+
 ### Intern
 - Unit-Tests mit `node:test` (ohne neue Abhängigkeit) für `md.js`, `util.js` und `model.js` in `tests/unit/`:
   XSS-Versuche im Markdown, nur `#anker`/http(s)-Links im Handbuch, dB-Umrechnung, Fade-Kurven, Timer mit gemockter
