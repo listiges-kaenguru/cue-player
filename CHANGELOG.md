@@ -8,6 +8,10 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+### Sicherheit
+- Cue-Farben werden nur noch als `#rgb`/`#rrggbb` übernommen. Eine präparierte `.cueshow` konnte über eine
+  Farbe wie `url(https://…)` beim Anzeigen einen fremden Server anfragen (und so verraten, wer die Show wann öffnet).
+
 ### Intern
 - Unit-Tests mit `node:test` (ohne neue Abhängigkeit) für `md.js`, `util.js` und `model.js` in `tests/unit/`:
   XSS-Versuche im Markdown, nur `#anker`/http(s)-Links im Handbuch, dB-Umrechnung, Fade-Kurven, Timer mit gemockter

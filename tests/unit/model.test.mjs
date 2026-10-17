@@ -123,6 +123,12 @@ describe('Migration älterer Daten', () => {
     assert.equal(s.cues[0].id, 'x');
     assert.equal(s.cues[0].nextAction, 'none');
   });
+  it('übernimmt nur Farben als #rgb oder #rrggbb (keine CSS-Ausdrücke aus fremden Dateien)', () => {
+    const farben = ['#b62324', '#ABC', '', 'url(https://evil.example/x)', 'red;background:url(//x)', '#12345', '#1234567',
+      'var(--x)', 'red', 42, null, { r: 1 }, '#b62324 url(x)'];
+    const s = M.normalizeSession({ cues: farben.map((color) => ({ type: 'memo', color })) });
+    assert.deepEqual(s.cues.map((c) => c.color), ['#b62324', '#ABC', '', '', '', '', '', '', '', '', '', '', '']);
+  });
   it('kommt ohne Einstellungen und Cues aus', () => {
     const s = M.normalizeSession({});
     assert.deepEqual(s.cues, []);
