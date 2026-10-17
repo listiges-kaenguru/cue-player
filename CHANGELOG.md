@@ -9,6 +9,10 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 ## [Unveröffentlicht]
 
 ### Intern
+- Unit-Tests mit `node:test` (ohne neue Abhängigkeit) für `md.js`, `util.js` und `model.js` in `tests/unit/`:
+  XSS-Versuche im Markdown, nur `#anker`/http(s)-Links im Handbuch, dB-Umrechnung, Fade-Kurven, Timer mit gemockter
+  Zeit, Versionsprüfung mit gemocktem GitHub, Migration älterer Daten, `__proto__` aus fremden Dateien
+  (`npm run test:unit`).
 - Smoke-Test läuft lokal in der gemeinsamen Testumgebung (`~/projects/testumgebung/pt test`), nicht mehr mit Browsern aus `~/.cache/ms-playwright`.
 
 ## [0.6.0] – 2026-10-17

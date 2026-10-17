@@ -1,0 +1,168 @@
+// Datenmodell (model.js): neue Sessions und Cues, Presets, Migration älterer Daten, Anzeigenamen.
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import * as M from '../../js/model.js';
+
+describe('Neue Session und neue Cues', () => {
+  it('legt eine Session mit Standardeinstellungen an', () => {
+    const s = M.newSession();
+    assert.equal(s.version, M.SESSION_VERSION);
+    assert.equal(s.name, 'Neue Show');
+    assert.deepEqual(s.cues, []);
+    assert.equal(s.settings.layout, 'list');
+    assert.equal(s.settings.goLockMs, 300);
+    assert.deepEqual(s.settings.midi, { enabled: false, go: '', stopAll: '' });
+    assert.notEqual(M.newSession().id, s.id);
+    assert.notStrictEqual(M.newSession().settings, s.settings, 'jede Session hat eigene Einstellungen');
+  });
+  it('gibt jedem Cue-Typ seine Standardwerte', () => {
+    for (const t of Object.keys(M.CUE_TYPES)) {
+      const c = M.newCue(t);
+      assert.equal(c.type, t);
+      assert.equal(c.nextAction, 'none');
+      assert.equal(c.preWait, 0);
+    }
+    assert.equal(M.newCue('audio').fadeCurve, 'log');
+    assert.equal(M.newCue('fade').volume, -60);
+    assert.equal(M.newCue('midi').data1, 60);
+    assert.equal(M.newCue('memo').confirm, false);
+  });
+  it('übernimmt Zusatzwerte und überschreibt Standards', () => {
+    const c = M.newCue('fade', { volume: -15, name: 'leiser' });
+    assert.equal(c.volume, -15);
+    assert.equal(c.name, 'leiser');
+    assert.equal(c.duration, 3);
+  });
+  it('legt bei unbekanntem Typ nur die gemeinsamen Felder an', () => {
+    const c = M.newCue('gibt-es-nicht');
+    assert.equal(c.type, 'gibt-es-nicht');
+    assert.equal(c.name, '');
+    assert.equal('volume' in c, false);
+  });
+});
+
+describe('Vorlagen (Presets, Kopieren)', () => {
+  const zweiCues = () => {
+    const a = M.newCue('audio', { name: 'Musik', hotkey: 'KeyM', midiTrigger: '90 3c' });
+    const f = M.newCue('fade', { target: a.id });
+    return [a, f];
+  };
+  it('entfernt ID und Trigger und macht interne Ziele zu Platzhaltern', () => {
+    const t = M.cuesToTemplates(zweiCues());
+    assert.equal('id' in t[0] || 'hotkey' in t[0] || 'midiTrigger' in t[0], false);
+    assert.equal(t[1].target, '#0');
+  });
+  it('leert externe Ziele, außer beim Klonen', () => {
+    const f = M.newCue('fade', { target: 'fremd' });
+    assert.equal(M.cuesToTemplates([f])[0].target, '');
+    assert.equal(M.cuesToTemplates([f], { keepExternal: true })[0].target, 'fremd');
+    assert.equal(M.cuesToTemplates([M.newCue('fade')])[0].target, '');
+  });
+  it('kopiert tief (Änderungen an der Vorlage ändern das Original nicht)', () => {
+    const a = M.newCue('memo', { extra: { tief: 1 } });
+    M.cuesToTemplates([a])[0].extra.tief = 2;
+    assert.equal(a.extra.tief, 1);
+  });
+  it('setzt Platzhalter beim Einfügen auf die neuen Cues', () => {
+    const neu = M.instantiateCues(M.cuesToTemplates(zweiCues()));
+    assert.equal(neu[1].target, neu[0].id);
+    assert.equal(neu[0].name, 'Musik');
+    assert.notEqual(neu[0].id, neu[1].id);
+  });
+  it('zeigt leere Fade- und Start-Ziele auf den vorherigen Cue, Stop-Ziele nicht', () => {
+    const [fade, start, stop, pause] = M.instantiateCues([
+      { type: 'fade', target: '' }, { type: 'startstop', mode: 'start', target: '' },
+      { type: 'startstop', mode: 'stop', target: '' }, { type: 'pause', target: '' },
+    ], 'vorher');
+    assert.equal(fade.target, 'vorher');
+    assert.equal(start.target, 'vorher');
+    assert.equal(stop.target, '');
+    assert.equal(pause.target, '');
+    assert.equal(M.instantiateCues([{ type: 'fade', target: '' }])[0].target, '');
+  });
+  it('macht ungültige Platzhalter zu leeren Zielen', () => {
+    const [c] = M.instantiateCues([{ type: 'fade', target: '#5' }]);
+    assert.equal(c.target, '');
+    const [d] = M.instantiateCues([{ type: 'fade', target: '#abc' }]);
+    assert.equal(d.target, '');
+  });
+  it('baut ein Preset mit Name und Zeitpunkt', () => {
+    const p = M.cueToPreset(M.newCue('pause'), 'Pause');
+    assert.equal(p.name, 'Pause');
+    assert.equal(p.cues.length, 1);
+    assert.equal(typeof p.created, 'number');
+  });
+  it('liefert fünf Standard-Presets mit eindeutigen Namen', () => {
+    const d = M.defaultPresets();
+    assert.equal(d.length, 5);
+    assert.equal(new Set(d.map((p) => p.name)).size, 5);
+    assert.equal(d[4].cues.length, 2);
+  });
+});
+
+describe('Migration älterer Daten', () => {
+  it('wandelt Start- und Stop-Cues aus v0.2 in Start/Stop um', () => {
+    assert.deepEqual(M.migrateCue({ type: 'start', target: 'a' }), { type: 'startstop', mode: 'start', target: 'a', fade: 0 });
+    assert.deepEqual(M.migrateCue({ type: 'stop', fade: 2 }), { type: 'startstop', mode: 'stop', fade: 2 });
+    const c = { type: 'audio' };
+    assert.strictEqual(M.migrateCue(c), c);
+  });
+  it('bringt Presets mit einem Cue auf das Mehr-Cue-Format', () => {
+    const p = M.migratePreset({ name: 'alt', cue: { type: 'stop' } });
+    assert.equal('cue' in p, false);
+    assert.equal(p.cues[0].type, 'startstop');
+    assert.deepEqual(M.migratePreset({ name: 'leer' }).cues, []);
+    assert.equal(M.migratePreset({ cues: [{ type: 'memo' }], cue: { type: 'audio' } }).cues[0].type, 'memo');
+  });
+  it('ergänzt fehlende Einstellungen und Cue-Felder', () => {
+    const s = M.normalizeSession({ name: 'alt', settings: { layout: 'cart', midi: { go: '90 3c' } }, cues: [{ type: 'start', id: 'x' }] });
+    assert.equal(s.settings.layout, 'cart');
+    assert.equal(s.settings.goLockMs, 300);
+    assert.deepEqual(s.settings.midi, { enabled: false, go: '90 3c', stopAll: '' });
+    assert.equal(s.cues[0].type, 'startstop');
+    assert.equal(s.cues[0].id, 'x');
+    assert.equal(s.cues[0].nextAction, 'none');
+  });
+  it('kommt ohne Einstellungen und Cues aus', () => {
+    const s = M.normalizeSession({});
+    assert.deepEqual(s.cues, []);
+    assert.equal(s.settings.cartColumns, 4);
+  });
+  it('verschmutzt keine Prototypen (__proto__ aus einer fremden Datei)', () => {
+    const fremd = JSON.parse('{"settings":{"__proto__":{"boese":1},"midi":{"__proto__":{"boese":2}}},"cues":[{"type":"memo","__proto__":{"boese":3}}]}');
+    const s = M.normalizeSession(fremd);
+    assert.equal({}.boese, undefined);
+    assert.equal(Object.prototype.boese, undefined);
+    assert.equal(s.cues[0].type, 'memo');
+  });
+});
+
+describe('Anzeigenamen', () => {
+  const show = () => {
+    const s = M.newSession();
+    const a = M.newCue('audio', { mediaName: 'intro.wav' });
+    s.cues.push(a);
+    return { s, a };
+  };
+  it('nimmt den eigenen Namen, sonst einen beschreibenden', () => {
+    const { s, a } = show();
+    assert.equal(M.cueDisplayName(s, M.newCue('audio', { name: 'Eigen' })), 'Eigen');
+    assert.equal(M.cueDisplayName(s, a), 'intro.wav');
+    assert.equal(M.cueDisplayName(s, M.newCue('audio')), 'Audio (keine Datei)');
+    assert.equal(M.cueDisplayName(s, M.newCue('fade', { target: a.id, volume: -10 })), 'Fade #1 → -10 dB');
+    assert.equal(M.cueDisplayName(s, M.newCue('fade', { volume: -60 })), 'Fade ? → −∞');
+    assert.equal(M.cueDisplayName(s, M.newCue('startstop', { mode: 'stop' })), 'Stop alle');
+    assert.equal(M.cueDisplayName(s, M.newCue('startstop', { mode: 'start' })), 'Start ?');
+    assert.equal(M.cueDisplayName(s, M.newCue('startstop', { target: a.id })), 'Start/Stop #1');
+    assert.equal(M.cueDisplayName(s, M.newCue('pause', { mode: 'resume' })), 'Weiter alle');
+    assert.equal(M.cueDisplayName(s, M.newCue('midi', { msg: 'cc', data1: 7 })), 'MIDI cc 7');
+    assert.equal(M.cueDisplayName(s, M.newCue('memo', { notes: '# Umbau\nmehr' })), 'Umbau');
+    assert.equal(M.cueDisplayName(s, M.newCue('memo')), 'Memo');
+  });
+  it('stürzt bei unbekanntem Typ oder Modus nicht ab', () => {
+    const { s } = show();
+    assert.equal(M.cueDisplayName(s, { type: 'raetsel' }), 'raetsel');
+    assert.doesNotThrow(() => M.cueDisplayName(s, { type: 'startstop', mode: 'quatsch' }));
+    assert.doesNotThrow(() => M.cueDisplayName(s, { type: 'pause', mode: null }));
+  });
+});
