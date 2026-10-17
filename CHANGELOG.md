@@ -9,7 +9,7 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 ## [Unveröffentlicht]
 
 ### Intern
-- Lokale Smoke-Tests laufen im Playwright-Container (`podman`), nicht mehr mit Browsern aus `~/.cache/ms-playwright`.
+- Smoke-Test läuft lokal in der gemeinsamen Testumgebung (`~/projects/testumgebung/pt test`), nicht mehr mit Browsern aus `~/.cache/ms-playwright`.
 
 ## [0.6.0] – 2026-10-17
 
