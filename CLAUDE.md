@@ -58,6 +58,14 @@ Lokal (Fedora) in der gemeinsamen Testumgebung, keine Browser auf dem Host insta
 
 Die Playwright-Version im Image muss zu `node_modules/playwright` passen; der Test warnt bei Abweichung.
 
+`pt test` führt aus: Unit-Tests (`tests/unit/*.test.mjs`, `node:test`, für `md.js`, `util.js`, `model.js`), den
+Smoke-Test und den Browsertest `tests/import.mjs` (präparierte `.cueshow`-Dateien, `site.json`). Weitere Befehle im
+Container: `pt npm run test:coverage` (Coverage der Unit-Tests), `pt npm run test:mutation` (Stryker, ca. 10 Minuten).
+
+- Fremde Shows (`.cueshow`) prüft `importShow()` in `storage.js` vollständig, bevor etwas gespeichert wird. Neue
+  Pflichtfelder dort ergänzen. Werte, die als CSS oder Attribut in die Seite gehen, vorher prüfen (wie `safeColor`
+  in `model.js`); Text nur über `h()`/`textContent`, Markdown nur über `md.js`.
+
 In der Claude-Cloud-Umgebung (Playwright und Chromium sind vorinstalliert, `npm install` ist nicht nötig):
 
 ```bash

@@ -130,11 +130,14 @@ export function migrateCue(c) {
   return c;
 }
 
+/** Nur Farben als #rgb/#rrggbb: Die Farbe landet als CSS-Wert in der Seite, url(…) aus einer fremden Show lüde fremde Server. */
+const safeColor = (c) => (typeof c === 'string' && /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(c) ? c : '');
+
 /** Ergänzt fehlende Felder (z. B. nach Import älterer Shows). */
 export function normalizeSession(s) {
   const def = newSession();
   s.settings = { ...def.settings, ...s.settings, midi: { ...def.settings.midi, ...s.settings?.midi } };
-  s.cues = (s.cues || []).map(migrateCue).map((c) => ({ ...newCue(c.type), ...c }));
+  s.cues = (s.cues || []).map(migrateCue).map((c) => ({ ...newCue(c.type), ...c, color: safeColor(c.color) }));
   return s;
 }
 

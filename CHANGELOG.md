@@ -8,7 +8,26 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+### Sicherheit
+- Cue-Farben werden nur noch als `#rgb`/`#rrggbb` übernommen. Eine präparierte `.cueshow` konnte über eine
+  Farbe wie `url(https://…)` beim Anzeigen einen fremden Server anfragen (und so verraten, wer die Show wann öffnet).
+
+### Behoben
+- **Import:** Eine `.cueshow` wird vollständig geprüft (Kennung, Headerlänge, Format, Aufbau der Show, Lage der
+  Mediendaten), bevor etwas gespeichert wird. Bisher blieben bei kaputten Dateien Audiodateien verwaist im Speicher, und
+  verfälschte Dateien (unsinnige Headerlänge, Medien außerhalb der Datei, fremde Formatversion) wurden angenommen.
+  Fehlermeldung einheitlich „Keine gültige .cueshow-Datei“.
+
 ### Intern
+- Unit-Tests mit `node:test` (ohne neue Abhängigkeit) für `md.js`, `util.js` und `model.js` in `tests/unit/`:
+  XSS-Versuche im Markdown, nur `#anker`/http(s)-Links im Handbuch, dB-Umrechnung, Fade-Kurven, Timer mit gemockter
+  Zeit, Versionsprüfung mit gemocktem GitHub, Migration älterer Daten, `__proto__` aus fremden Dateien
+  (`npm run test:unit`).
+- Browsertest `tests/import.mjs`: Import präparierter `.cueshow`-Dateien (kaputt, verfälscht, mit HTML/JS in allen
+  Textfeldern) und Impressum-Link aus `site.json` nur mit http(s) (`npm run test:import`).
+- Coverage der Unit-Tests mit dem in Node eingebauten Werkzeug (`npm run test:coverage`, 100 % Zeilen) und Mutation
+  Testing mit Stryker (Command-Runner, `npm run test:mutation`, 92 %). Stryker ist die einzige neue devDependency;
+  die App bleibt ohne Build und ohne Laufzeit-Abhängigkeiten.
 - Smoke-Test läuft lokal in der gemeinsamen Testumgebung (`~/projects/testumgebung/pt test`), nicht mehr mit Browsern aus `~/.cache/ms-playwright`.
 
 ## [0.6.0] – 2026-10-17
