@@ -25,6 +25,9 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
   (`npm run test:unit`).
 - Browsertest `tests/import.mjs`: Import präparierter `.cueshow`-Dateien (kaputt, verfälscht, mit HTML/JS in allen
   Textfeldern) und Impressum-Link aus `site.json` nur mit http(s) (`npm run test:import`).
+- Coverage der Unit-Tests mit dem in Node eingebauten Werkzeug (`npm run test:coverage`, 100 % Zeilen) und Mutation
+  Testing mit Stryker (Command-Runner, `npm run test:mutation`, 92 %). Stryker ist die einzige neue devDependency;
+  die App bleibt ohne Build und ohne Laufzeit-Abhängigkeiten.
 - Smoke-Test läuft lokal in der gemeinsamen Testumgebung (`~/projects/testumgebung/pt test`), nicht mehr mit Browsern aus `~/.cache/ms-playwright`.
 
 ## [0.6.0] – 2026-10-17

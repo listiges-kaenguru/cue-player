@@ -172,3 +172,69 @@ describe('Anzeigenamen', () => {
     assert.doesNotThrow(() => M.cueDisplayName(s, { type: 'pause', mode: null }));
   });
 });
+
+// Nachgeschärft nach Mutation Testing: Standardwerte festhalten, Ziele beim Einfügen, Farbprüfung
+describe('Standardwerte', () => {
+  it('Cue-Typen und Folgeaktionen', () => {
+    assert.deepEqual(M.CUE_TYPES, {
+      audio: { label: 'Audio', icon: '♪' }, fade: { label: 'Fade', icon: '◢' }, startstop: { label: 'Start / Stop', icon: '▶■' },
+      pause: { label: 'Pause', icon: '❚❚' }, midi: { label: 'MIDI', icon: '⎍' }, memo: { label: 'Memo', icon: '✎' },
+    });
+    assert.deepEqual(M.NEXT_ACTIONS, { none: 'Keine', continue: 'Auto-Continue', follow: 'Auto-Follow' });
+  });
+  it('Einstellungen einer neuen Show', () => {
+    const { id, updated, ...rest } = M.newSession('X');
+    assert.deepEqual(rest, {
+      version: 1, name: 'X', cues: [],
+      settings: { layout: 'list', showMode: false, confirmEdit: true, cartColumns: 4, goLockMs: 300, stopAllFade: 1.5,
+        pauseAllFade: 0, masterDb: 0, midi: { enabled: false, go: '', stopAll: '' }, wakeLock: true, sinkId: '' },
+    });
+  });
+  it('Felder je Cue-Typ', () => {
+    const ohneId = (c) => { const { id, ...r } = c; return r; };
+    const gemeinsam = { name: '', color: '', preWait: 0, postWait: 0, nextAction: 'none', hotkey: '', midiTrigger: '', notes: '' };
+    assert.deepEqual(ohneId(M.newCue('audio')), { type: 'audio', ...gemeinsam, mediaId: null, mediaName: '', duration: 0, volume: 0, pan: 0, start: 0, end: 0, fadeIn: 0, fadeOut: 0, fadeCurve: 'log', loop: false });
+    assert.deepEqual(ohneId(M.newCue('fade')), { type: 'fade', ...gemeinsam, target: '', volume: -60, duration: 3, fadeCurve: 'log', stopAfter: true });
+    assert.deepEqual(ohneId(M.newCue('startstop')), { type: 'startstop', ...gemeinsam, target: '', mode: 'toggle', fade: 0 });
+    assert.deepEqual(ohneId(M.newCue('pause')), { type: 'pause', ...gemeinsam, target: '', mode: 'toggle', fadeOut: 0, fadeIn: 0 });
+    assert.deepEqual(ohneId(M.newCue('midi')), { type: 'midi', ...gemeinsam, output: '', msg: 'noteon', channel: 1, data1: 60, data2: 127 });
+    assert.deepEqual(ohneId(M.newCue('memo')), { type: 'memo', ...gemeinsam, confirm: false });
+  });
+  it('Inhalt der Standard-Presets', () => {
+    const kurz = M.defaultPresets().map((p) => [p.name, p.cues.map((c) => {
+      const { name, color, preWait, postWait, nextAction, notes, ...r } = c;
+      return { ...r, ...(name && { name }), ...(notes && { notes }) };
+    })]);
+    assert.deepEqual(kurz, [
+      ['Ausblenden 3 s + Stop', [{ type: 'fade', target: '', volume: -60, duration: 3, fadeCurve: 'log', stopAfter: true }]],
+      ['Musik unter Text (−15 dB, 3 s)', [{ type: 'fade', target: '', volume: -15, duration: 3, fadeCurve: 'log', stopAfter: false }]],
+      ['Pause/Weiter mit Fade 2 s', [{ type: 'pause', target: '', mode: 'toggle', fadeOut: 2, fadeIn: 2 }]],
+      ['Alles ausblenden 5 s', [{ type: 'startstop', target: '', mode: 'stop', fade: 5 }]],
+      ['Szenenwechsel: alles ausblenden + Umbau (bestätigen)', [
+        { type: 'startstop', target: '', mode: 'stop', fade: 3 },
+        { type: 'memo', confirm: true, name: 'Umbau', notes: '! Erst GO nach Freigabe durch die Bühne' }]],
+    ]);
+  });
+});
+
+describe('Ziele und Farben: Randfälle', () => {
+  it('legt bei Cues ohne Ziel kein Ziel an', () => {
+    assert.equal('target' in M.cuesToTemplates([M.newCue('memo')])[0], false);
+    assert.equal('target' in M.instantiateCues([{ type: 'memo' }], 'vorher')[0], false);
+  });
+  it('lässt externe und nicht-textuelle Ziele beim Einfügen stehen', () => {
+    const [a, b] = M.instantiateCues([{ type: 'fade', target: 'fremd' }, { type: 'startstop', mode: 'stop', target: 7 }], 'vorher');
+    assert.equal(a.target, 'fremd');
+    assert.equal(b.target, 7);
+  });
+  it('lehnt Farben mit Text davor ab', () => {
+    const s = M.normalizeSession({ cues: [{ type: 'memo', color: 'x#abc' }, { type: 'memo', color: 'url(x)#abcdef' }] });
+    assert.deepEqual(s.cues.map((c) => c.color), ['', '']);
+  });
+  it('benennt Pause-Cues nach Modus', () => {
+    const s = M.newSession();
+    assert.equal(M.cueDisplayName(s, M.newCue('pause')), 'Pause/Weiter alle');
+    assert.equal(M.cueDisplayName(s, M.newCue('pause', { mode: 'pause' })), 'Pause alle');
+    assert.equal(M.cueDisplayName(s, M.newCue('startstop', { mode: 'toggle' })), 'Start/Stop alle');
+  });
+});

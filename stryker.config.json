@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "_comment": "Mutation Testing der reinen Module (Unit-Tests mit node:test). Command-Runner, weil Stryker keinen eigenen Runner für node:test hat.",
+  "testRunner": "command",
+  "commandRunner": { "command": "node --test 'tests/unit/*.test.mjs'" },
+  "coverageAnalysis": "off",
+  "mutate": ["js/md.js", "js/util.js", "js/model.js"],
+  "reporters": ["clear-text", "progress", "json"],
+  "jsonReporter": { "fileName": "reports/mutation/mutation.json" },
+  "concurrency": 2,
+  "tempDirName": ".stryker-tmp"
+}

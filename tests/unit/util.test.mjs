@@ -99,7 +99,7 @@ describe('Emitter', () => {
 describe('Timer und debounce (gemockte Zeit)', () => {
   let jetzt;
   beforeEach(() => {
-    jetzt = 0;
+    jetzt = 5000; // nicht 0, damit vertauschte Vorzeichen bei performance.now() auffallen
     mock.timers.enable({ apis: ['setTimeout'] });
     mock.method(performance, 'now', () => jetzt);
   });
@@ -286,5 +286,48 @@ describe('latestRelease (GitHub gemockt, Zeit gemockt)', () => {
     globalThis.localStorage = { getItem: () => { throw new Error('gesperrt'); }, setItem: () => { throw new Error('gesperrt'); } };
     mock.method(globalThis, 'fetch', antwort(200, { tag_name: 'v1.0.1' }));
     assert.equal(await U.latestRelease(API, KEY), '1.0.1');
+  });
+});
+
+// Nachgeschärft nach Mutation Testing
+describe('Randfälle Timer, Rampen, Versionen', () => {
+  let jetzt;
+  beforeEach(() => { jetzt = 5000; mock.timers.enable({ apis: ['setTimeout'] }); mock.method(performance, 'now', () => jetzt); });
+  afterEach(() => { mock.timers.reset(); mock.restoreAll(); });
+  const vor = (ms) => { jetzt += ms; mock.timers.tick(ms); };
+
+  it('zählt die vergangene Zeit während des Laufs mit, nach cancel nicht mehr', () => {
+    const t = new U.Timer(1000, () => {});
+    vor(250);
+    assert.equal(t.elapsed(), 250);
+    t.pause(); vor(100); t.resume(); vor(50);
+    assert.equal(t.elapsed(), 300);
+    t.cancel();
+    const beimAbbruch = t.elapsed();
+    vor(500);
+    assert.equal(t.running, false);
+    assert.equal(t.elapsed(), beimAbbruch, 'läuft nach cancel nicht weiter');
+  });
+  it('log-Rampe von leise nach laut (Ausgangswert ungleich 0 dB)', () => {
+    const calls = [];
+    const p = { value: U.dbToGain(-40), cancelScheduledValues() {}, setValueAtTime() {}, linearRampToValueAtTime() {}, setValueCurveAtTime: (a) => calls.push(a) };
+    U.rampParam({ currentTime: 0 }, p, U.dbToGain(-10), 1);
+    assert.ok(Math.abs(U.gainToDb(calls[0][127]) + 10) < 1e-4);
+    assert.ok(Math.abs(U.gainToDb(calls[0][63]) - (-40 + 30 * 63 / 127)) < 1e-3, String(U.gainToDb(calls[0][63])));
+  });
+  it('vergleicht mehrstellige Versionen und ignoriert eine vierte Stelle', () => {
+    assert.equal(U.versionFromTag('v10.20.30'), '10.20.30');
+    assert.ok(U.compareVersions('0.10.0', '0.2.0') > 0);
+    assert.equal(U.compareVersions('1.2.3.4', '1.2.3.9'), 0);
+  });
+  it('liefert bei HTTP-Fehler auch mit Tag im Inhalt null', async () => {
+    globalThis.localStorage = { getItem: () => null, setItem: () => {} };
+    mock.method(globalThis, 'fetch', async () => ({ ok: false, status: 500, json: async () => ({ tag_name: 'v9.9.9' }) }));
+    try { assert.equal(await U.latestRelease('https://api.github.com/x', 'k'), null); } finally { delete globalThis.localStorage; }
+  });
+  it('erzeugt IDs auch ganz ohne crypto', () => {
+    const orig = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
+    Object.defineProperty(globalThis, 'crypto', { value: undefined, configurable: true });
+    try { assert.match(U.uid(), /^id-/); } finally { Object.defineProperty(globalThis, 'crypto', orig); }
   });
 });

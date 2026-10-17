@@ -145,3 +145,103 @@ describe('firstLine und slugify', () => {
     assert.equal(slugify('**Fett** `code`'), 'fett-code');
   });
 });
+
+// Nachgeschärft nach Mutation Testing: längere Inhalte, Zeilen ohne Leerzeile dazwischen, Blöcke im Handbuch
+describe('renderMarkdown: Randfälle', () => {
+  it('formatiert auch längere Inhalte', () => {
+    assert.equal(renderMarkdown('**fett und mehr** __auch__ *kursiv hier* _so_ ~~weg damit~~ ==wichtig=='),
+      '<p><strong>fett und mehr</strong> <strong>auch</strong> <em>kursiv hier</em> <em>so</em> <del>weg damit</del> <mark>wichtig</mark></p>');
+    assert.equal(renderMarkdown('*am Anfang*'), '<p><em>am Anfang</em></p>');
+  });
+  it('beendet einen Absatz vor Überschrift, Liste, Warnung und Zitat', () => {
+    assert.equal(renderMarkdown('text\n# Titel'), '<p>text</p><h3>Titel</h3>');
+    assert.equal(renderMarkdown('text\n- eins'), '<p>text</p><ul><li>eins</li></ul>');
+    assert.equal(renderMarkdown('text\n! Achtung'), '<p>text</p><p class="md-warn">Achtung</p>');
+    assert.equal(renderMarkdown('text\n> zitat'), '<p>text</p><blockquote>zitat</blockquote>');
+  });
+  it('erkennt Blöcke nur am Zeilenanfang', () => {
+    assert.equal(renderMarkdown('Seite 1. Kapitel'), '<p>Seite 1. Kapitel</p>');
+    assert.equal(renderMarkdown('Hallo ! Welt'), '<p>Hallo ! Welt</p>');
+    assert.equal(renderMarkdown('a > b'), '<p>a &gt; b</p>');
+    assert.equal(renderMarkdown('Nr. # eins'), '<p>Nr. # eins</p>');
+  });
+  it('verträgt mehrere Leerzeichen und mehrstellige Nummern', () => {
+    assert.equal(renderMarkdown('##   Titel'), '<h4>Titel</h4>');
+    assert.equal(renderMarkdown('  -   Punkt eins'), '<ul><li>Punkt eins</li></ul>');
+    assert.equal(renderMarkdown('  12.   Punkt'), '<ol><li>Punkt</li></ol>');
+    assert.equal(renderMarkdown('!Achtung jetzt'), '<p class="md-warn">Achtung jetzt</p>');
+    assert.equal(renderMarkdown('>zitat hier'), '<blockquote>zitat hier</blockquote>');
+    assert.equal(renderMarkdown('>  eingerückt'), '<blockquote> eingerückt</blockquote>');
+  });
+  it('entfernt Leerzeichen nur am Zeilenende', () => {
+    assert.equal(renderMarkdown('a   \n  b'), '<p>a<br>  b</p>');
+  });
+});
+
+describe('firstLine: Randfälle', () => {
+  it('überspringt Zeilen aus Leerzeichen und entfernt Marker mit Abstand', () => {
+    assert.equal(firstLine('   \nText'), 'Text');
+    assert.equal(firstLine('  -   Punkt'), 'Punkt');
+    assert.equal(firstLine('12. Punkt'), 'Punkt');
+    assert.equal(firstLine('###Titel'), 'Titel');
+    assert.equal(firstLine('Nr. 1. Platz'), 'Nr. 1. Platz');
+  });
+});
+
+describe('renderDocument: Randfälle', () => {
+  it('verbindet Absatzzeilen mit Leerzeichen', () => {
+    assert.equal(renderDocument('eins\nzwei'), '<p>eins zwei</p>');
+  });
+  it('hält Listen über eine Leerzeile zusammen, beendet sie vor normalem Text', () => {
+    assert.equal(renderDocument('- a\n\n- b'), '<ul><li>a</li><li>b</li></ul>');
+    assert.equal(renderDocument('10. a\n\n11. b'), '<ol><li>a</li><li>b</li></ol>');
+    assert.equal(renderDocument('- a\n\ntext'), '<ul><li>a</li></ul><p>text</p>');
+    assert.equal(renderDocument('- a\n\n'), '<ul><li>a</li></ul>');
+    assert.equal(renderDocument('text\n\n- a'), '<p>text</p><ul><li>a</li></ul>');
+    assert.equal(renderDocument('- a\n\n - b'), '<ul><li>a<ul><li>b</li></ul></li></ul>');
+  });
+  it('erkennt Listen mit mehreren Leerzeichen und nur am Zeilenanfang', () => {
+    assert.equal(renderDocument('-   a'), '<ul><li>a</li></ul>');
+    assert.equal(renderDocument('Nr. 1. Platz'), '<p>Nr. 1. Platz</p>');
+    assert.equal(renderDocument('- [ ]   offen'), '<ul><li class="task">☐ offen</li></ul>');
+    assert.equal(renderDocument('- x [ ] y'), '<ul><li>x [ ] y</li></ul>');
+  });
+  it('hängt eingerückten Text an den passenden Eintrag', () => {
+    assert.equal(renderDocument('- a\n  weiter'), '<ul><li>a weiter</li></ul>');
+    assert.equal(renderDocument('- a\n weiter'), '<ul><li>a</li></ul><p> weiter</p>');
+    assert.equal(renderDocument('- a\n  - b\n\n    mehr'), '<ul><li>a<ul><li>b<br> mehr</li></ul></li></ul>');
+    assert.equal(renderDocument('- a\n  - b\n\n  mehr'), '<ul><li>a<ul><li>b</li></ul> mehr</li></ul>');
+    assert.equal(renderDocument('  eingerückt'), '<p>  eingerückt</p>');
+  });
+  it('erkennt eingerückte Codeblöcke und Linien mit Leerzeichen', () => {
+    assert.equal(renderDocument('  ```js\n*x*\n  ```\ndanach'), '<pre><code>*x*</code></pre><p>danach</p>');
+    assert.equal(renderDocument(' *** '), '<hr>');
+    assert.equal(renderDocument('text\n---'), '<p>text</p><hr>');
+    assert.equal(renderDocument('--'), '<p>--</p>');
+    assert.equal(renderDocument('a --- b'), '<p>a --- b</p>');
+  });
+  it('erkennt Überschriften mit mehreren Leerzeichen, nicht mitten im Text', () => {
+    assert.equal(renderDocument('##   Titel'), '<h2 id="doc-titel">Titel</h2>');
+    assert.equal(renderDocument('text\n# T'), '<p>text</p><h1 id="doc-t">T</h1>');
+    assert.equal(renderDocument('C# lernen'), '<p>C# lernen</p>');
+  });
+  it('baut Tabellen nur mit Trennzeile und beendet sie vor normalem Text', () => {
+    assert.equal(renderDocument('| a |\nkeine Tabelle'), '<p>| a | keine Tabelle</p>');
+    assert.equal(renderDocument('| a | b |\n| :-- | --: |\n| 1 | 2 |\ndanach'),
+      '<div class="doc-table"><table><thead><tr><th>a</th><th>b</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody></table></div><p>danach</p>');
+    assert.equal(renderDocument('text\n| a |\n|---|'), '<p>text</p><div class="doc-table"><table><thead><tr><th>a</th></tr></thead><tbody></tbody></table></div>');
+    assert.equal(renderDocument('a | b\n|---|---|'), '<p>a | b |---|---|</p>');
+    assert.equal(renderDocument('| a |\n|-x-|'), '<p>| a | |-x-|</p>');
+  });
+  it('baut Zitate und lässt viele Code-Stellen in einer Zeile unverändert', () => {
+    assert.equal(renderDocument('> Hinweis *hier*'), '<blockquote>Hinweis <em>hier</em></blockquote>');
+    assert.equal(renderDocument('text\n>zitat'), '<p>text</p><blockquote>zitat</blockquote>');
+    assert.equal(renderDocument('a > b'), '<p>a &gt; b</p>');
+    const viele = Array.from({ length: 12 }, (_, i) => `\`c${i}\``).join(' ');
+    assert.equal(renderDocument(viele), `<p>${Array.from({ length: 12 }, (_, i) => `<code>c${i}</code>`).join(' ')}</p>`);
+  });
+  it('lässt http- und https-Links zu, aber nur am Anfang des Ziels', () => {
+    assert.match(renderDocument('[a](http://example.org)'), /<a href="http:\/\/example.org"/);
+    assert.equal(renderDocument('[a](x-https://example.org)'), '<p>a</p>');
+  });
+});

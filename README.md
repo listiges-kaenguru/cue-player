@@ -96,6 +96,8 @@ js/midi.js             Web-MIDI-Anbindung
 js/md.js               Markdown-Renderer für Memos und die eingebaute Hilfe (sicher, ohne Bibliothek)
 js/util.js             Hilfsfunktionen (Timer, dB-Umrechnung, Fade-Kurven)
 tests/smoke.mjs        Browser-Smoke-Test (Playwright)
+tests/import.mjs       Browsertest: Import präparierter .cueshow-Dateien, site.json
+tests/unit/            Unit-Tests (node:test) für md.js, util.js, model.js
 img/                   App-Icons (nicht „icons/“: Apache-Standard-Alias)
 docs/                  Anleitungen (BENUTZERHANDBUCH.md wird auch als Hilfe in der App angezeigt)
 ```
