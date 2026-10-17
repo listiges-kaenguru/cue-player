@@ -12,7 +12,8 @@
   "scripts": {
     "start": "http-server -p 8080 -c-1",
     "test": "node tests/smoke.mjs",
-    "test:unit": "node --test 'tests/unit/*.test.mjs'"
+    "test:unit": "node --test 'tests/unit/*.test.mjs'",
+    "test:import": "node tests/import.mjs"
   },
   "devDependencies": {
     "http-server": "^14.1.1",
