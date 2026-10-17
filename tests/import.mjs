@@ -106,7 +106,8 @@ errors.length = 0;
 const grenzfaelle = [
   ['unbekannter Cue-Typ', session({ cues: [cue({ type: 'rakete', name: 'X' }), cue({ name: 'danach' })] })],
   ['falsche Typen in Cues', session({ cues: [cue({ type: 'audio', volume: 'laut', preWait: 'bald', duration: null, mediaId: 'fehlt' }), cue({ type: 'fade', target: { x: 1 }, duration: -5 })] })],
-  ['__proto__ im Header', JSON.parse(JSON.stringify(session()).replace('{', '{"__proto__":{"boese":1},"constructor":{"prototype":{"boese":2}},'))],
+  // Schlüssel vorn ins JSON-Objekt setzen (JSON.parse legt __proto__ dann als eigene Eigenschaft an)
+  ['__proto__ im Header', JSON.parse('{"__proto__":{"boese":1},"constructor":{"prototype":{"boese":2}},' + JSON.stringify(session()).slice(1))],
   ['Unicode und Steuerzeichen', session({ name: 'Ü🎭‮שלום\u0000', cues: [cue({ name: '\u0000￿😀', notes: '# 🎭\n‮text' })] })],
   ['keine Cues', session({ cues: [] })],
 ];
