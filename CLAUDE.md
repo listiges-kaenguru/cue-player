@@ -50,12 +50,13 @@ npm start              # http://localhost:8080
 npm test               # in zweitem Terminal: Smoke-Test
 ```
 
-Lokal (Fedora) im Container, keine Browser auf dem Host installieren (Image-Version = Playwright in `node_modules`):
+Lokal (Fedora) in der gemeinsamen Testumgebung, keine Browser auf dem Host installieren:
 
 ```bash
-podman run --rm -v "$PWD":/app:Z -w /app mcr.microsoft.com/playwright:v1.64.1-noble \
-  sh -c 'npx http-server -p 8080 -c-1 -s & sleep 2; node tests/smoke.mjs'
+~/projects/testumgebung/pt test     # Syntax, Links und Smoke-Test im Container (startet den Server selbst)
 ```
+
+Die Playwright-Version im Image muss zu `node_modules/playwright` passen; der Test warnt bei Abweichung.
 
 In der Claude-Cloud-Umgebung (Playwright und Chromium sind vorinstalliert, `npm install` ist nicht nötig):
 
