@@ -8,6 +8,10 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+## [0.6.1] – 2026-10-18
+
+Sicherheitskorrektur für den Import von Shows (`.cueshow`). Version 0.6.1 in `sw.js`, `app.js`, `package.json`.
+
 ### Sicherheit
 - Cue-Farben werden nur noch als `#rgb`/`#rrggbb` übernommen. Eine präparierte `.cueshow` konnte über eine
   Farbe wie `url(https://…)` beim Anzeigen einen fremden Server anfragen (und so verraten, wer die Show wann öffnet).
