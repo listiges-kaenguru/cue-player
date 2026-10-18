@@ -6,7 +6,7 @@ import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, cueDispl
 import { fmtTime, fmtDb, debounce, keyLabel, uid, clamp, MIN_DB, compareVersions, latestRelease } from './util.js';
 import { renderMarkdown, renderDocument, firstLine } from './md.js';
 
-export const APP_VERSION = '0.6.0';
+export const APP_VERSION = '0.6.1';
 export const SOURCE_URL = 'https://github.com/listiges-kaenguru/cue-player';
 /** Versionsprüfung: einzige Verbindung nach außen, höchstens einmal am Tag beim Öffnen der Einstellungen */
 const RELEASE_API = 'https://api.github.com/repos/listiges-kaenguru/cue-player/releases/latest';
