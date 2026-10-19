@@ -94,9 +94,17 @@ body.show-mode .edit-only { display: none !important; }
 /* ---------- Main ---------- */
 main {
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: 1fr var(--side-w, 300px);
   min-height: 0;
+  position: relative;
 }
+/* Griff zum Verstellen der Breite des rechten Bereichs (nur Desktop) */
+.side-resize {
+  position: absolute; top: 0; bottom: 0; right: calc(var(--side-w, 300px) - 4px); width: 8px; z-index: 5;
+  cursor: col-resize; touch-action: none;
+}
+.side-resize:hover, .side-resize:focus-visible, .side-resize.dragging { background: linear-gradient(to right, transparent 3px, var(--standby) 3px 5px, transparent 5px); outline: none; }
+body.resizing { cursor: col-resize; user-select: none; }
 .list-view, .cart-view { overflow: auto; min-height: 0; position: relative; }
 .side {
   border-left: 1px solid var(--line);
@@ -367,6 +375,7 @@ main {
 /* ---------- Responsiv (Tablet/Handy) ---------- */
 @media (max-width: 900px) {
   main { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+  .side-resize { display: none; }
   .side { border-left: none; border-top: 1px solid var(--line); max-height: 45vh; }
   .side.empty, .running.idle { display: none; }
   .memo-body { max-height: 28vh; overflow: auto; }

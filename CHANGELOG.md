@@ -19,6 +19,9 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
   Show-Modus springt nur Ziehen und Loslassen (ein versehentlicher Tipp tut nichts); während des Ziehens zeigt ein
   Marker die Zielzeit, Loslassen neben dem Balken bricht ab. Auf dem fokussierten Balken springen ←/→ um 5 Sekunden.
   Ein laufender Fade-Out am Ende wird dabei richtig fortgesetzt bzw. zurückgenommen.
+- **Breite des rechten Bereichs** (Regiebuch und Aktiv) ist am PC per Griff am linken Rand verstellbar (240 px bis
+  60 % der Fensterbreite, auch mit ←/→ am fokussierten Griff). Die Breite wird je Gerät gespeichert, Doppelklick stellt
+  die Standardbreite wieder her. Unter 900 px Fensterbreite bleibt das Layout wie bisher.
 
 ### Behoben
 - **Handy:** Die GO-Taste schnitt beim Standby-Namen die Unterlängen ab (g, p, y). „GO“ hat jetzt eine engere

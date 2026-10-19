@@ -252,6 +252,70 @@ await page.mouse.click(...(await at(1)));
 await page.waitForTimeout(300);
 check('Springen: rechter Rand → Cue endet', (await pos0()).state === 'idle');
 
+// --- 5. Breite des rechten Bereichs ---
+const KEY = 'cue-player-side-width';
+const side = () => page.evaluate((k) => ({
+  w: Math.round(document.getElementById('side').getBoundingClientRect().width),
+  stored: localStorage.getItem(k),
+  handle: getComputedStyle(document.getElementById('side-resize')).display !== 'none',
+}), KEY);
+const handleAt = async () => { const b = await (await page.$('#side-resize')).boundingBox(); return [b.x + b.width / 2, b.y + 200]; };
+const dragHandle = async (dx) => {
+  const [x, y] = await handleAt();
+  await page.mouse.move(x, y); await page.mouse.down();
+  await page.mouse.move(x + dx, y, { steps: 6 }); await page.mouse.up();
+};
+let sd = await side();
+check('Breite: Standard 300 px, Griff sichtbar', sd.w === 300 && sd.handle && sd.stored === null, JSON.stringify(sd));
+await dragHandle(-200);
+sd = await side();
+check('Breite: Ziehen nach links verbreitert und speichert', Math.abs(sd.w - 500) <= 2 && Math.abs(+sd.stored - 500) <= 2, JSON.stringify(sd));
+await dragHandle(-2000);
+sd = await side();
+check('Breite: höchstens 60 % des Fensters', sd.w === 768, JSON.stringify(sd));
+await dragHandle(2000);
+sd = await side();
+check('Breite: mindestens 240 px', sd.w === 240, JSON.stringify(sd));
+await page.focus('#side-resize');
+await page.keyboard.press('ArrowLeft');
+sd = await side();
+check('Breite: ← am Griff verbreitert', sd.w === 256 && sd.stored === '256', JSON.stringify(sd));
+await page.keyboard.press('ArrowRight');
+await page.keyboard.press('ArrowRight');
+check('Breite: → nicht unter das Minimum', (await side()).w === 240);
+await dragHandle(-260);
+await page.reload();
+await page.waitForSelector('#side-resize');
+sd = await side();
+check('Breite: bleibt nach dem Neuladen', Math.abs(sd.w - 500) <= 2, JSON.stringify(sd));
+await dragHandle(-200);
+check('Breite: 700 px', Math.abs((await side()).w - 700) <= 2);
+await page.setViewportSize({ width: 1000, height: 800 });
+await page.waitForTimeout(100);
+sd = await side();
+check('Breite: schmaleres Fenster begrenzt auf 60 %, Wunsch bleibt gespeichert', sd.w === 600 && Math.abs(+sd.stored - 700) <= 2, JSON.stringify(sd));
+await page.setViewportSize({ width: 1280, height: 800 });
+await page.waitForTimeout(100);
+check('Breite: wieder breiter → gewünschte Breite', Math.abs((await side()).w - 700) <= 2);
+await page.dblclick('#side-resize');
+sd = await side();
+check('Breite: Doppelklick → Standard, gespeicherter Wert gelöscht', sd.w === 300 && sd.stored === null, JSON.stringify(sd));
+for (const [val, want] of [['abc', 300], ['-5', 240], ['99999', 768], ['', 300], ['1e999', 300]]) {
+  await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, val]);
+  await page.reload();
+  await page.waitForSelector('#side-resize');
+  sd = await side();
+  check(`Breite: gespeicherter Wert ${JSON.stringify(val)} → ${want} px`, sd.w === want, JSON.stringify(sd));
+}
+await page.evaluate((k) => localStorage.setItem(k, '500'), KEY);
+await page.setViewportSize({ width: 800, height: 800 });
+await page.reload();
+await page.waitForSelector('#side-resize', { state: 'attached' });
+sd = await side();
+const cols = await page.$eval('#main', (m) => getComputedStyle(m).gridTemplateColumns);
+check('Breite: unter 900 px kein Griff, einspaltig wie bisher', !sd.handle && cols === '800px', JSON.stringify({ sd, cols }));
+await page.setViewportSize({ width: 1280, height: 800 });
+
 check('Keine Konsolenfehler', errors.length === 0, errors.join(' | '));
 await browser.close();
 process.exit(failed ? 1 : 0);

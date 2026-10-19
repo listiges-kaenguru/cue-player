@@ -5,7 +5,7 @@ import * as store from './storage.js';
 import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, cueDisplayName, cueToPreset, cuesToPreset, cuesToTemplates, instantiateCues, defaultPresets } from './model.js';
 import { fmtTime, fmtDb, debounce, keyLabel, uid, clamp, MIN_DB, compareVersions, latestRelease } from './util.js';
 import { renderMarkdown, renderDocument, firstLine } from './md.js';
-import { meterFraction, peakDb, holdPeak, peakRange, fractionAt, seekTarget, stepTarget, CLIP_HOLD_MS } from './meter.js';
+import { meterFraction, peakDb, holdPeak, peakRange, fractionAt, seekTarget, stepTarget, clampSideWidth, CLIP_HOLD_MS } from './meter.js';
 
 export const APP_VERSION = '0.6.1';
 export const SOURCE_URL = 'https://github.com/listiges-kaenguru/cue-player';
@@ -129,6 +129,7 @@ async function init() {
   await openSession(session);
   ensureDefaultPresets().catch((e) => console.warn('Presets:', e));
   loadSiteInfo();
+  initSideResize();
   requestAnimationFrame(frame);
   registerSW();
 }
@@ -556,6 +557,68 @@ function attachSeek(item) {
   });
   bar.addEventListener('pointercancel', end);
   bar.addEventListener('lostpointercapture', () => { if (drag) end(); });
+}
+
+// ---------------------------------------------------------------------------
+// Breite des rechten Bereichs (Desktop): Griff ziehen oder ←/→, gespeichert je Gerät im localStorage
+
+const SIDE_KEY = 'cue-player-side-width';
+const SIDE_STEP = 16;
+let sideWish = null; // gewünschte Breite (px); im Fenster wird sie ggf. begrenzt
+
+function applySideWidth() {
+  const w = clampSideWidth(sideWish, window.innerWidth);
+  if (w == null) $('#main').style.removeProperty('--side-w');
+  else $('#main').style.setProperty('--side-w', `${w}px`);
+  return w;
+}
+
+function setSideWidth(w) {
+  sideWish = clampSideWidth(w, window.innerWidth);
+  applySideWidth();
+  try {
+    if (sideWish == null) localStorage.removeItem(SIDE_KEY);
+    else localStorage.setItem(SIDE_KEY, String(sideWish));
+  } catch { /* privates Fenster o. Ä.: Breite gilt nur bis zum Neuladen */ }
+}
+
+function initSideResize() {
+  try { sideWish = clampSideWidth(localStorage.getItem(SIDE_KEY), Infinity); } catch { sideWish = null; }
+  applySideWidth();
+  window.addEventListener('resize', applySideWidth);
+  const grip = $('#side-resize');
+  let dragging = false;
+  grip.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    dragging = true;
+    grip.setPointerCapture?.(e.pointerId);
+    grip.classList.add('dragging');
+    document.body.classList.add('resizing');
+  });
+  grip.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    sideWish = window.innerWidth - e.clientX;
+    sideWish = applySideWidth();
+  });
+  const end = () => {
+    if (!dragging) return;
+    dragging = false;
+    grip.classList.remove('dragging');
+    document.body.classList.remove('resizing');
+    setSideWidth(sideWish);
+  };
+  grip.addEventListener('pointerup', end);
+  grip.addEventListener('lostpointercapture', end);
+  grip.addEventListener('dblclick', () => setSideWidth(null));
+}
+
+/** ←/→ auf dem fokussierten Griff: rechten Bereich verbreitern bzw. verschmälern. true, wenn behandelt. */
+function sideKey(e) {
+  if (e.target.id !== 'side-resize' || (e.code !== 'ArrowLeft' && e.code !== 'ArrowRight')) return false;
+  e.preventDefault();
+  const cur = $('#side').getBoundingClientRect().width;
+  setSideWidth(cur + (e.code === 'ArrowLeft' ? SIDE_STEP : -SIDE_STEP));
+  return true;
 }
 
 /** ←/→ auf einem fokussierten Balken: SEEK_STEP Sekunden springen. true, wenn behandelt. */
@@ -1492,7 +1555,7 @@ function onKeyDown(e) {
   if (dialogOpen() || isTyping(e)) return;
   if (e.ctrlKey && e.code === 'KeyE') { e.preventDefault(); toggleShowMode(); return; }
   if (e.ctrlKey || e.metaKey || e.altKey) return;
-  if (seekKey(e)) return;
+  if (seekKey(e) || sideKey(e)) return;
 
   switch (e.code) {
     case 'Space':
