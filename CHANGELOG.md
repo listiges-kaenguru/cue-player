@@ -8,6 +8,11 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+## [0.7.0] – 2026-10-19
+
+Pegelanzeigen, Wellenform und Springen in laufenden Cues, verstellbarer rechter Bereich, gemerkter Standby und
+mehrere Korrekturen. Version 0.7.0 in `sw.js`, `app.js`, `package.json`.
+
 ### Hinzugefügt
 - **Pegelanzeige am Master:** Neben dem Master-Regler zeigt eine Stereo-Anzeige (L/R) mit Spitzenwert-Halter, dass
   Ton rausgeht. Sie misst nach der Master-Lautstärke. Übersteuerung (≥ 0 dBFS) markiert ein rotes Feld, das drei
