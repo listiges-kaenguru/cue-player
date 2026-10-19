@@ -8,7 +8,6 @@ Offene Punkte und Ideen für spätere Versionen. Erledigtes wird hier gestrichen
 ### Vor dem ersten echten Einsatz
 
 - [ ] Nutzertest auf Android/Windows/Linux (Ergebnisse unten unter „Tests“ eintragen)
-- [ ] Pegelanzeige (VU) am Master, damit man sieht, dass Ton rausgeht
 - [ ] Undo/Redo
 - [ ] Warnung beim Schließen, wenn noch nichts exportiert wurde (Backup-Hinweis)
 

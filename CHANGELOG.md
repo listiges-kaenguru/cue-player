@@ -8,6 +8,11 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+### Hinzugefügt
+- **Pegelanzeige am Master:** Neben dem Master-Regler zeigt eine Stereo-Anzeige (L/R) mit Spitzenwert-Halter, dass
+  Ton rausgeht. Sie misst nach der Master-Lautstärke. Übersteuerung (≥ 0 dBFS) markiert ein rotes Feld, das drei
+  Sekunden stehen bleibt.
+
 ### Behoben
 - **Handy:** Die GO-Taste schnitt beim Standby-Namen die Unterlängen ab (g, p, y). „GO“ hat jetzt eine engere
   Zeilenhöhe, der Name passt vollständig in die Taste.

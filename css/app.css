@@ -269,6 +269,20 @@ main {
 .master input { width: 160px; }
 .master output { width: 5.5em; text-align: right; font-variant-numeric: tabular-nums; color: var(--fg); }
 
+/* Pegelanzeige: Farbverlauf grün/gelb/rot (−18 und −6 dBFS), abgedeckt von rechts bzw. oben */
+.vu { position: relative; display: flex; flex-direction: column; justify-content: center; gap: 3px; width: 110px; height: 22px; padding-right: 14px; flex: none; }
+.vu-ch {
+  position: relative; height: 7px; border-radius: 2px; overflow: hidden;
+  background: linear-gradient(to right, var(--accent) 0 70%, var(--warn) 70% 90%, var(--danger) 90%);
+}
+.vu-ch.vert { width: 6px; height: auto; background: linear-gradient(to top, var(--accent) 0 70%, var(--warn) 70% 90%, var(--danger) 90%); }
+.vu-cover { position: absolute; inset: 0; background: var(--bg); transform-origin: right; transform: scaleX(1); }
+.vu-ch.vert .vu-cover { transform-origin: top; transform: scaleY(1); }
+.vu-peak { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; background: var(--fg); opacity: 0; }
+.vu-ch.vert .vu-peak { top: auto; left: 0; right: 0; width: auto; height: 2px; }
+.vu-clip { position: absolute; right: 0; top: 3px; bottom: 3px; width: 9px; border-radius: 2px; background: var(--bg3); border: 1px solid var(--line); }
+.vu.clip .vu-clip { background: var(--danger); border-color: var(--danger); }
+
 /* ---------- Dialoge ---------- */
 .dlg {
   background: var(--bg2); color: var(--fg);
@@ -360,6 +374,9 @@ main {
   .transport-btns .tbtn { flex: 1; padding: 0 6px; }
   .master { margin-left: 0; flex: 1 1 100%; }
   .master input { flex: 1; }
+  .master { flex: 1 1 calc(100% - 96px); min-width: 0; } /* eigene Zeile, daneben die Pegelanzeige (84 px + Abstand) */
+  .master output { width: 4.5em; }
+  .vu { width: 84px; }
   .form-grid { grid-template-columns: 1fr; }
   .form-grid .hint { grid-column: 1; }
   .cart-view { --cols: 2 !important; }

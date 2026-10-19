@@ -4,3 +4,4 @@ _site/
 *.cueshow
 reports/
 .stryker-tmp/
+.shots/

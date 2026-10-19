@@ -98,6 +98,11 @@
       <input id="master" type="range" min="-60" max="6" step="0.5" value="0">
       <output id="master-val">0.0 dB</output>
     </label>
+    <div id="master-vu" class="vu" title="Ausgangspegel links/rechts (rot rechts: übersteuert)" aria-hidden="true">
+      <div class="vu-ch" data-level="0"><div class="vu-cover"></div><div class="vu-peak"></div></div>
+      <div class="vu-ch" data-level="0"><div class="vu-cover"></div><div class="vu-peak"></div></div>
+      <span class="vu-clip"></span>
+    </div>
   </footer>
 
   <!-- Cue bearbeiten -->

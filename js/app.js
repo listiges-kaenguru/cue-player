@@ -5,6 +5,7 @@ import * as store from './storage.js';
 import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, cueDisplayName, cueToPreset, cuesToPreset, cuesToTemplates, instantiateCues, defaultPresets } from './model.js';
 import { fmtTime, fmtDb, debounce, keyLabel, uid, clamp, MIN_DB, compareVersions, latestRelease } from './util.js';
 import { renderMarkdown, renderDocument, firstLine } from './md.js';
+import { meterFraction, peakDb, holdPeak, CLIP_HOLD_MS } from './meter.js';
 
 export const APP_VERSION = '0.6.1';
 export const SOURCE_URL = 'https://github.com/listiges-kaenguru/cue-player';
@@ -33,6 +34,7 @@ const state = {
   selected: new Set(), // Mehrfachauswahl (Cue-IDs)
   selAnchor: null,
   selectMode: false, // Auswahl-Modus (Knopf ☑): Antippen schaltet die Auswahl um
+  clipUntil: 0, // Clip-Markierung am Master sichtbar bis (performance.now())
 };
 
 const cues = () => state.session.cues;
@@ -347,6 +349,30 @@ function updateItem(id, item, el, txt, dim) {
   }
 }
 
+const meterHolds = new WeakMap(); // Kanal-Element -> Spitzenwert-Halter
+
+/** Eine Pegelanzeige (.vu-ch) aktualisieren. peak: linearer Spitzenwert. */
+function updateMeter(ch, peak, now) {
+  const db = peakDb(peak);
+  const hold = holdPeak(meterHolds.get(ch) ?? null, db, now);
+  meterHolds.set(ch, hold);
+  const f = meterFraction(db), pf = meterFraction(hold.db);
+  const vert = ch.classList.contains('vert');
+  ch.dataset.level = String(Math.round(f * 1000) / 1000);
+  ch.firstChild.style.transform = `${vert ? 'scaleY' : 'scaleX'}(${1 - f})`;
+  const pk = ch.lastChild;
+  pk.style[vert ? 'bottom' : 'left'] = `calc(${pf * 100}% - 2px)`;
+  pk.style.opacity = pf > 0 ? '1' : '0';
+}
+
+function updateMasterMeter(now) {
+  const peaks = engine.masterPeaks();
+  const vu = $('#master-vu');
+  vu.querySelectorAll('.vu-ch').forEach((ch, i) => updateMeter(ch, peaks[i], now));
+  if (Math.max(...peaks) >= 1) state.clipUntil = now + CLIP_HOLD_MS;
+  vu.classList.toggle('clip', now < state.clipUntil);
+}
+
 /** Wird pro Frame aufgerufen: Fortschrittsbalken und Status. */
 function frame() {
   state.rows.forEach((item, id) => updateItem(id, item, item.row, item.txt, 'width'));
@@ -363,7 +389,9 @@ function frame() {
     item.pp.textContent = r.paused ? '▶' : '❚❚';
   });
 
-  $('#btn-go').classList.toggle('locked', performance.now() < state.goLockedUntil);
+  const now = performance.now();
+  updateMasterMeter(now);
+  $('#btn-go').classList.toggle('locked', now < state.goLockedUntil);
   requestAnimationFrame(frame);
 }
 

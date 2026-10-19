@@ -1,8 +1,17 @@
 // Wiedergabe-Engine: Cue-Ablauf (Pre-Wait, Post-Wait, Auto-Continue/-Follow) und Audio über Web Audio.
 import { Emitter, Timer, clamp, dbToGain, rampParam } from './util.js';
 import { midiBytes } from './midi.js';
+import { blockPeak } from './meter.js';
 
 const DECLICK = 0.015; // s – kurze Rampe gegen Knackser bei Pause/Stop
+
+const peakBuf = new Float32Array(2048);
+/** Spitzenwert (linear) der letzten fftSize Samples eines AnalyserNodes. */
+function analyserPeak(a) {
+  const b = peakBuf.subarray(0, a.fftSize);
+  a.getFloatTimeDomainData(b);
+  return blockPeak(b);
+}
 
 /**
  * Basisklasse für den Laufzeitzustand eines Cues.
@@ -201,7 +210,11 @@ class AudioRunner extends Runner {
     const env = ctx.createGain();
     const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : ctx.createGain();
     src.connect(vol).connect(env).connect(pan).connect(this.engine.master);
-    this.chain = { el: this.el, src, vol, env, pan };
+    // Abgriff für die Pegelanzeige im Aktiv-Bereich (nach Lautstärke, Fades und Panorama)
+    const meter = ctx.createAnalyser();
+    meter.fftSize = 512;
+    pan.connect(meter);
+    this.chain = { el: this.el, src, vol, env, pan, meter };
   }
 
   bounds() {
@@ -313,6 +326,11 @@ class AudioRunner extends Runner {
     return true;
   }
 
+  /** Aktueller Spitzenwert (linear) dieses Cues, 0 ohne Wiedergabe. */
+  level() {
+    return this.chain && this.playing ? analyserPeak(this.chain.meter) : 0;
+  }
+
   actionProgress() {
     const { start, end } = this.bounds();
     const pos = this.el ? this.el.currentTime : start;
@@ -412,6 +430,7 @@ export class Engine extends Emitter {
     this.midi = midi;
     this.ctx = null;
     this.master = null;
+    this.meters = null; // AnalyserNodes L/R am Master
     this.session = null;
     this.runners = new Map();
     this.urls = new Map();
@@ -426,7 +445,18 @@ export class Engine extends Emitter {
       const Ctx = window.AudioContext || window.webkitAudioContext;
       this.ctx = new Ctx({ latencyHint: 'interactive' });
       this.master = this.ctx.createGain();
+      // Immer stereo, damit Mono-Quellen auf beiden Kanälen der Pegelanzeige erscheinen
+      Object.assign(this.master, { channelCount: 2, channelCountMode: 'explicit', channelInterpretation: 'speakers' });
       this.master.connect(this.ctx.destination);
+      // Pegelanzeige nach der Master-Lautstärke: zeigt, was wirklich rausgeht
+      const split = this.ctx.createChannelSplitter(2);
+      this.master.connect(split);
+      this.meters = [0, 1].map((ch) => {
+        const a = this.ctx.createAnalyser();
+        a.fftSize = 1024;
+        split.connect(a, ch);
+        return a;
+      });
       this.setMaster(this.session?.settings.masterDb ?? 0);
       if (this.session?.settings.sinkId) this.setSink(this.session.settings.sinkId).catch(() => {});
     }
@@ -500,6 +530,11 @@ export class Engine extends Emitter {
   stopAll(fade = 0) { this.active().forEach((r) => r.stop(fade)); }
   pauseAll(fade = 0) { this.active().forEach((r) => r.pause(fade)); }
   resumeAll(fade = 0) { this.active().forEach((r) => r.resume(fade)); }
+
+  /** Spitzenwerte (linear) links/rechts am Master; vor dem ersten GO (ohne AudioContext) [0, 0]. */
+  masterPeaks() {
+    return this.meters ? this.meters.map(analyserPeak) : [0, 0];
+  }
 
   setMaster(db) {
     if (!this.master) return;

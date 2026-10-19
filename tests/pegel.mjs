@@ -20,6 +20,7 @@ function wav(file, freq, sec, amp = () => 0.25) {
   return file;
 }
 const ton = wav(join(dir, 'Nachtigall gpy.wav'), 440, 12);
+const laut = wav(join(dir, 'laut.wav'), 330, 4, () => 0.9);
 
 let failed = 0;
 const check = (name, ok, info = '') => { console.log(`${ok ? 'OK  ' : 'FAIL'} ${name} ${info}`); if (!ok) failed++; };
@@ -34,8 +35,8 @@ page.on('pageerror', (e) => errors.push(e.message));
 page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
 await page.route('https://api.github.com/**', (r) => r.fulfill({ json: { tag_name: 'v0.0.1' }, headers: { 'access-control-allow-origin': '*' } }));
 await page.goto(URL);
-await page.setInputFiles('#file-audio', [ton]);
-await page.waitForFunction(() => document.querySelectorAll('.cue-row').length === 1);
+await page.setInputFiles('#file-audio', [ton, laut]);
+await page.waitForFunction(() => document.querySelectorAll('.cue-row').length === 2);
 await page.click('.cue-row >> nth=0');
 
 // --- 1. GO-Taste: Standby-Name samt Unterlängen sichtbar ---
@@ -51,6 +52,42 @@ for (const w of [1280, 390]) {
   check(`GO: Standby-Name mit Unterlängen sichtbar (${w}px)`, m.txt.includes('Nachtigall gpy') && m.fits && m.bottom <= m.inner, JSON.stringify(m));
 }
 await page.setViewportSize({ width: 1280, height: 800 });
+
+// --- 2. Master-Pegel ---
+const vu = () => page.evaluate(() => {
+  const m = document.getElementById('master-vu');
+  return { n: m?.querySelectorAll('.vu-ch').length, lvl: [...(m?.querySelectorAll('.vu-ch') ?? [])].map((c) => +c.dataset.level), clip: m?.classList.contains('clip') };
+});
+const two = (v) => v.n === 2 && v.lvl.length === 2;
+const stopNow = async () => { await page.keyboard.down('Shift'); await page.keyboard.press('Escape'); await page.keyboard.up('Shift'); };
+let v = await vu();
+check('Master-Pegel: vor dem ersten GO vorhanden und leer', v.n === 2 && v.lvl.every((x) => x === 0) && !v.clip, JSON.stringify(v));
+await page.click('#btn-go');
+await page.waitForTimeout(600);
+v = await vu();
+check('Master-Pegel: zeigt Ton (L und R)', two(v) && v.lvl.every((x) => x > 0.5 && x < 1) && !v.clip, JSON.stringify(v));
+await page.fill('#master', '-20');
+await page.waitForTimeout(300);
+const leiser = await vu();
+check('Master-Pegel: misst nach der Master-Lautstärke', two(leiser) && leiser.lvl.every((x, i) => x < v.lvl[i] - 0.2), JSON.stringify({ v, leiser }));
+await page.fill('#master', '0');
+await stopNow();
+await page.waitForTimeout(600);
+v = await vu();
+check('Master-Pegel: Stille → leer', two(v) && v.lvl.every((x) => x === 0), JSON.stringify(v));
+await page.fill('#master', '6');
+await page.click('.cue-row >> nth=1');
+await page.click('#btn-go');
+await page.waitForTimeout(500);
+v = await vu();
+check('Master-Pegel: Übersteuerung markiert', two(v) && v.clip && v.lvl.every((x) => x === 1), JSON.stringify(v));
+await stopNow();
+await page.fill('#master', '0');
+await page.waitForTimeout(600);
+check('Master-Pegel: Clip-Markierung bleibt kurz stehen', (await vu()).clip);
+await page.waitForTimeout(3000);
+check('Master-Pegel: Clip-Markierung verschwindet', (await vu()).clip === false);
+await page.click('.cue-row >> nth=0');
 
 check('Keine Konsolenfehler', errors.length === 0, errors.join(' | '));
 await browser.close();
