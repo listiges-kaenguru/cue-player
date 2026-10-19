@@ -2,7 +2,7 @@
 import { Engine } from './engine.js';
 import { Midi, midiLabel } from './midi.js';
 import * as store from './storage.js';
-import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, cueDisplayName, cueToPreset, cuesToPreset, cuesToTemplates, instantiateCues, defaultPresets } from './model.js';
+import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, sessionFingerprint, needsBackup, cueDisplayName, cueToPreset, cuesToPreset, cuesToTemplates, instantiateCues, defaultPresets } from './model.js';
 import { fmtTime, fmtDb, debounce, keyLabel, uid, clamp, MIN_DB, compareVersions, latestRelease } from './util.js';
 import { renderMarkdown, renderDocument, firstLine } from './md.js';
 import { meterFraction, peakDb, holdPeak, peakRange, fractionAt, seekTarget, stepTarget, clampSideWidth, CLIP_HOLD_MS } from './meter.js';
@@ -36,6 +36,7 @@ const state = {
   selectMode: false, // Auswahl-Modus (Knopf ☑): Antippen schaltet die Auswahl um
   clipUntil: 0, // Clip-Markierung am Master sichtbar bis (performance.now())
   savedStandby: null, // { sid, id }: zuletzt gespeicherter Standby
+  exportedFp: null, // Fingerabdruck der Show beim letzten Export bzw. Import (Backup-Hinweis)
 };
 
 const cues = () => state.session.cues;
@@ -99,6 +100,7 @@ async function openSession(session) {
   engine.stopAll(0);
   // Gemerkten Standby lesen, bevor die Show wechselt (frame() speichert sonst den alten unter der neuen Show)
   const saved = await store.getMeta(standbyKey(session.id)).catch(() => null);
+  state.exportedFp = await store.getMeta(exportKey(session.id)).catch(() => null);
   state.session = normalizeSession(session);
   engine.setSession(state.session);
   const i = typeof saved === 'string' && saved ? cueIndex(saved) : -1;
@@ -117,6 +119,14 @@ async function openSession(session) {
 
 /** Standby je Show im Meta-Store (Laufzeitzustand, gehört nicht in die Show-Daten bzw. den Export). */
 const standbyKey = (sessionId) => 'standby:' + sessionId;
+/** Stand des letzten Exports bzw. Imports je Show (für den Hinweis beim Schließen). */
+const exportKey = (sessionId) => 'exportiert:' + sessionId;
+
+/** Aktuellen Stand als gesichert merken; fp = Fingerabdruck dessen, was exportiert wurde. */
+async function markExported(fp = sessionFingerprint(state.session)) {
+  state.exportedFp = fp;
+  await store.setMeta(exportKey(state.session.id), fp);
+}
 
 function rememberStandby() {
   const sid = state.session?.id;
@@ -1245,10 +1255,12 @@ async function renderSessions() {
 
 async function exportCurrent() {
   await store.saveSession(state.session);
+  const fp = sessionFingerprint(state.session);
   toast('Export wird erstellt…');
   const blob = await store.exportShow(state.session);
   const fname = (state.session.name || 'show').replace(/[^\w\-äöüÄÖÜß ]+/g, '_').trim() + '.cueshow';
   download(blob, fname);
+  await markExported(fp);
 }
 
 // ---------------------------------------------------------------------------
@@ -1501,6 +1513,7 @@ function bindUI() {
       await store.saveSession(state.session);
       const s = await store.importShow(f);
       await openSession(s);
+      await markExported(); // die Datei gibt es ja schon
       $('#dlg-sessions').close();
       toast(`„${s.name}“ importiert`);
     } catch (err) {
@@ -1542,7 +1555,8 @@ function bindUI() {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') applyWakeLock(); });
   window.addEventListener('beforeunload', (e) => {
     store.saveSession(state.session);
-    if (engine.active().length) { e.preventDefault(); e.returnValue = ''; }
+    // Laufende Wiedergabe oder Änderungen seit dem letzten Export → Browser fragt nach
+    if (engine.active().length || needsBackup(state.session, state.exportedFp)) { e.preventDefault(); e.returnValue = ''; }
   });
 
   // Engine-Ereignisse

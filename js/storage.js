@@ -71,7 +71,7 @@ export function saveSession(session) {
 
 export async function deleteSession(id) {
   await tx('sessions', 'readwrite', (s) => s.delete(id));
-  await tx('meta', 'readwrite', (s) => s.delete('standby:' + id));
+  await tx('meta', 'readwrite', (s) => { s.delete('standby:' + id); s.delete('exportiert:' + id); });
 }
 
 export const putMedia = (rec) => tx('media', 'readwrite', (s) => s.put(rec));
