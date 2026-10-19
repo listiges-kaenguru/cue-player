@@ -8,6 +8,10 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+## [0.7.1] – 2026-10-19
+
+Korrektur der Laufzeitanzeige in der Cue-Liste auf dem Handy. Version 0.7.1 in `sw.js`, `app.js`, `package.json`.
+
 ### Behoben
 - **Handy:** Die Laufzeit in der Cue-Liste war seit 0.7.0 abgeschnitten („0:15.2 / −0:…“), weil die Dauer-Spalte
   eine feste Breite hat. Bis 600 px Breite zeigt die Liste jetzt nur die Restzeit (`−0:32.8`), bei Loops ⟳ und die
