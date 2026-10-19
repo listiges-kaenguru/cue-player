@@ -141,6 +141,34 @@ export function normalizeSession(s) {
   return s;
 }
 
+/** JSON mit sortierten Schlüsseln: gleicher Inhalt ergibt unabhängig von der Reihenfolge denselben Text. */
+const canonical = (v) => (Array.isArray(v) ? `[${v.map(canonical).join(',')}]`
+  : v && typeof v === 'object'
+    ? `{${Object.keys(v).sort().filter((k) => v[k] !== undefined).map((k) => `${JSON.stringify(k)}:${canonical(v[k])}`).join(',')}}`
+    : JSON.stringify(v) ?? 'null');
+
+/**
+ * Fingerabdruck des Show-Inhalts für den Backup-Hinweis. Ohne Speicherzeit und ohne die beim Laden ermittelte
+ * Dauer, sonst gälte eine Show nach dem Öffnen schon als geändert. 53-Bit-Hash (cyrb53), nicht kryptografisch.
+ */
+export function sessionFingerprint(session) {
+  const { updated, ...rest } = session;
+  rest.cues = (session.cues || []).map(({ duration, ...c }) => c);
+  const text = canonical(rest);
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < text.length; i++) {
+    const c = text.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 2654435761);
+    h2 = Math.imul(h2 ^ c, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+
+/** Hinweis beim Schließen: Show hat Cues und weicht vom zuletzt exportierten bzw. importierten Stand ab. */
+export const needsBackup = (session, exportedFp) => (session.cues?.length ?? 0) > 0 && exportedFp !== sessionFingerprint(session);
+
 export function cueDisplayName(session, cue) {
   if (cue.name) return cue.name;
   const ti = session.cues.findIndex((c) => c.id === cue.target);

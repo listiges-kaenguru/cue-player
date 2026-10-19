@@ -9,7 +9,6 @@ Offene Punkte und Ideen für spätere Versionen. Erledigtes wird hier gestrichen
 
 - [ ] Nutzertest auf Android/Windows/Linux (Ergebnisse unten unter „Tests“ eintragen)
 - [ ] Undo/Redo
-- [ ] Warnung beim Schließen, wenn noch nichts exportiert wurde (Backup-Hinweis)
 
 ### Vom Nutzer gewünscht
 
