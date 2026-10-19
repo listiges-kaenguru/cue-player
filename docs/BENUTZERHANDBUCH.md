@@ -271,7 +271,7 @@ zeigt automatisch:
 - die **Notizen des Standby-Cues**.
 
 Gibt es nichts anzuzeigen, verschwindet der Bereich. Mit einem Tipp auf die Kopfzeile lässt er sich
-zuklappen, z. B. auf dem Handy, wenn der Platz knapp ist.
+zuklappen, z. B. auf dem Handy, wenn der Platz knapp ist. Das Gerät merkt sich, ob er auf- oder zugeklappt ist.
 
 ---
 

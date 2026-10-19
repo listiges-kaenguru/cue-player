@@ -16,7 +16,6 @@ Offene Punkte und Ideen für spätere Versionen. Erledigtes wird hier gestrichen
 - [ ] **Presets – Ausbau (bei Bedarf):** Presets exportieren/importieren bzw. mit `.cueshow` weitergeben (heute nur
   lokal); Preset direkt bearbeiten (heute: einfügen, ändern, neu speichern, altes löschen); Mehrfachauswahl auch in
   der Cart-Ansicht?
-- [ ] **Memo:** Zustand des Regiebuchs (auf-/zugeklappt) merken (klein, bei Gelegenheit).
 - [ ] **Ausgabegerät wach halten** (globale Option, z. B. für Bluetooth-Lautsprecher, die nach 10 Minuten Stille
   abschalten; heute Notlösung per Stille-Cue in Schleife). Konzept mit offenen Fragen:
   `~/projects/entwuerfe/2026-10-cueplayer-geraet-wach-halten/konzept-geraet-wach-halten.md`
@@ -81,8 +80,6 @@ Roadmap-Vorschläge (auch in der README):
   Ohne Trimmung wird `el.loop` genutzt und ist nahtlos.
 - Ende-Erkennung und Fade-Out am Ende laufen per 20-ms-Intervall (Timer im Hintergrund-Tab: Audio-Tabs werden nicht gedrosselt).
 - Nach dem Neuladen steht der Standby immer auf Cue 1 (wird nicht gespeichert).
-- Springen in einem laufenden Cue setzt die Position hart um (ohne kurzes Aus-/Einblenden); je nach Material kann
-  es an der Sprungstelle leise knacken.
 - Die Wellenform wird bei 11 025 Hz berechnet; sehr hohe Frequenzen (z. B. Hi-Hats) sind darin kaum zu sehen.
 - Firefox: keine Installation auf dem Desktop, kein `setSinkId` am AudioContext.
 - AGPL: Copyright-Zeile (Name des Rechteinhabers) in README bzw. Quelldateien fehlt noch, falls gewünscht.

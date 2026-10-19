@@ -18,10 +18,14 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 - **Springen in laufenden Cues:** Ein Klick auf den Balken springt an diese Stelle, auch bei pausierten Cues. Im
   Show-Modus springt nur Ziehen und Loslassen (ein versehentlicher Tipp tut nichts); während des Ziehens zeigt ein
   Marker die Zielzeit, Loslassen neben dem Balken bricht ab. Auf dem fokussierten Balken springen ←/→ um 5 Sekunden.
-  Ein laufender Fade-Out am Ende wird dabei richtig fortgesetzt bzw. zurückgenommen.
+  Ein laufender Fade-Out am Ende wird dabei richtig fortgesetzt bzw. zurückgenommen. Beim Sprung wird kurz aus- und
+  wieder eingeblendet, damit es nicht knackt.
 - **Breite des rechten Bereichs** (Regiebuch und Aktiv) ist am PC per Griff am linken Rand verstellbar (240 px bis
   60 % der Fensterbreite, auch mit ←/→ am fokussierten Griff). Die Breite wird je Gerät gespeichert, Doppelklick stellt
   die Standardbreite wieder her. Unter 900 px Fensterbreite bleibt das Layout wie bisher.
+
+### Geändert
+- **Regiebuch:** Auf- oder zugeklappt bleibt nach dem Neuladen erhalten (je Gerät gespeichert).
 
 ### Behoben
 - **Schmale Bildschirme:** Die Cue-Liste sprang während der Wiedergabe, weil die laufende Zeitanzeige die

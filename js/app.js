@@ -130,6 +130,7 @@ async function init() {
   ensureDefaultPresets().catch((e) => console.warn('Presets:', e));
   loadSiteInfo();
   initSideResize();
+  initMemoPanel();
   requestAnimationFrame(frame);
   registerSW();
 }
@@ -557,6 +558,19 @@ function attachSeek(item) {
   });
   bar.addEventListener('pointercancel', end);
   bar.addEventListener('lostpointercapture', () => { if (drag) end(); });
+}
+
+// ---------------------------------------------------------------------------
+// Regiebuch auf-/zugeklappt: je Gerät im localStorage ('0' = zu, sonst offen)
+
+const MEMO_KEY = 'cue-player-memo-open';
+
+function initMemoPanel() {
+  const panel = $('#memo-panel');
+  try { panel.open = localStorage.getItem(MEMO_KEY) !== '0'; } catch { /* Standard: offen */ }
+  panel.addEventListener('toggle', () => {
+    try { localStorage.setItem(MEMO_KEY, panel.open ? '1' : '0'); } catch { /* privates Fenster o. Ä. */ }
+  });
 }
 
 // ---------------------------------------------------------------------------

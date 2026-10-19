@@ -159,6 +159,8 @@ class AudioRunner extends Runner {
     this.stopH = null; // Timeout bis zum Ende eines Stop-Fades
     this.pauseH = null; // Timeout bis zum Anhalten nach einem Pause-Fade
     this.envBeforePause = null;
+    this.dipToken = 0; // macht veraltete Einblendungen nach dem Springen ungültig
+    this.dipH = null;
   }
 
   /** Lädt die Datei in ein <audio>-Element (gestreamt, nicht komplett dekodiert – spart Speicher). */
@@ -213,12 +215,13 @@ class AudioRunner extends Runner {
     const vol = ctx.createGain();
     const env = ctx.createGain();
     const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : ctx.createGain();
-    src.connect(vol).connect(env).connect(pan).connect(this.engine.master);
+    const dip = ctx.createGain(); // kurzes Aus-/Einblenden beim Springen, unabhängig von den Fades in env
+    src.connect(vol).connect(env).connect(dip).connect(pan).connect(this.engine.master);
     // Abgriff für die Pegelanzeige im Aktiv-Bereich (nach Lautstärke, Fades und Panorama)
     const meter = ctx.createAnalyser();
     meter.fftSize = 512;
     pan.connect(meter);
-    this.chain = { el: this.el, src, vol, env, pan, meter };
+    this.chain = { el: this.el, src, vol, env, dip, pan, meter };
   }
 
   bounds() {
@@ -247,8 +250,12 @@ class AudioRunner extends Runner {
     this._ensureChain();
     const cue = this.cue;
     const { start, end } = this.bounds();
-    const { vol, env, pan } = this.chain;
+    const { vol, env, dip, pan } = this.chain;
     const now = ctx.currentTime;
+    this.dipToken++; // eine noch ausstehende Einblendung vom Springen verwerfen
+    clearTimeout(this.dipH);
+    dip.gain.cancelScheduledValues(now);
+    dip.gain.setValueAtTime(1, now);
     vol.gain.cancelScheduledValues(now);
     vol.gain.setValueAtTime(dbToGain(cue.volume), now);
     if (pan.pan) pan.pan.setValueAtTime(cue.pan || 0, now);
@@ -340,6 +347,7 @@ class AudioRunner extends Runner {
     if (!this.canSeek()) return false;
     const { start, end } = this.bounds();
     const pos = clamp(t, start, end);
+    if (!this.el.paused) this._dipAround();
     this.el.currentTime = pos;
     // Lief schon der Fade-Out am Ende: vor dessen Beginn wieder voll, sonst blendet tick() ab hier neu aus.
     if (this.fadingOut) {
@@ -350,6 +358,31 @@ class AudioRunner extends Runner {
       }
     }
     return true;
+  }
+
+  /**
+   * Gegen Knacken beim Springen: sofort kurz ausblenden; das Element braucht ohnehin einige Millisekunden für den
+   * Sprung. Nach 'seeked' (spätestens nach 250 ms) wieder einblenden. Schnelle Folgen blenden erst nach dem letzten ein.
+   */
+  _dipAround() {
+    const ctx = this.engine.ctx, g = this.chain.dip.gain, el = this.el;
+    const now = ctx.currentTime;
+    g.cancelScheduledValues(now);
+    g.setValueAtTime(g.value, now);
+    g.linearRampToValueAtTime(0, now + DECLICK / 3);
+    const tok = ++this.dipToken;
+    const back = () => {
+      if (tok !== this.dipToken || !this.chain) return;
+      clearTimeout(this.dipH);
+      el.removeEventListener('seeked', back);
+      const t = ctx.currentTime;
+      g.cancelScheduledValues(t);
+      g.setValueAtTime(g.value, t);
+      g.linearRampToValueAtTime(1, t + DECLICK);
+    };
+    clearTimeout(this.dipH);
+    this.dipH = setTimeout(back, 250);
+    el.addEventListener('seeked', back, { once: true });
   }
 
   /** Aktueller Spitzenwert (linear) dieses Cues, 0 ohne Wiedergabe. */

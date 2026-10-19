@@ -316,6 +316,97 @@ const cols = await page.$eval('#main', (m) => getComputedStyle(m).gridTemplateCo
 check('Breite: unter 900 px kein Griff, einspaltig wie bisher', !sd.handle && cols === '800px', JSON.stringify({ sd, cols }));
 await page.setViewportSize({ width: 1280, height: 800 });
 
+// --- 6. Springen ohne Knacken: kurz aus-, nach dem Sprung wieder einblenden ---
+await page.waitForFunction(() => document.querySelectorAll('.cue-row').length >= 2);
+await page.click('.cue-row >> nth=0');
+await page.click('#btn-go');
+await page.waitForTimeout(500);
+const dip = await page.evaluate(async (id) => {
+  const r = window.cuePlayer.engine.runners.get(id);
+  const g = r.chain.dip?.gain;
+  if (!g) return { fehlt: true };
+  const ramps = [];
+  const orig = g.linearRampToValueAtTime.bind(g);
+  g.linearRampToValueAtTime = (v, t) => { ramps.push(v); return orig(v, t); };
+  const ok = r.seek(6);
+  const pos = r.el.currentTime;
+  await new Promise((res) => setTimeout(res, 300));
+  g.linearRampToValueAtTime = orig;
+  return { ok, pos, ramps, after: g.value, env: r.chain.env.gain.value, state: r.state };
+}, id0);
+check('Springen ohne Knacken: aus- und wieder einblenden, Position sofort gesetzt',
+  dip.ok === true && Math.abs(dip.pos - 6) < 0.05 && JSON.stringify(dip.ramps) === '[0,1]' && dip.after > 0.99 && dip.env > 0.99 && dip.state === 'running', JSON.stringify(dip));
+const quick = await page.evaluate(async (id) => {
+  const r = window.cuePlayer.engine.runners.get(id);
+  r.seek(2); r.seek(4); r.seek(8); // schnell hintereinander (z. B. Pfeiltaste gedrückt halten)
+  const pos = r.el.currentTime;
+  await new Promise((res) => setTimeout(res, 300));
+  return { pos, after: r.chain.dip.gain.value };
+}, id0);
+check('Springen ohne Knacken: schnelle Folge endet bei voller Lautstärke', Math.abs(quick.pos - 8) < 0.05 && quick.after > 0.99, JSON.stringify(quick));
+const pausedDip = await page.evaluate(async (id) => {
+  const r = window.cuePlayer.engine.runners.get(id);
+  r.pause(0);
+  await new Promise((res) => setTimeout(res, 100));
+  const g = r.chain.dip.gain;
+  const ramps = [];
+  const orig = g.linearRampToValueAtTime.bind(g);
+  g.linearRampToValueAtTime = (v, t) => { ramps.push(v); return orig(v, t); };
+  r.seek(3);
+  await new Promise((res) => setTimeout(res, 100));
+  g.linearRampToValueAtTime = orig;
+  const out = { ramps, pos: r.el.currentTime, state: r.state, elPaused: r.el.paused };
+  r.resume(0);
+  return out;
+}, id0);
+check('Springen pausiert: direkt, ohne Blende, bleibt pausiert', pausedDip.ramps.length === 0 && Math.abs(pausedDip.pos - 3) < 0.05 && pausedDip.state === 'paused' && pausedDip.elPaused, JSON.stringify(pausedDip));
+const restart = await page.evaluate(async (id) => {
+  const { engine } = window.cuePlayer;
+  const r = engine.runners.get(id);
+  r.seek(5);
+  r.stop(0, true); // mitten im Ausblenden stoppen und neu starten
+  engine.go(id);
+  await new Promise((res) => setTimeout(res, 400));
+  return { state: r.state, dip: r.chain.dip.gain.value };
+}, id0);
+check('Springen ohne Knacken: Neustart während der Blende ist nicht stumm', restart.state === 'running' && restart.dip > 0.99, JSON.stringify(restart));
+await stopNow();
+
+// --- 7. Regiebuch: auf-/zugeklappt bleibt nach dem Neuladen ---
+const MEMO_KEY = 'cue-player-memo-open';
+await page.click('.cue-row >> nth=0');
+await page.click('#btn-add-cue');
+await page.click('[data-add="memo"]');
+await page.fill('#cue-form-body input[type=text] >> nth=0', 'Umbau');
+await page.fill('#cue-form-body textarea >> nth=0', 'Bühne frei');
+await page.click('#cue-form .primary');
+await page.waitForTimeout(200);
+await page.click('.cue-row >> nth=2'); // Standby hinter dem Memo → Regiebuch sichtbar
+const memo = () => page.evaluate((k) => ({ hidden: document.getElementById('memo-panel').hidden, open: document.getElementById('memo-panel').open, stored: localStorage.getItem(k) }), MEMO_KEY);
+let mp = await memo();
+check('Regiebuch: sichtbar und standardmäßig offen', !mp.hidden && mp.open && mp.stored === null, JSON.stringify(mp));
+await page.click('#memo-summary');
+await page.waitForTimeout(100);
+mp = await memo();
+check('Regiebuch: Zuklappen wird gespeichert', !mp.open && mp.stored === '0', JSON.stringify(mp));
+await page.reload();
+await page.waitForSelector('.cue-row');
+await page.click('.cue-row >> nth=2');
+mp = await memo();
+check('Regiebuch: bleibt nach dem Neuladen zu', !mp.hidden && !mp.open, JSON.stringify(mp));
+await page.click('#memo-summary');
+await page.waitForTimeout(100);
+await page.reload();
+await page.waitForSelector('.cue-row');
+mp = await memo();
+check('Regiebuch: Aufklappen wird gespeichert und bleibt', mp.open && mp.stored === '1', JSON.stringify(mp));
+for (const val of ['abc', '', 'true']) {
+  await page.evaluate(([k, v]) => localStorage.setItem(k, v), [MEMO_KEY, val]);
+  await page.reload();
+  await page.waitForSelector('.cue-row');
+  check(`Regiebuch: gespeicherter Wert ${JSON.stringify(val)} → offen`, (await memo()).open);
+}
+
 check('Keine Konsolenfehler', errors.length === 0, errors.join(' | '));
 await browser.close();
 process.exit(failed ? 1 : 0);
