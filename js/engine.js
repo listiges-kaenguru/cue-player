@@ -1,9 +1,13 @@
 // Wiedergabe-Engine: Cue-Ablauf (Pre-Wait, Post-Wait, Auto-Continue/-Follow) und Audio über Web Audio.
 import { Emitter, Timer, clamp, dbToGain, rampParam } from './util.js';
 import { midiBytes } from './midi.js';
-import { blockPeak } from './meter.js';
+import { blockPeak, waveformPeaks, WAVEFORM_MAX_SEC } from './meter.js';
 
 const DECLICK = 0.015; // s – kurze Rampe gegen Knackser bei Pause/Stop
+
+/** Wellenform: Anzahl der Abschnitte und Abtastrate beim Dekodieren (niedrig, spart Speicher). */
+const WAVE_BUCKETS = 2000;
+const WAVE_RATE = 11025;
 
 const peakBuf = new Float32Array(2048);
 /** Spitzenwert (linear) der letzten fftSize Samples eines AnalyserNodes. */
@@ -326,6 +330,28 @@ class AudioRunner extends Runner {
     return true;
   }
 
+  /** Springen ist möglich, solange die Datei läuft oder pausiert ist (nicht in Pre-/Post-Wait oder beim Stoppen). */
+  canSeek() {
+    return this.playing && !!this.chain && !!this.el && !this.stopping;
+  }
+
+  /** An Position t (Sekunden in der Datei) springen, begrenzt auf den getrimmten Bereich. */
+  seek(t) {
+    if (!this.canSeek()) return false;
+    const { start, end } = this.bounds();
+    const pos = clamp(t, start, end);
+    this.el.currentTime = pos;
+    // Lief schon der Fade-Out am Ende: vor dessen Beginn wieder voll, sonst blendet tick() ab hier neu aus.
+    if (this.fadingOut) {
+      this.fadingOut = false;
+      if (pos < end - this.cue.fadeOut) {
+        if (this.paused) this.envBeforePause = 1;
+        else rampParam(this.engine.ctx, this.chain.env.gain, 1, DECLICK * 2, 'linear');
+      }
+    }
+    return true;
+  }
+
   /** Aktueller Spitzenwert (linear) dieses Cues, 0 ohne Wiedergabe. */
   level() {
     return this.chain && this.playing ? analyserPeak(this.chain.meter) : 0;
@@ -434,6 +460,7 @@ export class Engine extends Emitter {
     this.session = null;
     this.runners = new Map();
     this.urls = new Map();
+    this.waves = new Map(); // mediaId -> Promise<Float32Array | null>
     this.labelFn = (c) => c.name || c.type;
     // Ende-Erkennung, Loop-Sprünge und Fade-Out am Ende der Audio-Cues
     setInterval(() => this.runners.forEach((r) => r.tick?.()), 20);
@@ -469,6 +496,7 @@ export class Engine extends Emitter {
     this.runners.clear();
     this.urls.forEach((u) => URL.revokeObjectURL(u));
     this.urls.clear();
+    this.waves.clear();
     this.session = session;
     if (this.master) this.setMaster(session.settings.masterDb);
     // Runner anlegen und Audio vorladen
@@ -509,6 +537,29 @@ export class Engine extends Emitter {
     const url = URL.createObjectURL(blob);
     this.urls.set(mediaId, url);
     return url;
+  }
+
+  /**
+   * Wellenform einer Mediendatei (WAVE_BUCKETS Spitzenwerte), einmal berechnet und gecacht.
+   * null bei fehlender oder nicht dekodierbarer Datei und bei Dateien über WAVEFORM_MAX_SEC.
+   */
+  waveform(mediaId, duration) {
+    if (!mediaId || !(duration > 0) || duration > WAVEFORM_MAX_SEC) return Promise.resolve(null);
+    if (!this.waves.has(mediaId)) this.waves.set(mediaId, this._decodeWave(mediaId));
+    return this.waves.get(mediaId);
+  }
+
+  async _decodeWave(mediaId) {
+    try {
+      const blob = await this.loadMedia(mediaId);
+      if (!blob) return null;
+      const Off = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+      const buf = await new Off(1, 1, WAVE_RATE).decodeAudioData(await blob.arrayBuffer());
+      const chans = Array.from({ length: buf.numberOfChannels }, (_, i) => buf.getChannelData(i));
+      return waveformPeaks(chans, WAVE_BUCKETS);
+    } catch {
+      return null; // z. B. Video-Container ohne dekodierbare Tonspur: normaler Balken
+    }
   }
 
   go(id) {

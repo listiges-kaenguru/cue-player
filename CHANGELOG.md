@@ -12,6 +12,13 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 - **Pegelanzeige am Master:** Neben dem Master-Regler zeigt eine Stereo-Anzeige (L/R) mit Spitzenwert-Halter, dass
   Ton rausgeht. Sie misst nach der Master-Lautstärke. Übersteuerung (≥ 0 dBFS) markiert ein rotes Feld, das drei
   Sekunden stehen bleibt.
+- **Wellenform und Pegel im Aktiv-Bereich:** Laufende Audio-Cues zeigen im Fortschrittsbalken die Wellenform der
+  Datei (getrimmter Bereich, gespielter Teil farbig) und daneben ihren aktuellen Pegel. Die Wellenform wird einmal je
+  Datei im Hintergrund berechnet; Dateien über 20 Minuten und nicht dekodierbare Dateien behalten den normalen Balken.
+- **Springen in laufenden Cues:** Ein Klick auf den Balken springt an diese Stelle, auch bei pausierten Cues. Im
+  Show-Modus springt nur Ziehen und Loslassen (ein versehentlicher Tipp tut nichts); während des Ziehens zeigt ein
+  Marker die Zielzeit, Loslassen neben dem Balken bricht ab. Auf dem fokussierten Balken springen ←/→ um 5 Sekunden.
+  Ein laufender Fade-Out am Ende wird dabei richtig fortgesetzt bzw. zurückgenommen.
 
 ### Behoben
 - **Handy:** Die GO-Taste schnitt beim Standby-Namen die Unterlängen ab (g, p, y). „GO“ hat jetzt eine engere
