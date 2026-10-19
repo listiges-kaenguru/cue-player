@@ -31,6 +31,8 @@ einzigen Codebasis, ohne Store, offline-fähig, installierbar wie eine normale A
 | Start/Stop- und Pause/Weiter-Cues (je mit Umschalten und Fade) | ✅ |
 | Pre-Wait, Post-Wait, Auto-Continue, Auto-Follow | ✅ |
 | Stop alle (mit Fade), Pause alle, Weiter | ✅ |
+| Pegelanzeige am Master (L/R, Spitzenwert, Übersteuerung) | ✅ |
+| Wellenform und Pegel laufender Cues, Springen per Klick/Ziehen | ✅ |
 | Tastatur-Trigger pro Cue | ✅ |
 | MIDI-Trigger (Eingang) & MIDI-Cues (Ausgang) | ✅ (Web MIDI) |
 | Mehrere Shows, Export/Import als eine Datei | ✅ (`.cueshow`) |
@@ -95,9 +97,11 @@ js/storage.js          IndexedDB-Speicher, Export/Import (.cueshow)
 js/midi.js             Web-MIDI-Anbindung
 js/md.js               Markdown-Renderer für Memos und die eingebaute Hilfe (sicher, ohne Bibliothek)
 js/util.js             Hilfsfunktionen (Timer, dB-Umrechnung, Fade-Kurven)
+js/meter.js            Pegelskala, Spitzenwert-Halter, Wellenform, Springen, Breite des rechten Bereichs
 tests/smoke.mjs        Browser-Smoke-Test (Playwright)
 tests/import.mjs       Browsertest: Import präparierter .cueshow-Dateien, site.json
-tests/unit/            Unit-Tests (node:test) für md.js, util.js, model.js
+tests/pegel.mjs        Browsertest: GO-Taste, Pegelanzeigen, Springen, Breite des rechten Bereichs
+tests/unit/            Unit-Tests (node:test) für md.js, util.js, model.js, meter.js
 img/                   App-Icons (nicht „icons/“: Apache-Standard-Alias)
 docs/                  Anleitungen (BENUTZERHANDBUCH.md wird auch als Hilfe in der App angezeigt)
 ```

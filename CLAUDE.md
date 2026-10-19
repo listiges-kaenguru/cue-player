@@ -30,8 +30,11 @@ Android/Windows/Linux. Homepage `../get-cueplayer`, Demo `../demo-cueplayer`.
 
 - `js/engine.js`: `Runner` (Zustände prewait/running/paused/postwait/idle, Timer) und Unterklassen je Cue-Typ.
   Audio: `<audio>` (gestreamt) → MediaElementSource → vol-Gain (Fade-Cues) → env-Gain (Fade-In/-Out/Stop) → Panner → Master.
+  Pegel: Analyser je Cue hinter dem Panner (`level()`), am Master Splitter → 2 Analyser (`masterPeaks()`). Wellenform
+  über `engine.waveform()` (OfflineAudioContext mit 11 025 Hz, gecacht je mediaId, nicht über 20 min). Springen: `seek()`.
   Neuer Cue-Typ: Runner-Klasse + Eintrag in `RUNNERS`, Defaults in `model.js` (`newCue`), Editor-Felder in `app.js`
   (`openEditor`), Menüeintrag in `index.html`.
+- `js/meter.js`: reine Logik für Pegelanzeigen, Wellenform, Springen und Breite des rechten Bereichs (unit-getestet).
 - `js/md.js`: Markdown-Teilmenge, escaped zuerst alles HTML. Ergebnis darf per `innerHTML` gesetzt werden, anderes nicht.
 - Presets: `storage.js` (`listPresets/savePreset/deletePreset`), `model.js` (`cueToPreset`, `defaultPresets`),
   UI in `app.js` (Abschnitt „Presets“). Seed einmalig über Meta-Key `presetsSeeded`.
@@ -58,8 +61,9 @@ Lokal (Fedora) in der gemeinsamen Testumgebung, keine Browser auf dem Host insta
 
 Die Playwright-Version im Image muss zu `node_modules/playwright` passen; der Test warnt bei Abweichung.
 
-`pt test` führt aus: Unit-Tests (`tests/unit/*.test.mjs`, `node:test`, für `md.js`, `util.js`, `model.js`), den
-Smoke-Test und den Browsertest `tests/import.mjs` (präparierte `.cueshow`-Dateien, `site.json`). Weitere Befehle im
+`pt test` führt aus: Unit-Tests (`tests/unit/*.test.mjs`, `node:test`, für `md.js`, `util.js`, `model.js`, `meter.js`), den
+Smoke-Test und die Browsertests `tests/import.mjs` (präparierte `.cueshow`-Dateien, `site.json`) und `tests/pegel.mjs`
+(GO-Taste, Pegel, Wellenform, Springen, Breite des rechten Bereichs). Weitere Befehle im
 Container: `pt npm run test:coverage` (Coverage der Unit-Tests), `pt npm run test:mutation` (Stryker, ca. 10 Minuten).
 
 - Fremde Shows (`.cueshow`) prüft `importShow()` in `storage.js` vollständig, bevor etwas gespeichert wird. Neue
