@@ -70,8 +70,6 @@ Roadmap-Vorschläge (auch in der README):
 
 ## Bekannte Schwächen
 
-- DB-Upgrade (Version 1 → 2): Ist die App noch in einem zweiten Tab mit alter Version offen, blockiert das Upgrade
-  (`onblocked` wird nicht behandelt). Die Lösung für Nutzer ist, alle Tabs zu schließen.
 - Geklonte Fade-/Start-/Stop-Cues zielen weiterhin auf denselben Ziel-Cue wie das Original (gewollt, aber ggf. überraschend).
 - Ersetzte Audiodateien bleiben in IndexedDB liegen, bis die Show gewechselt oder gelöscht wird
   oder in ⚙ „Unbenutzte Medien löschen“ gedrückt wird (`gcMedia`).
@@ -79,7 +77,6 @@ Roadmap-Vorschläge (auch in der README):
 - Loop mit Start/Ende-Trimmung springt per `tick()` (20 ms) zurück, das ist nicht ganz nahtlos.
   Ohne Trimmung wird `el.loop` genutzt und ist nahtlos.
 - Ende-Erkennung und Fade-Out am Ende laufen per 20-ms-Intervall (Timer im Hintergrund-Tab: Audio-Tabs werden nicht gedrosselt).
-- Nach dem Neuladen steht der Standby immer auf Cue 1 (wird nicht gespeichert).
 - Die Wellenform wird bei 11 025 Hz berechnet; sehr hohe Frequenzen (z. B. Hi-Hats) sind darin kaum zu sehen.
 - Firefox: keine Installation auf dem Desktop, kein `setSinkId` am AudioContext.
 - AGPL: Copyright-Zeile (Name des Rechteinhabers) in README bzw. Quelldateien fehlt noch, falls gewünscht.

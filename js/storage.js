@@ -5,11 +5,21 @@ import { migratePreset } from './model.js';
 const DB_NAME = 'cue-player';
 const DB_VERSION = 2; // 2: Store „presets“
 let dbPromise = null;
+let onBlock = () => {};
+
+/**
+ * Hinweise bei Upgrades mit mehreren offenen Tabs: fn('blocked') – ein anderer Tab hält die alte Datenbank offen,
+ * fn('unblocked') – Upgrade läuft weiter, fn('versionchange') – ein anderer Tab braucht eine neuere Version
+ * (die Verbindung wird hier geschlossen, diese Seite muss neu geladen werden).
+ */
+export function onDbBlock(fn) { onBlock = fn; }
 
 function db() {
   if (!dbPromise) {
     dbPromise = new Promise((resolve, reject) => {
       const req = indexedDB.open(DB_NAME, DB_VERSION);
+      let blocked = false;
+      req.onblocked = () => { blocked = true; onBlock('blocked'); };
       req.onupgradeneeded = () => {
         const d = req.result;
         if (!d.objectStoreNames.contains('sessions')) d.createObjectStore('sessions', { keyPath: 'id' });
@@ -17,7 +27,12 @@ function db() {
         if (!d.objectStoreNames.contains('meta')) d.createObjectStore('meta', { keyPath: 'key' });
         if (!d.objectStoreNames.contains('presets')) d.createObjectStore('presets', { keyPath: 'id' });
       };
-      req.onsuccess = () => resolve(req.result);
+      req.onsuccess = () => {
+        const d = req.result;
+        if (blocked) onBlock('unblocked');
+        d.onversionchange = () => { d.close(); onBlock('versionchange'); };
+        resolve(d);
+      };
       req.onerror = () => reject(req.error);
     });
   }
@@ -54,7 +69,10 @@ export function saveSession(session) {
   return tx('sessions', 'readwrite', (s) => s.put(JSON.parse(JSON.stringify(session))));
 }
 
-export const deleteSession = (id) => tx('sessions', 'readwrite', (s) => s.delete(id));
+export async function deleteSession(id) {
+  await tx('sessions', 'readwrite', (s) => s.delete(id));
+  await tx('meta', 'readwrite', (s) => s.delete('standby:' + id));
+}
 
 export const putMedia = (rec) => tx('media', 'readwrite', (s) => s.put(rec));
 export const getMedia = (id) => tx('media', 'readonly', (s) => req2p(s.get(id)));

@@ -35,6 +35,7 @@ const state = {
   selAnchor: null,
   selectMode: false, // Auswahl-Modus (Knopf ☑): Antippen schaltet die Auswahl um
   clipUntil: 0, // Clip-Markierung am Master sichtbar bis (performance.now())
+  savedStandby: null, // { sid, id }: zuletzt gespeicherter Standby
 };
 
 const cues = () => state.session.cues;
@@ -96,9 +97,13 @@ const dialogOpen = () => !!document.querySelector('dialog[open]');
 
 async function openSession(session) {
   engine.stopAll(0);
+  // Gemerkten Standby lesen, bevor die Show wechselt (frame() speichert sonst den alten unter der neuen Show)
+  const saved = await store.getMeta(standbyKey(session.id)).catch(() => null);
   state.session = normalizeSession(session);
   engine.setSession(state.session);
-  state.standbyId = nextStandby(0);
+  const i = typeof saved === 'string' && saved ? cueIndex(saved) : -1;
+  state.standbyId = nextStandby(Math.max(0, i));
+  state.savedStandby = { sid: session.id, id: state.standbyId };
   await store.setMeta('lastSession', session.id);
   $('#session-name').value = session.name;
   $('#master').value = settings().masterDb;
@@ -109,6 +114,25 @@ async function openSession(session) {
   applyWakeLock();
   renderAll();
 }
+
+/** Standby je Show im Meta-Store (Laufzeitzustand, gehört nicht in die Show-Daten bzw. den Export). */
+const standbyKey = (sessionId) => 'standby:' + sessionId;
+
+function rememberStandby() {
+  const sid = state.session?.id;
+  if (!sid || (state.savedStandby?.sid === sid && state.savedStandby.id === state.standbyId)) return;
+  state.savedStandby = { sid, id: state.standbyId };
+  store.setMeta(standbyKey(sid), state.standbyId).catch(() => {});
+}
+
+store.onDbBlock((what) => {
+  $('#toasts .toast.blocked')?.remove();
+  if (what === 'unblocked') return;
+  const msg = what === 'blocked'
+    ? 'Update wartet: Der Cue Player ist noch in einem anderen Tab oder Fenster geöffnet. Bitte dort schließen.'
+    : 'Der Cue Player wurde in einem anderen Tab aktualisiert. Bitte diese Seite neu laden.';
+  $('#toasts').append(h('div', { class: 'toast error blocked' }, msg)); // bleibt stehen, bis es weitergeht
+});
 
 async function init() {
   let session = null;
@@ -407,6 +431,7 @@ function frame() {
   });
 
   updateMasterMeter(now);
+  rememberStandby();
   $('#btn-go').classList.toggle('locked', now < state.goLockedUntil);
   requestAnimationFrame(frame);
 }

@@ -40,7 +40,9 @@ Android/Windows/Linux. Homepage `../get-cueplayer`, Demo `../demo-cueplayer`.
   UI in `app.js` (Abschnitt „Presets“). Seed einmalig über Meta-Key `presetsSeeded`.
 - `window.cuePlayer = { engine, state }` für Tests/DevTools (Smoke-Test liest darüber Pegel und Cue-Daten).
 - `js/app.js`: komplette UI. Rendering bei Strukturänderung neu (`renderAll`), Fortschritt pro Frame (`frame`).
-- `js/storage.js`: IndexedDB-Stores `sessions`, `media` (Blobs), `meta`, `presets`. Export/Import.
+- `js/storage.js`: IndexedDB-Stores `sessions`, `media` (Blobs), `meta`, `presets`. Export/Import. Meta-Keys: `lastSession`,
+  `presetsSeeded`, `standby:<sessionId>`. Upgrade mit anderen offenen Tabs: `onDbBlock()` (Hinweis in `app.js`).
+  Gerätebezogene Ansicht im localStorage: `cue-player-side-width`, `cue-player-memo-open`.
 - `sw.js`: Cache-First, lädt beim Installieren am HTTP-Cache vorbei.
 - `site.json`: optionaler Impressum-Link, im Repo leer (`{}`); die Demo bringt ihre eigene mit.
 - Icons in `img/`, nie in `icons/` (Apache-Alias).
@@ -63,7 +65,8 @@ Die Playwright-Version im Image muss zu `node_modules/playwright` passen; der Te
 
 `pt test` führt aus: Unit-Tests (`tests/unit/*.test.mjs`, `node:test`, für `md.js`, `util.js`, `model.js`, `meter.js`), den
 Smoke-Test und die Browsertests `tests/import.mjs` (präparierte `.cueshow`-Dateien, `site.json`) und `tests/pegel.mjs`
-(GO-Taste, Pegel, Wellenform, Springen, Breite des rechten Bereichs). Weitere Befehle im
+(GO-Taste, Pegel, Wellenform, Springen, Breite des rechten Bereichs) sowie `tests/zustand.mjs` (Standby, DB-Upgrade);
+weitere `tests/*.mjs` laufen automatisch mit. Weitere Befehle im
 Container: `pt npm run test:coverage` (Coverage der Unit-Tests), `pt npm run test:mutation` (Stryker, ca. 10 Minuten).
 
 - Fremde Shows (`.cueshow`) prüft `importShow()` in `storage.js` vollständig, bevor etwas gespeichert wird. Neue

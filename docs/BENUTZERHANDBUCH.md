@@ -311,7 +311,8 @@ die durch Auto-Continue/-Follow ohnehin ausgelöst werden. Das nächste GO triff
 
 1. Vor Beginn den **Schalter auf ▶ Show** stellen (Kopfleiste oder `Strg+E`). Damit sind Editor,
    Hinzufügen und Löschen gesperrt.
-2. **Standby setzen:** Zeile antippen, oder mit **↑ / ↓**. Standardmäßig steht der Standby auf Cue 1.
+2. **Standby setzen:** Zeile antippen, oder mit **↑ / ↓**. Standardmäßig steht der Standby auf Cue 1. Das Gerät
+   merkt sich den Standby je Show: Nach einem Neuladen, etwa nach einem Absturz, geht es am selben Cue weiter.
    Die GO-Taste zeigt unten an, welcher Cue als Nächstes kommt.
 3. **GO** – großer grüner Knopf oder **Leertaste**. Eine kurze GO-Sperre (Standard 300 ms)
    verhindert versehentliches Doppel-Auslösen.
@@ -453,4 +454,5 @@ die einzige Verbindung nach außen; ohne Internet bleibt der Hinweis einfach weg
 | Ausgabegerät-Auswahl fehlt | Nur in Chrome/Edge verfügbar; sonst Systemeinstellung nutzen. |
 | MIDI wird nicht erkannt | Chrome/Edge verwenden, Gerät vor dem Öffnen der App anschließen, in ⚙ MIDI aus- und wieder einschalten. |
 | Shows sind weg | Website-Daten wurden gelöscht. Letzten Export importieren. In ⚙ „Dauerhaft: Anfordern“ nutzen. |
+| „Update wartet … in einem anderen Tab geöffnet“ | Den Cue Player in allen anderen Tabs und Fenstern schließen, dann lädt die App von selbst weiter. |
 | Neue Version wird nicht angezeigt | App komplett schließen und neu öffnen (Updates werden beim nächsten Start aktiv). |
