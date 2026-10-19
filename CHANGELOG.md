@@ -8,6 +8,14 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+### Hinzugefügt
+- **Backup-Hinweis:** Wenn sich eine Show seit dem letzten Export geändert hat oder noch nie exportiert wurde, fragt
+  der Browser beim Schließen oder Neuladen nach. Ein Export oder Import gilt als gesichert. Der Stand wird je Show
+  gemerkt (Meta-Key `exportiert:<id>`) und gilt auch nach dem Neuladen. Shows ohne Cues lösen keinen Hinweis aus,
+  die Dauer, die beim Laden einer Datei ermittelt wird, zählt nicht als Änderung. Die Nachfrage bei laufender
+  Wiedergabe bleibt wie bisher. Getestet mit Unit-Tests (`sessionFingerprint`, `needsBackup`) und dem
+  Browsertest `tests/sicherung.mjs`.
+
 ## [0.7.1] – 2026-10-19
 
 Korrektur der Laufzeitanzeige in der Cue-Liste auf dem Handy. Version 0.7.1 in `sw.js`, `app.js`, `package.json`.

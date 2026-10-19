@@ -393,6 +393,9 @@ Importieren.
 
 **Backup:** Shows liegen im Speicher des Browsers. Wird die App deinstalliert oder werden die
 Website-Daten gelöscht, sind sie weg. Deshalb nach jeder Probe **exportieren**.
+Hat sich die Show seit dem letzten Export geändert, fragt der Browser beim Schließen oder Neuladen nach, ob du die
+Seite wirklich verlassen willst. Nach einem Export oder Import fragt er nicht mehr, bis du wieder etwas änderst.
+Shows ohne Cues lösen keine Nachfrage aus.
 
 ---
 
