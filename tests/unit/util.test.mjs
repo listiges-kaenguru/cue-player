@@ -325,6 +325,23 @@ describe('Randfälle Timer, Rampen, Versionen', () => {
     mock.method(globalThis, 'fetch', async () => ({ ok: false, status: 500, json: async () => ({ tag_name: 'v9.9.9' }) }));
     try { assert.equal(await U.latestRelease('https://api.github.com/x', 'k'), null); } finally { delete globalThis.localStorage; }
   });
+  it('nutzt für IDs nie Math.random (CodeQL: unsichere Zufallszahlen), auch ohne randomUUID oder crypto', () => {
+    const rnd = mock.method(Math, 'random', () => { throw new Error('Math.random benutzt'); });
+    const origCrypto = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
+    try {
+      Object.defineProperty(globalThis.crypto, 'randomUUID', { value: undefined, configurable: true });
+      const a = new Set(Array.from({ length: 200 }, U.uid));
+      delete globalThis.crypto.randomUUID;
+      assert.equal(a.size, 200);
+      Object.defineProperty(globalThis, 'crypto', { value: undefined, configurable: true });
+      const b = new Set(Array.from({ length: 200 }, U.uid));
+      assert.equal(b.size, 200);
+      for (const id of [...a, ...b]) assert.match(id, /^id-[a-z0-9]+-[a-z0-9]+$/);
+    } finally {
+      Object.defineProperty(globalThis, 'crypto', origCrypto);
+      rnd.mock.restore();
+    }
+  });
   it('erzeugt IDs auch ganz ohne crypto', () => {
     const orig = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
     Object.defineProperty(globalThis, 'crypto', { value: undefined, configurable: true });

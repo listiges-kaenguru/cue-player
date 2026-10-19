@@ -1,8 +1,18 @@
 // Kleine Hilfsfunktionen ohne Abhängigkeiten.
 
+let uidCount = 0;
+
+/**
+ * Eindeutige ID (lokaler Datenbankschlüssel, kein Geheimnis). randomUUID fehlt ohne HTTPS (z. B. im Heimnetz per IP);
+ * getRandomValues gibt es auch dort. Ohne crypto: Zeit + Zähler. Math.random wird bewusst nicht verwendet.
+ */
 export function uid() {
-  if (globalThis.crypto?.randomUUID) return crypto.randomUUID();
-  return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  const c = globalThis.crypto;
+  if (c?.randomUUID) return c.randomUUID();
+  const rnd = c?.getRandomValues
+    ? Array.from(c.getRandomValues(new Uint32Array(2)), (n) => n.toString(36)).join('')
+    : (++uidCount).toString(36) + Math.floor(performance.now() * 1000).toString(36);
+  return 'id-' + Date.now().toString(36) + '-' + rnd;
 }
 
 export const MIN_DB = -60;

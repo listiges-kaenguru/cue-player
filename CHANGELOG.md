@@ -43,6 +43,8 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
   Zeilenhöhe, der Name passt vollständig in die Taste.
 
 ### Intern
+- `uid()` nutzt ohne `crypto.randomUUID` (z. B. ohne HTTPS) jetzt `crypto.getRandomValues` statt `Math.random`
+  (CodeQL-Hinweis „Insecure randomness“; die IDs sind nur lokale Datenbankschlüssel).
 - Neues Modul `js/meter.js` (Pegelskala, Spitzenwert-Halter, Wellenform, Klick → Zeit, Breite des rechten Bereichs)
   mit Unit-Tests `tests/unit/meter.test.mjs`, auch im Mutation Testing.
 - Neuer Browsertest `tests/fade.mjs` (Fade-Cue pausieren und fortsetzen).
