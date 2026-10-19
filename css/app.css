@@ -94,9 +94,17 @@ body.show-mode .edit-only { display: none !important; }
 /* ---------- Main ---------- */
 main {
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: 1fr var(--side-w, 300px);
   min-height: 0;
+  position: relative;
 }
+/* Griff zum Verstellen der Breite des rechten Bereichs (nur Desktop) */
+.side-resize {
+  position: absolute; top: 0; bottom: 0; right: calc(var(--side-w, 300px) - 4px); width: 8px; z-index: 5;
+  cursor: col-resize; touch-action: none;
+}
+.side-resize:hover, .side-resize:focus-visible, .side-resize.dragging { background: linear-gradient(to right, transparent 3px, var(--standby) 3px 5px, transparent 5px); outline: none; }
+body.resizing { cursor: col-resize; user-select: none; }
 .list-view, .cart-view { overflow: auto; min-height: 0; position: relative; }
 .side {
   border-left: 1px solid var(--line);
@@ -143,7 +151,8 @@ main {
 .bar.st-prewait .fill { background: var(--pre); }
 .bar.st-postwait .fill { background: var(--post); }
 .bar.st-paused .fill { background: var(--warn); }
-.bar .txt { position: relative; padding: 0 6px; line-height: 18px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* Absolut, damit der wechselnde Zeittext die Spaltenbreite der Liste nicht verändert (sonst springen Zeilenumbrüche) */
+.bar .txt { position: absolute; top: 0; left: 0; right: 0; padding: 0 6px; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 
 .empty-hint { text-align: center; color: var(--muted); padding: 48px 16px; }
 .linkbtn { background: none; border: none; color: var(--standby); padding: 0; text-decoration: underline; }
@@ -242,6 +251,23 @@ main {
 .run-item .ri-head { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
 .run-item .ri-name { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .run-item .ri-head button { padding: 2px 8px; }
+.ri-bar { display: flex; gap: 4px; align-items: stretch; }
+.ri-bar .bar { flex: 1; min-width: 0; }
+/* Audio-Cues: Wellenform im Balken, gespielter Teil farbig; Klick/Ziehen springt */
+.bar.seek { height: 40px; cursor: pointer; touch-action: pan-y; user-select: none; }
+.show-mode .bar.seek { cursor: ew-resize; }
+.bar.seek:focus-visible { outline: 2px solid var(--standby); outline-offset: 1px; }
+.bar .wave { position: absolute; inset: 0; width: 100%; height: 100%; }
+.bar.has-wave .fill { opacity: .22; }
+.bar.seek .txt { text-shadow: 0 0 3px var(--bg), 0 0 3px var(--bg); }
+.seek-mark {
+  position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--standby);
+  font-size: 11px; font-weight: 700; white-space: nowrap; color: var(--fg); text-shadow: 0 0 3px var(--bg), 0 0 3px var(--bg);
+  pointer-events: none;
+}
+.seek-mark > span { position: absolute; bottom: 2px; left: 6px; }
+.seek-mark.flip > span { left: auto; right: 6px; }
+.seek-mark.cancel { background: var(--danger); }
 
 /* ---------- Transport ---------- */
 .transport {
@@ -261,13 +287,27 @@ main {
 }
 .go:hover { background: #2a9a40; }
 .go.locked { opacity: .55; }
-.go-label { font-size: 26px; font-weight: 800; letter-spacing: .1em; }
-.go-next { font-size: 13px; opacity: .9; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.go-label { font-size: 26px; line-height: 1.1; font-weight: 800; letter-spacing: .1em; flex: none; }
+.go-next { font-size: 13px; line-height: 1.35; flex: none; opacity: .9; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .transport-btns { display: flex; gap: 8px; }
 .tbtn { height: 48px; padding: 0 16px; font-weight: 600; }
 .master { display: flex; align-items: center; gap: 8px; margin-left: auto; color: var(--muted); font-size: 13px; }
 .master input { width: 160px; }
 .master output { width: 5.5em; text-align: right; font-variant-numeric: tabular-nums; color: var(--fg); }
+
+/* Pegelanzeige: Farbverlauf grün/gelb/rot (−18 und −6 dBFS), abgedeckt von rechts bzw. oben */
+.vu { position: relative; display: flex; flex-direction: column; justify-content: center; gap: 3px; width: 110px; height: 22px; padding-right: 14px; flex: none; }
+.vu-ch {
+  position: relative; height: 7px; border-radius: 2px; overflow: hidden;
+  background: linear-gradient(to right, var(--accent) 0 70%, var(--warn) 70% 90%, var(--danger) 90%);
+}
+.vu-ch.vert { width: 6px; height: auto; background: linear-gradient(to top, var(--accent) 0 70%, var(--warn) 70% 90%, var(--danger) 90%); }
+.vu-cover { position: absolute; inset: 0; background: var(--bg); transform-origin: right; transform: scaleX(1); }
+.vu-ch.vert .vu-cover { transform-origin: top; transform: scaleY(1); }
+.vu-peak { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; background: var(--fg); opacity: 0; }
+.vu-ch.vert .vu-peak { top: auto; left: 0; right: 0; width: auto; height: 2px; }
+.vu-clip { position: absolute; right: 0; top: 3px; bottom: 3px; width: 9px; border-radius: 2px; background: var(--bg3); border: 1px solid var(--line); }
+.vu.clip .vu-clip { background: var(--danger); border-color: var(--danger); }
 
 /* ---------- Dialoge ---------- */
 .dlg {
@@ -336,6 +376,7 @@ main {
 /* ---------- Responsiv (Tablet/Handy) ---------- */
 @media (max-width: 900px) {
   main { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+  .side-resize { display: none; }
   .side { border-left: none; border-top: 1px solid var(--line); max-height: 45vh; }
   .side.empty, .running.idle { display: none; }
   .memo-body { max-height: 28vh; overflow: auto; }
@@ -360,6 +401,9 @@ main {
   .transport-btns .tbtn { flex: 1; padding: 0 6px; }
   .master { margin-left: 0; flex: 1 1 100%; }
   .master input { flex: 1; }
+  .master { flex: 1 1 calc(100% - 96px); min-width: 0; } /* eigene Zeile, daneben die Pegelanzeige (84 px + Abstand) */
+  .master output { width: 4.5em; }
+  .vu { width: 84px; }
   .form-grid { grid-template-columns: 1fr; }
   .form-grid .hint { grid-column: 1; }
   .cart-view { --cols: 2 !important; }

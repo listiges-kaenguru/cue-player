@@ -8,7 +8,6 @@ Offene Punkte und Ideen für spätere Versionen. Erledigtes wird hier gestrichen
 ### Vor dem ersten echten Einsatz
 
 - [ ] Nutzertest auf Android/Windows/Linux (Ergebnisse unten unter „Tests“ eintragen)
-- [ ] Pegelanzeige (VU) am Master, damit man sieht, dass Ton rausgeht
 - [ ] Undo/Redo
 - [ ] Warnung beim Schließen, wenn noch nichts exportiert wurde (Backup-Hinweis)
 
@@ -17,9 +16,9 @@ Offene Punkte und Ideen für spätere Versionen. Erledigtes wird hier gestrichen
 - [ ] **Presets – Ausbau (bei Bedarf):** Presets exportieren/importieren bzw. mit `.cueshow` weitergeben (heute nur
   lokal); Preset direkt bearbeiten (heute: einfügen, ändern, neu speichern, altes löschen); Mehrfachauswahl auch in
   der Cart-Ansicht?
-- [ ] **Handy: GO-Taste schneidet Unterlängen ab** (≤ 600 px, `.go` 64 px hoch): Der Standby-Name unter „GO“
-  verliert unten g/p/y („Nachtiaall“). Zu sehen in `../get-cueplayer/img/app/handy-*.webp`.
-- [ ] **Memo:** Zustand des Regiebuchs (auf-/zugeklappt) merken (klein, bei Gelegenheit).
+- [ ] **Ausgabegerät wach halten** (globale Option, z. B. für Bluetooth-Lautsprecher, die nach 10 Minuten Stille
+  abschalten; heute Notlösung per Stille-Cue in Schleife). Konzept mit offenen Fragen:
+  `~/projects/entwuerfe/2026-10-cueplayer-geraet-wach-halten/konzept-geraet-wach-halten.md`
 - [ ] **Import aus Linux Show Player (LiSP)** und evtl. anderen Programmen. *(Nutzer: später)*
   Stand des Wissens (an echter Datei prüfen!):
   - LiSP-Sessions (`.lsp`) sind JSON: Layout-Einstellungen + Liste `cues` mit `_type_` (z. B. `MediaCue`/`GstMediaCue`,
@@ -71,16 +70,13 @@ Roadmap-Vorschläge (auch in der README):
 
 ## Bekannte Schwächen
 
-- DB-Upgrade (Version 1 → 2): Ist die App noch in einem zweiten Tab mit alter Version offen, blockiert das Upgrade
-  (`onblocked` wird nicht behandelt). Die Lösung für Nutzer ist, alle Tabs zu schließen.
 - Geklonte Fade-/Start-/Stop-Cues zielen weiterhin auf denselben Ziel-Cue wie das Original (gewollt, aber ggf. überraschend).
 - Ersetzte Audiodateien bleiben in IndexedDB liegen, bis die Show gewechselt oder gelöscht wird
   oder in ⚙ „Unbenutzte Medien löschen“ gedrückt wird (`gcMedia`).
-- Fade-Cue pausiert nur seinen Timer; die laufende Gain-Automation in Web Audio läuft beim Pausieren weiter.
 - Loop mit Start/Ende-Trimmung springt per `tick()` (20 ms) zurück, das ist nicht ganz nahtlos.
   Ohne Trimmung wird `el.loop` genutzt und ist nahtlos.
 - Ende-Erkennung und Fade-Out am Ende laufen per 20-ms-Intervall (Timer im Hintergrund-Tab: Audio-Tabs werden nicht gedrosselt).
-- Nach dem Neuladen steht der Standby immer auf Cue 1 (wird nicht gespeichert).
+- Die Wellenform wird bei 11 025 Hz berechnet; sehr hohe Frequenzen (z. B. Hi-Hats) sind darin kaum zu sehen.
 - Firefox: keine Installation auf dem Desktop, kein `setSinkId` am AudioContext.
 - AGPL: Copyright-Zeile (Name des Rechteinhabers) in README bzw. Quelldateien fehlt noch, falls gewünscht.
 

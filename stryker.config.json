@@ -4,7 +4,7 @@
   "testRunner": "command",
   "commandRunner": { "command": "node --test 'tests/unit/*.test.mjs'" },
   "coverageAnalysis": "off",
-  "mutate": ["js/md.js", "js/util.js", "js/model.js"],
+  "mutate": ["js/md.js", "js/util.js", "js/model.js", "js/meter.js"],
   "reporters": ["clear-text", "progress", "json"],
   "jsonReporter": { "fileName": "reports/mutation/mutation.json" },
   "concurrency": 2,

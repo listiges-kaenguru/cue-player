@@ -43,10 +43,11 @@ Inhalt:
 ├────────────────────────────────────────────────────┬──────────────────┤
 │ #  Cue                   Pre    Dauer       Post   │ AKTIV            │
 │ 1  ♪ Einlassmusik               ███░░ 1:02  ↧ AF   │ 1 · Einlassmusik │
-│ 2▸ ◢ Fade #1 → −∞               0:03.0             │  ❚❚  ■  ███░░    │
+│ 2▸ ◢ Fade #1 → −∞               0:03.0             │        ❚❚  ■     │
+│                                                    │ ▁▃▅▇▅▃▂▃▅▆▄▂▁  ▌ │
 │ 3  ♪ Gewitter          0:02.0   0:45.0             │                  │
 ├────────────────────────────────────────────────────┴──────────────────┤
-│ [   GO   ]  [■ Stop alle] [❚❚ Pause] [▶ Weiter]      Master ───●── 0 dB│  ← Transportleiste
+│ [   GO   ]  [■ Stop alle] [❚❚ Pause] [▶ Weiter]  Master ──●─ 0 dB ▬▬▬▫│  ← Transportleiste
 │  2 · Fade…                                                            │
 └───────────────────────────────────────────────────────────────────────┘
 ```
@@ -64,7 +65,16 @@ Inhalt:
 - **📖 Regiebuch** (rechts oben, auf dem Handy über GO) – Memo-Texte und Notizen zum nächsten Cue,
   siehe [Memo](#-memo).
 - **Aktiv** (rechts, auf dem Handy unten) – alle gerade laufenden Cues mit Fortschritt,
-  Pause- und Stop-Knopf.
+  Pause- und Stop-Knopf. Bei Audio-Cues zeigt der Balken die **Wellenform** der Datei (der schon gespielte
+  Teil ist farbig), rechts daneben steht der aktuelle **Pegel** des Cues. Ein Klick auf den Balken springt an
+  diese Stelle, siehe [Die Show fahren](#6-die-show-fahren).
+- **Breite des rechten Bereichs** (am PC): Den linken Rand von Regiebuch/Aktiv mit der Maus ziehen. Die Breite
+  merkt sich das Gerät; **Doppelklick** auf den Rand stellt die Standardbreite wieder her. Mit der Tastatur:
+  Rand per Tab anwählen, dann **← / →**.
+- **Pegelanzeige** (rechts neben dem Master-Regler) – zeigt links/rechts, was tatsächlich rausgeht, also
+  nach der Master-Lautstärke. Grün ist normal, gelb laut (über −18 dB), rot sehr laut (über −6 dB). Der weiße
+  Strich hält kurz den Spitzenwert. Leuchtet das Feld ganz rechts **rot**, war der Ton übersteuert (0 dB
+  erreicht, es kann verzerren). Dann Master oder Cue leiser stellen. Die Markierung erlischt nach drei Sekunden.
 - **Farben der Fortschrittsbalken:** grün = läuft, violett = Pre-Wait, orange = Post-Wait,
   gelb = pausiert.
 
@@ -181,6 +191,9 @@ ihn fort.
 Beispiel „Musik unter Text ziehen“: Fade-Cue auf −15 dB, 3 s, *Danach stoppen* aus. Später ein
 zweiter Fade auf −∞ mit *Danach stoppen* an.
 
+Pausiert man während eines Fades (Pause alle oder Pause-Cue), bleibt die Lautstärke stehen. Bei „Weiter“ läuft der
+Fade ab dort mit der Restzeit weiter.
+
 ### ▶■ Start / Stop
 
 Startet oder stoppt einen anderen Cue, aufgebaut wie der Pause/Weiter-Cue.
@@ -261,7 +274,7 @@ zeigt automatisch:
 - die **Notizen des Standby-Cues**.
 
 Gibt es nichts anzuzeigen, verschwindet der Bereich. Mit einem Tipp auf die Kopfzeile lässt er sich
-zuklappen, z. B. auf dem Handy, wenn der Platz knapp ist.
+zuklappen, z. B. auf dem Handy, wenn der Platz knapp ist. Das Gerät merkt sich, ob er auf- oder zugeklappt ist.
 
 ---
 
@@ -301,18 +314,28 @@ die durch Auto-Continue/-Follow ohnehin ausgelöst werden. Das nächste GO triff
 
 1. Vor Beginn den **Schalter auf ▶ Show** stellen (Kopfleiste oder `Strg+E`). Damit sind Editor,
    Hinzufügen und Löschen gesperrt.
-2. **Standby setzen:** Zeile antippen, oder mit **↑ / ↓**. Standardmäßig steht der Standby auf Cue 1.
+2. **Standby setzen:** Zeile antippen, oder mit **↑ / ↓**. Standardmäßig steht der Standby auf Cue 1. Das Gerät
+   merkt sich den Standby je Show: Nach einem Neuladen, etwa nach einem Absturz, geht es am selben Cue weiter.
    Die GO-Taste zeigt unten an, welcher Cue als Nächstes kommt.
 3. **GO** – großer grüner Knopf oder **Leertaste**. Eine kurze GO-Sperre (Standard 300 ms)
    verhindert versehentliches Doppel-Auslösen.
 4. Laufende Cues erscheinen unter **Aktiv**. Dort einzeln pausieren (❚❚/▶) oder stoppen (■ – mit
    dem eingestellten Stop-alle-Fade).
+   **Springen:** Bei Audio-Cues zum Ziel im Balken springen, an der Wellenform sieht man laute und leise
+   Stellen. Das geht auch bei pausierten Cues, sie bleiben dann pausiert.
+   - Im **Edit-Modus** genügt ein Klick bzw. Tipp auf die Stelle.
+   - Im **Show-Modus** springt ein kurzer Tipp absichtlich *nicht*. Den Finger oder die Maus auf dem Balken
+     **ziehen**: Ein blauer Strich mit Zeitangabe zeigt das Ziel, beim **Loslassen** wird gesprungen. Wer es sich
+     anders überlegt, zieht nach oben oder unten vom Balken weg (Strich wird rot, „Abbrechen“) und lässt los.
+   - Mit der Tastatur: Balken per Tab anwählen, dann **← / →** springt 5 Sekunden zurück bzw. vor.
+   Bei einer Start/Ende-Trimmung umfasst der Balken nur den getrimmten Teil. Ein Sprung in den Fade-Out am Ende
+   blendet von dort aus; ein Sprung davor stellt die volle Lautstärke wieder her.
 5. **Notfall / Ende:**
    - **Stop alle** oder **Esc** – alle Cues mit dem eingestellten Fade (Standard 1,5 s) ausblenden.
    - **Zweimal Esc** (innerhalb einer Sekunde) oder **Shift+Esc** – sofort stoppen.
    - **Pause** / **Weiter** – alle laufenden Cues anhalten / fortsetzen (inkl. laufender Pre- und
      Post-Waits), mit dem eingestellten Pause-alle-Fade.
-6. **Master** – Gesamtlautstärke (−∞ bis +6 dB).
+6. **Master** – Gesamtlautstärke (−∞ bis +6 dB). Die Pegelanzeige daneben zeigt, ob Ton rausgeht.
 
 **Tipp:** Die App beim ersten Antippen „aufwecken“ – Browser erlauben Audio erst nach einer
 Benutzeraktion. Ein Tipp irgendwo in die App genügt; ein GO zählt natürlich auch.
@@ -401,6 +424,7 @@ die einzige Verbindung nach außen; ohne Internet bleibt der Hinweis einfach weg
 | **Esc** | Alle stoppen (mit Fade) |
 | **Esc Esc** / **Shift+Esc** | Alle sofort stoppen |
 | **↑ / ↓** | Standby verschieben |
+| **← / →** | auf einem angewählten Balken im Aktiv-Bereich: 5 s zurück/vor springen; auf dem Rand des rechten Bereichs: Breite ändern |
 | **Strg+E** | Edit-/Show-Modus umschalten |
 | **F1** | Hilfe (dieses Handbuch) öffnen |
 | *eigene Tasten* | Cue-Hotkeys (im Editor festgelegt) |
@@ -412,7 +436,7 @@ die einzige Verbindung nach außen; ohne Internet bleibt der Hinweis einfach weg
 - [ ] Show vollständig einmal durchgespielt – auf **dem Gerät, das in der Show benutzt wird**.
 - [ ] Show **exportiert** (Backup auf USB-Stick o. ä.).
 - [ ] Gerät am Netzteil, Benachrichtigungen aus (Flugmodus/Bitte nicht stören).
-- [ ] Richtiges **Ausgabegerät** gewählt, Master-Lautstärke geprüft.
+- [ ] Richtiges **Ausgabegerät** gewählt, Master-Lautstärke geprüft (Pegelanzeige schlägt beim Probe-GO aus, ohne rot zu werden).
 - [ ] Schalter auf **▶ Show** (grün).
 - [ ] Standby steht auf Cue 1.
 - [ ] Einmal in die App getippt (Audio „aufgeweckt“).
@@ -424,6 +448,8 @@ die einzige Verbindung nach außen; ohne Internet bleibt der Hinweis einfach weg
 | Problem | Lösung |
 |---|---|
 | Kein Ton beim ersten GO | Einmal in die App tippen/klicken (Autoplay-Sperre des Browsers). Lautstärke von System und Master prüfen. |
+| Pegelanzeige bewegt sich, aber kein Ton | Die App spielt. Ausgabegerät (⚙), Systemlautstärke, Kabel/Bluetooth und Verstärker prüfen. |
+| Keine Wellenform im Aktiv-Balken | Bei Dateien über 20 Minuten und manchen Videodateien gibt es keine Wellenform (zu viel Speicher bzw. nicht lesbar). Springen geht trotzdem. |
 | Cue zeigt „Datei fehlt“ oder „!“ | Datei wurde gelöscht oder ist beschädigt → Editor → *Datei wählen…* |
 | „Datei nicht abspielbar“ | Format wird vom Browser nicht unterstützt (z. B. manche WMA/AIFF). In MP3/WAV/OGG umwandeln. |
 | Ton setzt aus / ruckelt auf Android | Akku-Optimierung für Chrome ausschalten; App im Vordergrund lassen; andere Apps schließen. |
@@ -431,4 +457,5 @@ die einzige Verbindung nach außen; ohne Internet bleibt der Hinweis einfach weg
 | Ausgabegerät-Auswahl fehlt | Nur in Chrome/Edge verfügbar; sonst Systemeinstellung nutzen. |
 | MIDI wird nicht erkannt | Chrome/Edge verwenden, Gerät vor dem Öffnen der App anschließen, in ⚙ MIDI aus- und wieder einschalten. |
 | Shows sind weg | Website-Daten wurden gelöscht. Letzten Export importieren. In ⚙ „Dauerhaft: Anfordern“ nutzen. |
+| „Update wartet … in einem anderen Tab geöffnet“ | Den Cue Player in allen anderen Tabs und Fenstern schließen, dann lädt die App von selbst weiter. |
 | Neue Version wird nicht angezeigt | App komplett schließen und neu öffnen (Updates werden beim nächsten Start aktiv). |

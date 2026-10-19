@@ -5,6 +5,7 @@ import * as store from './storage.js';
 import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, cueDisplayName, cueToPreset, cuesToPreset, cuesToTemplates, instantiateCues, defaultPresets } from './model.js';
 import { fmtTime, fmtDb, debounce, keyLabel, uid, clamp, MIN_DB, compareVersions, latestRelease } from './util.js';
 import { renderMarkdown, renderDocument, firstLine } from './md.js';
+import { meterFraction, peakDb, holdPeak, peakRange, fractionAt, seekTarget, stepTarget, clampSideWidth, CLIP_HOLD_MS } from './meter.js';
 
 export const APP_VERSION = '0.6.1';
 export const SOURCE_URL = 'https://github.com/listiges-kaenguru/cue-player';
@@ -33,6 +34,8 @@ const state = {
   selected: new Set(), // Mehrfachauswahl (Cue-IDs)
   selAnchor: null,
   selectMode: false, // Auswahl-Modus (Knopf ☑): Antippen schaltet die Auswahl um
+  clipUntil: 0, // Clip-Markierung am Master sichtbar bis (performance.now())
+  savedStandby: null, // { sid, id }: zuletzt gespeicherter Standby
 };
 
 const cues = () => state.session.cues;
@@ -94,9 +97,13 @@ const dialogOpen = () => !!document.querySelector('dialog[open]');
 
 async function openSession(session) {
   engine.stopAll(0);
+  // Gemerkten Standby lesen, bevor die Show wechselt (frame() speichert sonst den alten unter der neuen Show)
+  const saved = await store.getMeta(standbyKey(session.id)).catch(() => null);
   state.session = normalizeSession(session);
   engine.setSession(state.session);
-  state.standbyId = nextStandby(0);
+  const i = typeof saved === 'string' && saved ? cueIndex(saved) : -1;
+  state.standbyId = nextStandby(Math.max(0, i));
+  state.savedStandby = { sid: session.id, id: state.standbyId };
   await store.setMeta('lastSession', session.id);
   $('#session-name').value = session.name;
   $('#master').value = settings().masterDb;
@@ -107,6 +114,25 @@ async function openSession(session) {
   applyWakeLock();
   renderAll();
 }
+
+/** Standby je Show im Meta-Store (Laufzeitzustand, gehört nicht in die Show-Daten bzw. den Export). */
+const standbyKey = (sessionId) => 'standby:' + sessionId;
+
+function rememberStandby() {
+  const sid = state.session?.id;
+  if (!sid || (state.savedStandby?.sid === sid && state.savedStandby.id === state.standbyId)) return;
+  state.savedStandby = { sid, id: state.standbyId };
+  store.setMeta(standbyKey(sid), state.standbyId).catch(() => {});
+}
+
+store.onDbBlock((what) => {
+  $('#toasts .toast.blocked')?.remove();
+  if (what === 'unblocked') return;
+  const msg = what === 'blocked'
+    ? 'Update wartet: Der Cue Player ist noch in einem anderen Tab oder Fenster geöffnet. Bitte dort schließen.'
+    : 'Der Cue Player wurde in einem anderen Tab aktualisiert. Bitte diese Seite neu laden.';
+  $('#toasts').append(h('div', { class: 'toast error blocked' }, msg)); // bleibt stehen, bis es weitergeht
+});
 
 async function init() {
   let session = null;
@@ -127,6 +153,8 @@ async function init() {
   await openSession(session);
   ensureDefaultPresets().catch((e) => console.warn('Presets:', e));
   loadSiteInfo();
+  initSideResize();
+  initMemoPanel();
   requestAnimationFrame(frame);
   registerSW();
 }
@@ -347,49 +375,299 @@ function updateItem(id, item, el, txt, dim) {
   }
 }
 
+const meterHolds = new WeakMap(); // Kanal-Element -> Spitzenwert-Halter
+
+/** Eine Pegelanzeige (.vu-ch) aktualisieren. peak: linearer Spitzenwert. */
+function updateMeter(ch, peak, now) {
+  const db = peakDb(peak);
+  const hold = holdPeak(meterHolds.get(ch) ?? null, db, now);
+  meterHolds.set(ch, hold);
+  const f = meterFraction(db), pf = meterFraction(hold.db);
+  const vert = ch.classList.contains('vert');
+  ch.dataset.level = String(Math.round(f * 1000) / 1000);
+  ch.firstChild.style.transform = `${vert ? 'scaleY' : 'scaleX'}(${1 - f})`;
+  const pk = ch.lastChild;
+  pk.style[vert ? 'bottom' : 'left'] = `calc(${pf * 100}% - 2px)`;
+  pk.style.opacity = pf > 0 ? '1' : '0';
+}
+
+function updateMasterMeter(now) {
+  const peaks = engine.masterPeaks();
+  const vu = $('#master-vu');
+  vu.querySelectorAll('.vu-ch').forEach((ch, i) => updateMeter(ch, peaks[i], now));
+  if (Math.max(...peaks) >= 1) state.clipUntil = now + CLIP_HOLD_MS;
+  vu.classList.toggle('clip', now < state.clipUntil);
+}
+
 /** Wird pro Frame aufgerufen: Fortschrittsbalken und Status. */
 function frame() {
   state.rows.forEach((item, id) => updateItem(id, item, item.row, item.txt, 'width'));
   state.tiles.forEach((item, id) => updateItem(id, item, item.tile, item.time, 'height'));
 
   if (state.runningDirty) renderRunning();
+  const now = performance.now();
   state.runItems.forEach((item, id) => {
-    const r = engine.runners.get(id);
-    if (!r) return;
+    const r = item.runner;
+    if (engine.runners.get(id) !== r) return;
     const p = r.progress();
-    item.bar.className = 'bar st-' + r.state;
+    if (r.state !== item.lastState) {
+      item.bar.classList.remove('st-' + item.lastState);
+      item.bar.classList.add('st-' + r.state);
+      item.lastState = r.state;
+    }
     item.fill.style.width = progressPct(p);
     item.txt.textContent = progressText(p);
     item.pp.textContent = r.paused ? '▶' : '❚❚';
+    if (item.vu) updateMeter(item.vu, r.level(), now);
+    if (item.wave) drawWave(item, p);
+    if (item.seekable) {
+      const sec = String(Math.floor(p.elapsed));
+      if (item.bar.getAttribute('aria-valuenow') !== sec) {
+        item.bar.setAttribute('aria-valuenow', sec);
+        item.bar.setAttribute('aria-valuemax', String(Math.floor(p.total)));
+        item.bar.setAttribute('aria-valuetext', progressText(p));
+      }
+    }
   });
 
-  $('#btn-go').classList.toggle('locked', performance.now() < state.goLockedUntil);
+  updateMasterMeter(now);
+  rememberStandby();
+  $('#btn-go').classList.toggle('locked', now < state.goLockedUntil);
   requestAnimationFrame(frame);
 }
 
+/**
+ * Aktiv-Bereich: Einträge laufender Cues. Vorhandene Einträge werden wiederverwendet, damit Fokus,
+ * Ziehen und gezeichnete Wellenform erhalten bleiben, wenn andere Cues starten oder enden.
+ */
 function renderRunning() {
   state.runningDirty = false;
   const list = $('#running-list');
-  const active = engine.active();
-  list.textContent = '';
-  state.runItems.clear();
   updateSideVisibility();
-  if (!active.length) { list.append(h('p', { class: 'muted' }, 'Nichts läuft.')); return; }
-  active.forEach((r) => {
+  const items = new Map();
+  engine.active().forEach((r) => {
     const cue = r.cue;
     if (!cue) return;
-    const fill = h('div', { class: 'fill' });
-    const txt = h('div', { class: 'txt' });
-    const bar = h('div', { class: 'bar' }, fill, txt);
-    const pp = h('button', { title: 'Pause / Weiter', onclick: () => (r.paused ? r.resume(settings().pauseAllFade) : r.pause(settings().pauseAllFade)) }, '❚❚');
-    list.append(h('div', { class: 'run-item' },
-      h('div', { class: 'ri-head' },
-        h('span', { class: 'ri-name' }, numbered(cue)),
-        pp,
-        h('button', { class: 'danger', title: 'Stop (mit Stop-alle-Fade)', onclick: () => r.stop(settings().stopAllFade) }, '■')),
-      bar));
-    state.runItems.set(cue.id, { bar, fill, txt, pp });
+    let item = state.runItems.get(cue.id);
+    if (item?.runner !== r) item = runItem(r, cue);
+    item.name.textContent = numbered(cue);
+    items.set(cue.id, item);
   });
+  state.runItems = items;
+  const els = [...items.values()].map((i) => i.el);
+  [...list.children].forEach((c) => { if (!els.includes(c)) c.remove(); });
+  els.forEach((el, i) => { if (list.children[i] !== el) list.insertBefore(el, list.children[i] ?? null); });
+  if (!els.length) list.append(h('p', { class: 'muted' }, 'Nichts läuft.'));
+}
+
+function runItem(r, cue) {
+  const seekable = typeof r.seek === 'function'; // Audio-Cues
+  const fill = h('div', { class: 'fill' });
+  const txt = h('div', { class: 'txt' });
+  const item = { runner: r, seekable, fill, txt, lastState: 'idle', wave: null, drawn: '' };
+  if (seekable) {
+    item.canvas = h('canvas', { class: 'wave' });
+    item.mark = h('div', { class: 'seek-mark', hidden: true });
+    item.bar = h('div', { class: 'bar seek', 'data-cue': cue.id, tabindex: '0', role: 'slider', 'aria-label': `Position: ${label(cue)}`, 'aria-valuemin': '0' },
+      item.canvas, fill, txt, item.mark);
+    item.vu = h('div', { class: 'vu-ch vert', title: 'Pegel dieses Cues' }, h('div', { class: 'vu-cover' }), h('div', { class: 'vu-peak' }));
+    attachSeek(item);
+    engine.waveform(cue.mediaId, r.mediaDuration || cue.duration).then((w) => {
+      if (!w) return;
+      item.wave = w;
+      item.bar.classList.add('has-wave');
+    });
+  } else {
+    item.bar = h('div', { class: 'bar' }, fill, txt);
+  }
+  item.pp = h('button', { title: 'Pause / Weiter', onclick: () => (r.paused ? r.resume(settings().pauseAllFade) : r.pause(settings().pauseAllFade)) }, '❚❚');
+  item.name = h('span', { class: 'ri-name' });
+  item.el = h('div', { class: 'run-item' },
+    h('div', { class: 'ri-head' },
+      item.name,
+      item.pp,
+      h('button', { class: 'danger', title: 'Stop (mit Stop-alle-Fade)', onclick: () => r.stop(settings().stopAllFade) }, '■')),
+    seekable ? h('div', { class: 'ri-bar' }, item.bar, item.vu) : item.bar);
+  return item;
+}
+
+let waveColors = null;
+
+/** Wellenform im Balken zeichnen: gespielter Teil farbig. Nur neu, wenn sich Größe, Bereich, Fortschritt oder Zustand ändern. */
+function drawWave(item, p) {
+  const { canvas, bar, runner: r } = item;
+  const dpr = window.devicePixelRatio || 1;
+  const w = Math.round(bar.clientWidth * dpr), ht = Math.round(bar.clientHeight * dpr);
+  if (!w || !ht) return;
+  const { start, end } = r.bounds();
+  const played = Math.round((p.total ? Math.min(1, p.elapsed / p.total) : 0) * w);
+  const key = `${w}x${ht}:${start}:${end}:${played}:${r.state}`;
+  if (key === item.drawn) return;
+  item.drawn = key;
+  if (canvas.width !== w) canvas.width = w;
+  if (canvas.height !== ht) canvas.height = ht;
+  if (!waveColors) {
+    const cs = getComputedStyle(document.documentElement);
+    waveColors = Object.fromEntries(['--accent', '--warn', '--muted'].map((v) => [v, cs.getPropertyValue(v).trim()]));
+  }
+  const g = canvas.getContext('2d');
+  g.clearRect(0, 0, w, ht);
+  const peaks = item.wave;
+  const [i0, i1] = peakRange(peaks.length, r.mediaDuration || r.cue.duration, start, end);
+  const n = i1 - i0;
+  if (!n) return;
+  const playedColor = r.paused ? waveColors['--warn'] : waveColors['--accent'];
+  for (const [from, to, color, alpha] of [[0, played, playedColor, 1], [played, w, waveColors['--muted'], 0.55]]) {
+    g.fillStyle = color;
+    g.globalAlpha = alpha;
+    for (let x = from; x < to; x++) {
+      const a = i0 + Math.floor((x * n) / w), b = Math.max(a + 1, i0 + Math.floor(((x + 1) * n) / w));
+      let pk = 0;
+      for (let k = a; k < b; k++) if (peaks[k] > pk) pk = peaks[k];
+      const hh = Math.max(dpr, Math.min(1, pk) * ht);
+      g.fillRect(x, (ht - hh) / 2, 1, hh);
+    }
+  }
+}
+
+/** Ab so vielen Pixeln Bewegung gilt ein Druck auf den Balken als Ziehen. */
+const DRAG_PX = 6;
+/** So weit (px) darf der Zeiger beim Ziehen über/unter dem Balken sein, weiter weg bricht ab. */
+const DRAG_CANCEL_PX = 24;
+/** Schrittweite der Pfeiltasten auf dem Balken (Sekunden). */
+const SEEK_STEP = 5;
+
+/**
+ * Springen per Balken. Edit-Modus: Klick springt. Show-Modus: nur Ziehen und Loslassen springt (Schutz vor
+ * versehentlichem Antippen). Während des Ziehens zeigt ein Marker das Ziel; Loslassen weit neben dem Balken bricht ab.
+ */
+function attachSeek(item) {
+  const { bar, mark, runner: r } = item;
+  let drag = null;
+  const target = (e) => {
+    const rect = bar.getBoundingClientRect();
+    const f = fractionAt(e.clientX, rect.left, rect.width);
+    const out = e.clientY < rect.top - DRAG_CANCEL_PX || e.clientY > rect.bottom + DRAG_CANCEL_PX;
+    return { f, out };
+  };
+  const end = () => {
+    drag = null;
+    mark.hidden = true;
+    bar.classList.remove('dragging');
+  };
+  bar.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || !r.canSeek()) return;
+    drag = { x0: e.clientX, moved: false };
+    bar.setPointerCapture?.(e.pointerId);
+  });
+  bar.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    if (!drag.moved && Math.abs(e.clientX - drag.x0) < DRAG_PX) return;
+    drag.moved = true;
+    const { f, out } = target(e);
+    const b = r.bounds();
+    bar.classList.add('dragging');
+    mark.hidden = false;
+    mark.classList.toggle('cancel', out);
+    mark.style.left = `${f * 100}%`;
+    mark.classList.toggle('flip', f > 0.7);
+    mark.replaceChildren(h('span', {}, out ? 'Abbrechen' : fmtTime(seekTarget(f, b) - b.start)));
+  });
+  bar.addEventListener('pointerup', (e) => {
+    if (!drag) return;
+    const { moved } = drag;
+    const { f, out } = target(e);
+    end();
+    if (out || (!moved && settings().showMode) || !r.canSeek()) return;
+    r.seek(seekTarget(f, r.bounds()));
+  });
+  bar.addEventListener('pointercancel', end);
+  bar.addEventListener('lostpointercapture', () => { if (drag) end(); });
+}
+
+// ---------------------------------------------------------------------------
+// Regiebuch auf-/zugeklappt: je Gerät im localStorage ('0' = zu, sonst offen)
+
+const MEMO_KEY = 'cue-player-memo-open';
+
+function initMemoPanel() {
+  const panel = $('#memo-panel');
+  try { panel.open = localStorage.getItem(MEMO_KEY) !== '0'; } catch { /* Standard: offen */ }
+  panel.addEventListener('toggle', () => {
+    try { localStorage.setItem(MEMO_KEY, panel.open ? '1' : '0'); } catch { /* privates Fenster o. Ä. */ }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Breite des rechten Bereichs (Desktop): Griff ziehen oder ←/→, gespeichert je Gerät im localStorage
+
+const SIDE_KEY = 'cue-player-side-width';
+const SIDE_STEP = 16;
+let sideWish = null; // gewünschte Breite (px); im Fenster wird sie ggf. begrenzt
+
+function applySideWidth() {
+  const w = clampSideWidth(sideWish, window.innerWidth);
+  if (w == null) $('#main').style.removeProperty('--side-w');
+  else $('#main').style.setProperty('--side-w', `${w}px`);
+  return w;
+}
+
+function setSideWidth(w) {
+  sideWish = clampSideWidth(w, window.innerWidth);
+  applySideWidth();
+  try {
+    if (sideWish == null) localStorage.removeItem(SIDE_KEY);
+    else localStorage.setItem(SIDE_KEY, String(sideWish));
+  } catch { /* privates Fenster o. Ä.: Breite gilt nur bis zum Neuladen */ }
+}
+
+function initSideResize() {
+  try { sideWish = clampSideWidth(localStorage.getItem(SIDE_KEY), Infinity); } catch { sideWish = null; }
+  applySideWidth();
+  window.addEventListener('resize', applySideWidth);
+  const grip = $('#side-resize');
+  let dragging = false;
+  grip.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    dragging = true;
+    grip.setPointerCapture?.(e.pointerId);
+    grip.classList.add('dragging');
+    document.body.classList.add('resizing');
+  });
+  grip.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    sideWish = window.innerWidth - e.clientX;
+    sideWish = applySideWidth();
+  });
+  const end = () => {
+    if (!dragging) return;
+    dragging = false;
+    grip.classList.remove('dragging');
+    document.body.classList.remove('resizing');
+    setSideWidth(sideWish);
+  };
+  grip.addEventListener('pointerup', end);
+  grip.addEventListener('lostpointercapture', end);
+  grip.addEventListener('dblclick', () => setSideWidth(null));
+}
+
+/** ←/→ auf dem fokussierten Griff: rechten Bereich verbreitern bzw. verschmälern. true, wenn behandelt. */
+function sideKey(e) {
+  if (e.target.id !== 'side-resize' || (e.code !== 'ArrowLeft' && e.code !== 'ArrowRight')) return false;
+  e.preventDefault();
+  const cur = $('#side').getBoundingClientRect().width;
+  setSideWidth(cur + (e.code === 'ArrowLeft' ? SIDE_STEP : -SIDE_STEP));
+  return true;
+}
+
+/** ←/→ auf einem fokussierten Balken: SEEK_STEP Sekunden springen. true, wenn behandelt. */
+function seekKey(e) {
+  const bar = e.target.closest?.('.bar.seek');
+  if (!bar || (e.code !== 'ArrowLeft' && e.code !== 'ArrowRight')) return false;
+  e.preventDefault();
+  const r = engine.runners.get(bar.dataset.cue);
+  if (r?.canSeek()) r.seek(stepTarget(r.el.currentTime, e.code === 'ArrowRight' ? SEEK_STEP : -SEEK_STEP, r.bounds()));
+  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -1316,6 +1594,7 @@ function onKeyDown(e) {
   if (dialogOpen() || isTyping(e)) return;
   if (e.ctrlKey && e.code === 'KeyE') { e.preventDefault(); toggleShowMode(); return; }
   if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (seekKey(e) || sideKey(e)) return;
 
   switch (e.code) {
     case 'Space':

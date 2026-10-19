@@ -1,8 +1,21 @@
 // Wiedergabe-Engine: Cue-Ablauf (Pre-Wait, Post-Wait, Auto-Continue/-Follow) und Audio über Web Audio.
 import { Emitter, Timer, clamp, dbToGain, rampParam } from './util.js';
 import { midiBytes } from './midi.js';
+import { blockPeak, waveformPeaks, WAVEFORM_MAX_SEC } from './meter.js';
 
 const DECLICK = 0.015; // s – kurze Rampe gegen Knackser bei Pause/Stop
+
+/** Wellenform: Anzahl der Abschnitte und Abtastrate beim Dekodieren (niedrig, spart Speicher). */
+const WAVE_BUCKETS = 2000;
+const WAVE_RATE = 11025;
+
+const peakBuf = new Float32Array(2048);
+/** Spitzenwert (linear) der letzten fftSize Samples eines AnalyserNodes. */
+function analyserPeak(a) {
+  const b = peakBuf.subarray(0, a.fftSize);
+  a.getFloatTimeDomainData(b);
+  return blockPeak(b);
+}
 
 /**
  * Basisklasse für den Laufzeitzustand eines Cues.
@@ -146,6 +159,8 @@ class AudioRunner extends Runner {
     this.stopH = null; // Timeout bis zum Ende eines Stop-Fades
     this.pauseH = null; // Timeout bis zum Anhalten nach einem Pause-Fade
     this.envBeforePause = null;
+    this.dipToken = 0; // macht veraltete Einblendungen nach dem Springen ungültig
+    this.dipH = null;
   }
 
   /** Lädt die Datei in ein <audio>-Element (gestreamt, nicht komplett dekodiert – spart Speicher). */
@@ -200,8 +215,13 @@ class AudioRunner extends Runner {
     const vol = ctx.createGain();
     const env = ctx.createGain();
     const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : ctx.createGain();
-    src.connect(vol).connect(env).connect(pan).connect(this.engine.master);
-    this.chain = { el: this.el, src, vol, env, pan };
+    const dip = ctx.createGain(); // kurzes Aus-/Einblenden beim Springen, unabhängig von den Fades in env
+    src.connect(vol).connect(env).connect(dip).connect(pan).connect(this.engine.master);
+    // Abgriff für die Pegelanzeige im Aktiv-Bereich (nach Lautstärke, Fades und Panorama)
+    const meter = ctx.createAnalyser();
+    meter.fftSize = 512;
+    pan.connect(meter);
+    this.chain = { el: this.el, src, vol, env, dip, pan, meter };
   }
 
   bounds() {
@@ -230,8 +250,12 @@ class AudioRunner extends Runner {
     this._ensureChain();
     const cue = this.cue;
     const { start, end } = this.bounds();
-    const { vol, env, pan } = this.chain;
+    const { vol, env, dip, pan } = this.chain;
     const now = ctx.currentTime;
+    this.dipToken++; // eine noch ausstehende Einblendung vom Springen verwerfen
+    clearTimeout(this.dipH);
+    dip.gain.cancelScheduledValues(now);
+    dip.gain.setValueAtTime(1, now);
     vol.gain.cancelScheduledValues(now);
     vol.gain.setValueAtTime(dbToGain(cue.volume), now);
     if (pan.pan) pan.pan.setValueAtTime(cue.pan || 0, now);
@@ -313,6 +337,72 @@ class AudioRunner extends Runner {
     return true;
   }
 
+  /** Laufenden Lautstärke-Fade auf dem aktuellen Wert anhalten (Fade-Cue pausiert). */
+  holdVolume() {
+    if (!this.chain) return;
+    const g = this.chain.vol.gain, now = this.engine.ctx.currentTime;
+    // cancelScheduledValues(now) ließe eine schon laufende Kurve weiterlaufen; Firefox kennt cancelAndHoldAtTime nicht.
+    if (g.cancelAndHoldAtTime) g.cancelAndHoldAtTime(now);
+    else {
+      const v = g.value;
+      g.cancelScheduledValues(0);
+      g.setValueAtTime(v, now);
+    }
+  }
+
+  /** Springen ist möglich, solange die Datei läuft oder pausiert ist (nicht in Pre-/Post-Wait oder beim Stoppen). */
+  canSeek() {
+    return this.playing && !!this.chain && !!this.el && !this.stopping;
+  }
+
+  /** An Position t (Sekunden in der Datei) springen, begrenzt auf den getrimmten Bereich. */
+  seek(t) {
+    if (!this.canSeek()) return false;
+    const { start, end } = this.bounds();
+    const pos = clamp(t, start, end);
+    if (!this.el.paused) this._dipAround();
+    this.el.currentTime = pos;
+    // Lief schon der Fade-Out am Ende: vor dessen Beginn wieder voll, sonst blendet tick() ab hier neu aus.
+    if (this.fadingOut) {
+      this.fadingOut = false;
+      if (pos < end - this.cue.fadeOut) {
+        if (this.paused) this.envBeforePause = 1;
+        else rampParam(this.engine.ctx, this.chain.env.gain, 1, DECLICK * 2, 'linear');
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Gegen Knacken beim Springen: sofort kurz ausblenden; das Element braucht ohnehin einige Millisekunden für den
+   * Sprung. Nach 'seeked' (spätestens nach 250 ms) wieder einblenden. Schnelle Folgen blenden erst nach dem letzten ein.
+   */
+  _dipAround() {
+    const ctx = this.engine.ctx, g = this.chain.dip.gain, el = this.el;
+    const now = ctx.currentTime;
+    g.cancelScheduledValues(now);
+    g.setValueAtTime(g.value, now);
+    g.linearRampToValueAtTime(0, now + DECLICK / 3);
+    const tok = ++this.dipToken;
+    const back = () => {
+      if (tok !== this.dipToken || !this.chain) return;
+      clearTimeout(this.dipH);
+      el.removeEventListener('seeked', back);
+      const t = ctx.currentTime;
+      g.cancelScheduledValues(t);
+      g.setValueAtTime(g.value, t);
+      g.linearRampToValueAtTime(1, t + DECLICK);
+    };
+    clearTimeout(this.dipH);
+    this.dipH = setTimeout(back, 250);
+    el.addEventListener('seeked', back, { once: true });
+  }
+
+  /** Aktueller Spitzenwert (linear) dieses Cues, 0 ohne Wiedergabe. */
+  level() {
+    return this.chain && this.playing ? analyserPeak(this.chain.meter) : 0;
+  }
+
   actionProgress() {
     const { start, end } = this.bounds();
     const pos = this.el ? this.el.currentTime : start;
@@ -350,9 +440,29 @@ class FadeRunner extends TimedRunner {
       this.ended(true);
       return;
     }
+    this.target = target;
     this.runFor(cue.duration, () => {
       if (cue.stopAfter && target.playing) target.stop(0, true);
     });
+  }
+
+  /** Pause friert die Lautstärke des Ziels ein … */
+  pauseAction() {
+    super.pauseAction();
+    this.target?.holdVolume();
+  }
+
+  /** … „Weiter“ blendet ab dort mit der Restdauer und derselben Kurve zum Zielwert (endet zur angezeigten Zeit). */
+  resumeAction() {
+    super.resumeAction();
+    if (!this.actTimer || !this.target) return;
+    const rest = Math.max(0, (this.actTimer.ms - this.actTimer.elapsed()) / 1000);
+    this.target.fadeVolume(this.cue.volume, rest, this.cue.fadeCurve); // Ziel inzwischen beendet: tut nichts
+  }
+
+  stopAction() {
+    this.target = null;
+    super.stopAction();
   }
 }
 
@@ -412,9 +522,11 @@ export class Engine extends Emitter {
     this.midi = midi;
     this.ctx = null;
     this.master = null;
+    this.meters = null; // AnalyserNodes L/R am Master
     this.session = null;
     this.runners = new Map();
     this.urls = new Map();
+    this.waves = new Map(); // mediaId -> Promise<Float32Array | null>
     this.labelFn = (c) => c.name || c.type;
     // Ende-Erkennung, Loop-Sprünge und Fade-Out am Ende der Audio-Cues
     setInterval(() => this.runners.forEach((r) => r.tick?.()), 20);
@@ -426,7 +538,18 @@ export class Engine extends Emitter {
       const Ctx = window.AudioContext || window.webkitAudioContext;
       this.ctx = new Ctx({ latencyHint: 'interactive' });
       this.master = this.ctx.createGain();
+      // Immer stereo, damit Mono-Quellen auf beiden Kanälen der Pegelanzeige erscheinen
+      Object.assign(this.master, { channelCount: 2, channelCountMode: 'explicit', channelInterpretation: 'speakers' });
       this.master.connect(this.ctx.destination);
+      // Pegelanzeige nach der Master-Lautstärke: zeigt, was wirklich rausgeht
+      const split = this.ctx.createChannelSplitter(2);
+      this.master.connect(split);
+      this.meters = [0, 1].map((ch) => {
+        const a = this.ctx.createAnalyser();
+        a.fftSize = 1024;
+        split.connect(a, ch);
+        return a;
+      });
       this.setMaster(this.session?.settings.masterDb ?? 0);
       if (this.session?.settings.sinkId) this.setSink(this.session.settings.sinkId).catch(() => {});
     }
@@ -439,6 +562,7 @@ export class Engine extends Emitter {
     this.runners.clear();
     this.urls.forEach((u) => URL.revokeObjectURL(u));
     this.urls.clear();
+    this.waves.clear();
     this.session = session;
     if (this.master) this.setMaster(session.settings.masterDb);
     // Runner anlegen und Audio vorladen
@@ -481,6 +605,29 @@ export class Engine extends Emitter {
     return url;
   }
 
+  /**
+   * Wellenform einer Mediendatei (WAVE_BUCKETS Spitzenwerte), einmal berechnet und gecacht.
+   * null bei fehlender oder nicht dekodierbarer Datei und bei Dateien über WAVEFORM_MAX_SEC.
+   */
+  waveform(mediaId, duration) {
+    if (!mediaId || !(duration > 0) || duration > WAVEFORM_MAX_SEC) return Promise.resolve(null);
+    if (!this.waves.has(mediaId)) this.waves.set(mediaId, this._decodeWave(mediaId));
+    return this.waves.get(mediaId);
+  }
+
+  async _decodeWave(mediaId) {
+    try {
+      const blob = await this.loadMedia(mediaId);
+      if (!blob) return null;
+      const Off = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+      const buf = await new Off(1, 1, WAVE_RATE).decodeAudioData(await blob.arrayBuffer());
+      const chans = Array.from({ length: buf.numberOfChannels }, (_, i) => buf.getChannelData(i));
+      return waveformPeaks(chans, WAVE_BUCKETS);
+    } catch {
+      return null; // z. B. Video-Container ohne dekodierbare Tonspur: normaler Balken
+    }
+  }
+
   go(id) {
     this.ensureContext();
     const r = this.runner(id);
@@ -500,6 +647,11 @@ export class Engine extends Emitter {
   stopAll(fade = 0) { this.active().forEach((r) => r.stop(fade)); }
   pauseAll(fade = 0) { this.active().forEach((r) => r.pause(fade)); }
   resumeAll(fade = 0) { this.active().forEach((r) => r.resume(fade)); }
+
+  /** Spitzenwerte (linear) links/rechts am Master; vor dem ersten GO (ohne AudioContext) [0, 0]. */
+  masterPeaks() {
+    return this.meters ? this.meters.map(analyserPeak) : [0, 0];
+  }
 
   setMaster(db) {
     if (!this.master) return;

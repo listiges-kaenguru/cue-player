@@ -8,6 +8,51 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+### Hinzugefügt
+- **Pegelanzeige am Master:** Neben dem Master-Regler zeigt eine Stereo-Anzeige (L/R) mit Spitzenwert-Halter, dass
+  Ton rausgeht. Sie misst nach der Master-Lautstärke. Übersteuerung (≥ 0 dBFS) markiert ein rotes Feld, das drei
+  Sekunden stehen bleibt.
+- **Wellenform und Pegel im Aktiv-Bereich:** Laufende Audio-Cues zeigen im Fortschrittsbalken die Wellenform der
+  Datei (getrimmter Bereich, gespielter Teil farbig) und daneben ihren aktuellen Pegel. Die Wellenform wird einmal je
+  Datei im Hintergrund berechnet; Dateien über 20 Minuten und nicht dekodierbare Dateien behalten den normalen Balken.
+- **Springen in laufenden Cues:** Ein Klick auf den Balken springt an diese Stelle, auch bei pausierten Cues. Im
+  Show-Modus springt nur Ziehen und Loslassen (ein versehentlicher Tipp tut nichts); während des Ziehens zeigt ein
+  Marker die Zielzeit, Loslassen neben dem Balken bricht ab. Auf dem fokussierten Balken springen ←/→ um 5 Sekunden.
+  Ein laufender Fade-Out am Ende wird dabei richtig fortgesetzt bzw. zurückgenommen. Beim Sprung wird kurz aus- und
+  wieder eingeblendet, damit es nicht knackt.
+- **Breite des rechten Bereichs** (Regiebuch und Aktiv) ist am PC per Griff am linken Rand verstellbar (240 px bis
+  60 % der Fensterbreite, auch mit ←/→ am fokussierten Griff). Die Breite wird je Gerät gespeichert, Doppelklick stellt
+  die Standardbreite wieder her. Unter 900 px Fensterbreite bleibt das Layout wie bisher.
+
+### Geändert
+- **Standby wird gemerkt:** Nach dem Neuladen (z. B. nach einem Absturz mitten in der Vorstellung) oder beim Wechsel
+  zurück zu einer Show steht der Standby wieder auf dem zuletzt gewählten Cue, je Show und Gerät. Er gehört nicht zur
+  Show und wird nicht exportiert. Ist der Cue gelöscht, steht der Standby auf Cue 1.
+- **Regiebuch:** Auf- oder zugeklappt bleibt nach dem Neuladen erhalten (je Gerät gespeichert).
+
+### Behoben
+- **Fade-Cue pausieren:** Bisher hielt eine Pause (Pause alle, Pause-Cue) nur die Zeitanzeige eines Fade-Cues an,
+  die Lautstärke änderte sich weiter. Jetzt friert sie ein; „Weiter“ blendet ab dort mit der Restdauer und derselben
+  Kurve zum Zielwert. Stop während der Pause lässt die Lautstärke, wo sie ist.
+- **Update bei mehreren offenen Tabs:** Hielt ein zweiter Tab die alte Datenbank offen, blieb die App nach einem Update
+  ohne Hinweis hängen. Jetzt erscheint „Bitte dort schließen“, danach lädt die App von selbst weiter. Ab dieser Version
+  gibt eine geöffnete App die Datenbank für eine neuere Version frei und bittet um Neuladen.
+- **Schmale Bildschirme:** Die Cue-Liste sprang während der Wiedergabe, weil die laufende Zeitanzeige die
+  Spaltenbreite veränderte und Cue-Namen kurz umbrachen. Die Zeitanzeige hat jetzt keinen Einfluss mehr auf die Breite.
+- **Handy:** Die GO-Taste schnitt beim Standby-Namen die Unterlängen ab (g, p, y). „GO“ hat jetzt eine engere
+  Zeilenhöhe, der Name passt vollständig in die Taste.
+
+### Intern
+- Entwicklungsabhängigkeit `qs` (über Stryker → `typed-rest-client`) per npm-`overrides` auf ≥ 6.16.0 angehoben
+  (Dependabot: DoS in `qs.stringify`; betrifft nur die Entwicklungsumgebung, nicht die App). `npm audit`: 0 Funde.
+- `uid()` nutzt ohne `crypto.randomUUID` (z. B. ohne HTTPS) jetzt `crypto.getRandomValues` statt `Math.random`
+  (CodeQL-Hinweis „Insecure randomness“; die IDs sind nur lokale Datenbankschlüssel).
+- Neues Modul `js/meter.js` (Pegelskala, Spitzenwert-Halter, Wellenform, Klick → Zeit, Breite des rechten Bereichs)
+  mit Unit-Tests `tests/unit/meter.test.mjs`, auch im Mutation Testing.
+- Neuer Browsertest `tests/fade.mjs` (Fade-Cue pausieren und fortsetzen).
+- Neuer Browsertest `tests/zustand.mjs` (Standby merken, Datenbank-Upgrade mit zweitem Tab).
+- Neuer Browsertest `tests/pegel.mjs` (GO-Taste, Pegelanzeigen, Springen, Breite des rechten Bereichs).
+
 ## [0.6.1] – 2026-10-18
 
 Sicherheitskorrektur für den Import von Shows (`.cueshow`). Version 0.6.1 in `sw.js`, `app.js`, `package.json`.
