@@ -13,6 +13,8 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
   Zeilenhöhe, der Name passt vollständig in die Taste.
 
 ### Intern
+- Neues Modul `js/meter.js` (Pegelskala, Spitzenwert-Halter, Wellenform, Klick → Zeit, Breite des rechten Bereichs)
+  mit Unit-Tests `tests/unit/meter.test.mjs`, auch im Mutation Testing.
 - Neuer Browsertest `tests/pegel.mjs` (GO-Taste, Pegelanzeigen, Springen, Breite des rechten Bereichs).
 
 ## [0.6.1] – 2026-10-18
