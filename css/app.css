@@ -261,8 +261,8 @@ main {
 }
 .go:hover { background: #2a9a40; }
 .go.locked { opacity: .55; }
-.go-label { font-size: 26px; font-weight: 800; letter-spacing: .1em; }
-.go-next { font-size: 13px; opacity: .9; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.go-label { font-size: 26px; line-height: 1.1; font-weight: 800; letter-spacing: .1em; flex: none; }
+.go-next { font-size: 13px; line-height: 1.35; flex: none; opacity: .9; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .transport-btns { display: flex; gap: 8px; }
 .tbtn { height: 48px; padding: 0 16px; font-weight: 600; }
 .master { display: flex; align-items: center; gap: 8px; margin-left: auto; color: var(--muted); font-size: 13px; }

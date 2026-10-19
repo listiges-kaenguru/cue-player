@@ -8,6 +8,13 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+### Behoben
+- **Handy:** Die GO-Taste schnitt beim Standby-Namen die Unterlängen ab (g, p, y). „GO“ hat jetzt eine engere
+  Zeilenhöhe, der Name passt vollständig in die Taste.
+
+### Intern
+- Neuer Browsertest `tests/pegel.mjs` (GO-Taste, Pegelanzeigen, Springen, Breite des rechten Bereichs).
+
 ## [0.6.1] – 2026-10-18
 
 Sicherheitskorrektur für den Import von Shows (`.cueshow`). Version 0.6.1 in `sw.js`, `app.js`, `package.json`.

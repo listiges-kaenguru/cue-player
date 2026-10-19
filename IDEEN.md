@@ -17,9 +17,10 @@ Offene Punkte und Ideen für spätere Versionen. Erledigtes wird hier gestrichen
 - [ ] **Presets – Ausbau (bei Bedarf):** Presets exportieren/importieren bzw. mit `.cueshow` weitergeben (heute nur
   lokal); Preset direkt bearbeiten (heute: einfügen, ändern, neu speichern, altes löschen); Mehrfachauswahl auch in
   der Cart-Ansicht?
-- [ ] **Handy: GO-Taste schneidet Unterlängen ab** (≤ 600 px, `.go` 64 px hoch): Der Standby-Name unter „GO“
-  verliert unten g/p/y („Nachtiaall“). Zu sehen in `../get-cueplayer/img/app/handy-*.webp`.
 - [ ] **Memo:** Zustand des Regiebuchs (auf-/zugeklappt) merken (klein, bei Gelegenheit).
+- [ ] **Ausgabegerät wach halten** (globale Option, z. B. für Bluetooth-Lautsprecher, die nach 10 Minuten Stille
+  abschalten; heute Notlösung per Stille-Cue in Schleife). Konzept mit offenen Fragen:
+  `~/projects/entwuerfe/2026-10-cueplayer-geraet-wach-halten/konzept-geraet-wach-halten.md`
 - [ ] **Import aus Linux Show Player (LiSP)** und evtl. anderen Programmen. *(Nutzer: später)*
   Stand des Wissens (an echter Datei prüfen!):
   - LiSP-Sessions (`.lsp`) sind JSON: Layout-Einstellungen + Liste `cues` mit `_type_` (z. B. `MediaCue`/`GstMediaCue`,
