@@ -77,6 +77,9 @@ Inhalt:
   erreicht, es kann verzerren). Dann Master oder Cue leiser stellen. Die Markierung erlischt nach drei Sekunden.
 - **Farben der Fortschrittsbalken:** grün = läuft, violett = Pre-Wait, orange = Post-Wait,
   gelb = pausiert.
+- **Zeit im Balken:** verstrichen / Restzeit (z. B. `0:15.2 / −0:32.8`), bei Loops ⟳ und die verstrichene Zeit.
+  Auf dem Handy zeigt die Cue-Liste aus Platzgründen nur die Restzeit (`−0:32.8`); vollständig steht sie im
+  Aktiv-Bereich.
 
 Auf schmalen Bildschirmen (Handy) werden die Spalten Pre/Post ausgeblendet; sie sind im Editor
 weiterhin einstellbar.

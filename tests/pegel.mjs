@@ -54,6 +54,31 @@ for (const w of [1280, 390]) {
 }
 await page.setViewportSize({ width: 1280, height: 800 });
 
+// --- 1b. Laufzeit in der Cue-Liste: schmal nur Restzeit, ohne Abschneiden ---
+const rowTime = () => page.$eval('.cue-row >> nth=0', (r) => {
+  const t = r.querySelector('.bar .txt');
+  return { txt: t.textContent, cut: t.scrollWidth > t.clientWidth };
+});
+await page.click('#btn-go');
+await page.waitForTimeout(400);
+let rt = await rowTime();
+check('Liste breit: verstrichen / Rest', /^\d+:\d\d\.\d \/ −\d+:\d\d\.\d$/.test(rt.txt) && !rt.cut, JSON.stringify(rt));
+await page.setViewportSize({ width: 390, height: 800 });
+await page.waitForTimeout(200);
+rt = await rowTime();
+check('Liste schmal (390 px): nur Restzeit, nicht abgeschnitten', /^−\d+:\d\d\.\d$/.test(rt.txt) && !rt.cut, JSON.stringify(rt));
+const aktivTxt = await page.$eval('.run-item .bar .txt', (t) => t.textContent);
+check('Aktiv-Bereich schmal: weiter verstrichen / Rest', aktivTxt.includes(' / −'), aktivTxt);
+await page.evaluate(() => { window.cuePlayer.state.session.cues[0].loop = true; });
+await page.waitForTimeout(150);
+rt = await rowTime();
+check('Liste schmal, Loop: nur ⟳ und verstrichene Zeit', /^⟳ \d+:\d\d\.\d$/.test(rt.txt) && !rt.cut, JSON.stringify(rt));
+await page.evaluate(() => { window.cuePlayer.state.session.cues[0].loop = false; });
+await page.setViewportSize({ width: 1280, height: 800 });
+await page.keyboard.down('Shift'); await page.keyboard.press('Escape'); await page.keyboard.up('Shift');
+await page.waitForTimeout(200);
+await page.click('.cue-row >> nth=0');
+
 // --- 2. Master-Pegel ---
 const vu = () => page.evaluate(() => {
   const m = document.getElementById('master-vu');

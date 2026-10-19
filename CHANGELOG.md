@@ -8,6 +8,11 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+### Behoben
+- **Handy:** Die Laufzeit in der Cue-Liste war seit 0.7.0 abgeschnitten („0:15.2 / −0:…“), weil die Dauer-Spalte
+  eine feste Breite hat. Bis 600 px Breite zeigt die Liste jetzt nur die Restzeit (`−0:32.8`), bei Loops ⟳ und die
+  verstrichene Zeit. Der Aktiv-Bereich zeigt weiter beides.
+
 ## [0.7.0] – 2026-10-19
 
 Pegelanzeigen, Wellenform und Springen in laufenden Cues, verstellbarer rechter Bereich, gemerkter Standby und

@@ -343,13 +343,17 @@ function updateGo() {
   $('#go-next').textContent = cue ? `${guard ? '🔒 bestätigen · ' : ''}${numbered(cue)}` : 'Ende der Liste';
 }
 
-function progressText(p) {
+/** compact: nur Restzeit bzw. bei Loops die verstrichene Zeit (Cue-Liste auf schmalen Bildschirmen). */
+function progressText(p, compact = false) {
   if (p.phase === 'prewait') return `Pre-Wait ${fmtTime(p.total - p.elapsed)}`;
   if (p.phase === 'postwait') return `Post-Wait ${fmtTime(p.total - p.elapsed)}`;
-  if (p.loop) return `⟳ ${fmtTime(p.elapsed)} / ${fmtTime(p.total)}`;
+  if (p.loop) return compact ? `⟳ ${fmtTime(p.elapsed)}` : `⟳ ${fmtTime(p.elapsed)} / ${fmtTime(p.total)}`;
   if (!p.total) return '';
-  return `${fmtTime(p.elapsed)} / −${fmtTime(p.total - p.elapsed)}`;
+  return compact ? `−${fmtTime(p.total - p.elapsed)}` : `${fmtTime(p.elapsed)} / −${fmtTime(p.total - p.elapsed)}`;
 }
+
+/** Schmaler Bildschirm: Die Dauer-Spalte der Liste ist dann zu schmal für „verstrichen / Rest“. */
+const narrow = window.matchMedia('(max-width: 600px)');
 
 /** Füllstand eines Fortschrittsbalkens (CSS-Länge). Ohne bekannte Dauer: voll. */
 const progressPct = (p) => (p.total ? `${Math.min(100, (p.elapsed / p.total) * 100)}%` : '100%');
@@ -358,7 +362,7 @@ const progressPct = (p) => (p.total ? `${Math.min(100, (p.elapsed / p.total) * 1
  * Zustand und Fortschritt einer Listenzeile bzw. Cart-Kachel aktualisieren.
  * el: Element mit der Zustandsklasse, txt: Textfeld, dim: 'width' (Balken) oder 'height' (Kachel).
  */
-function updateItem(id, item, el, txt, dim) {
+function updateItem(id, item, el, txt, dim, compact = false) {
   const r = engine.runners.get(id);
   const st = r?.state ?? 'idle';
   if (st !== item.lastState) {
@@ -371,7 +375,7 @@ function updateItem(id, item, el, txt, dim) {
   if (st !== 'idle') {
     const p = r.progress();
     item.fill.style[dim] = progressPct(p);
-    txt.textContent = progressText(p);
+    txt.textContent = progressText(p, compact);
   }
 }
 
@@ -401,7 +405,8 @@ function updateMasterMeter(now) {
 
 /** Wird pro Frame aufgerufen: Fortschrittsbalken und Status. */
 function frame() {
-  state.rows.forEach((item, id) => updateItem(id, item, item.row, item.txt, 'width'));
+  const compact = narrow.matches;
+  state.rows.forEach((item, id) => updateItem(id, item, item.row, item.txt, 'width', compact));
   state.tiles.forEach((item, id) => updateItem(id, item, item.tile, item.time, 'height'));
 
   if (state.runningDirty) renderRunning();
