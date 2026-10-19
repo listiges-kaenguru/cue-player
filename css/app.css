@@ -151,7 +151,8 @@ body.resizing { cursor: col-resize; user-select: none; }
 .bar.st-prewait .fill { background: var(--pre); }
 .bar.st-postwait .fill { background: var(--post); }
 .bar.st-paused .fill { background: var(--warn); }
-.bar .txt { position: relative; padding: 0 6px; line-height: 18px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* Absolut, damit der wechselnde Zeittext die Spaltenbreite der Liste nicht verändert (sonst springen Zeilenumbrüche) */
+.bar .txt { position: absolute; top: 0; left: 0; right: 0; padding: 0 6px; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 
 .empty-hint { text-align: center; color: var(--muted); padding: 48px 16px; }
 .linkbtn { background: none; border: none; color: var(--standby); padding: 0; text-decoration: underline; }

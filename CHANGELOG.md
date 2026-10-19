@@ -24,6 +24,8 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
   die Standardbreite wieder her. Unter 900 px Fensterbreite bleibt das Layout wie bisher.
 
 ### Behoben
+- **Schmale Bildschirme:** Die Cue-Liste sprang während der Wiedergabe, weil die laufende Zeitanzeige die
+  Spaltenbreite veränderte und Cue-Namen kurz umbrachen. Die Zeitanzeige hat jetzt keinen Einfluss mehr auf die Breite.
 - **Handy:** Die GO-Taste schnitt beim Standby-Namen die Unterlängen ab (g, p, y). „GO“ hat jetzt eine engere
   Zeilenhöhe, der Name passt vollständig in die Taste.
 
