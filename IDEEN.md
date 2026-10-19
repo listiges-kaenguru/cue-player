@@ -81,6 +81,9 @@ Roadmap-Vorschläge (auch in der README):
   Ohne Trimmung wird `el.loop` genutzt und ist nahtlos.
 - Ende-Erkennung und Fade-Out am Ende laufen per 20-ms-Intervall (Timer im Hintergrund-Tab: Audio-Tabs werden nicht gedrosselt).
 - Nach dem Neuladen steht der Standby immer auf Cue 1 (wird nicht gespeichert).
+- Springen in einem laufenden Cue setzt die Position hart um (ohne kurzes Aus-/Einblenden); je nach Material kann
+  es an der Sprungstelle leise knacken.
+- Die Wellenform wird bei 11 025 Hz berechnet; sehr hohe Frequenzen (z. B. Hi-Hats) sind darin kaum zu sehen.
 - Firefox: keine Installation auf dem Desktop, kein `setSinkId` am AudioContext.
 - AGPL: Copyright-Zeile (Name des Rechteinhabers) in README bzw. Quelldateien fehlt noch, falls gewünscht.
 

@@ -88,6 +88,9 @@ describe('Wellenform', () => {
     assert.equal(M.waveformPeaks([new Float32Array(8)], -3).length, 0);
     assert.equal(M.waveformPeaks([new Float32Array(8)], NaN).length, 0);
   });
+  it('Grenze für die Wellenform: 20 Minuten', () => {
+    assert.equal(M.WAVEFORM_MAX_SEC, 1200);
+  });
   it('Ausschnitt für getrimmte Cues', () => {
     assert.deepEqual(M.peakRange(100, 10, 2, 7), [20, 70]);
     assert.deepEqual(M.peakRange(100, 10, 0, 10), [0, 100]);
@@ -138,7 +141,7 @@ describe('Breite des rechten Bereichs', () => {
     assert.equal(M.clampSideWidth(500, 300), M.SIDE_MIN);
   });
   it('ungültige gespeicherte Werte → null (Standardbreite)', () => {
-    for (const v of [NaN, 'abc', '', null, undefined, Infinity, {}]) assert.equal(M.clampSideWidth(v, 1600), null, String(v));
+    for (const v of [NaN, 'abc', '', '   ', null, undefined, Infinity, {}]) assert.equal(M.clampSideWidth(v, 1600), null, String(v));
   });
   it('Zahl als Text wird akzeptiert (localStorage)', () => {
     assert.equal(M.clampSideWidth('420', 1600), 420);
