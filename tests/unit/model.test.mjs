@@ -262,8 +262,10 @@ describe('Backup-Hinweis: Fingerabdruck und Exportstand', () => {
     assert.equal(M.sessionFingerprint(umsortiert), fp);
   });
   it('ändert sich bei Name, Cue-Feld, Einstellung, Reihenfolge, neuem oder gelöschtem Cue', () => {
-    const fp = (f) => { const s = show(); s.cues[0].id = 'a'; s.cues[1].id = 'b'; f(s); return M.sessionFingerprint(s); };
+    // Feste IDs: newSession/newCue vergeben sonst bei jedem Aufruf neue, und alles wäre „verschieden“
+    const fp = (f) => { const s = show(); s.id = 'show'; s.cues[0].id = 'a'; s.cues[1].id = 'b'; f(s); return M.sessionFingerprint(s); };
     const basis = fp(() => {});
+    assert.equal(fp(() => {}), basis);
     assert.notEqual(fp((s) => { s.name = 'Probe 2'; }), basis);
     assert.notEqual(fp((s) => { s.cues[0].name = 'Intro'; }), basis);
     assert.notEqual(fp((s) => { s.cues[1].text = 'Notiz'; }), basis);
@@ -271,9 +273,23 @@ describe('Backup-Hinweis: Fingerabdruck und Exportstand', () => {
     assert.notEqual(fp((s) => { s.cues.reverse(); }), basis);
     assert.notEqual(fp((s) => { s.cues.push(M.newCue('stop')); }), basis);
     assert.notEqual(fp((s) => { s.cues.pop(); }), basis);
+    assert.notEqual(fp((s) => { s.cues[0].volume = -3; }), basis);
+  });
+  it('fehlende Cues wie leere Liste, Felder mit undefined wie fehlende', () => {
+    const s = M.newSession();
+    const leer = M.sessionFingerprint(s);
+    assert.equal(M.sessionFingerprint({ ...s, cues: undefined }), leer);
+    const { cues, ...ohne } = s;
+    assert.equal(M.sessionFingerprint(ohne), leer);
+    assert.equal(M.sessionFingerprint({ ...s, extra: undefined }), leer);
+    const c = show();
+    const mitCues = M.sessionFingerprint(c);
+    c.cues[0].notiz = undefined;
+    assert.equal(M.sessionFingerprint(c), mitCues);
   });
   it('unterscheidet Typen und Sonderzeichen', () => {
     const s = show();
+    s.id = 'show';
     s.name = '1';
     const a = M.sessionFingerprint(s);
     s.name = 1;
