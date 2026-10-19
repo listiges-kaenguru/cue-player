@@ -43,6 +43,8 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
   Zeilenhöhe, der Name passt vollständig in die Taste.
 
 ### Intern
+- Entwicklungsabhängigkeit `qs` (über Stryker → `typed-rest-client`) per npm-`overrides` auf ≥ 6.16.0 angehoben
+  (Dependabot: DoS in `qs.stringify`; betrifft nur die Entwicklungsumgebung, nicht die App). `npm audit`: 0 Funde.
 - `uid()` nutzt ohne `crypto.randomUUID` (z. B. ohne HTTPS) jetzt `crypto.getRandomValues` statt `Math.random`
   (CodeQL-Hinweis „Insecure randomness“; die IDs sind nur lokale Datenbankschlüssel).
 - Neues Modul `js/meter.js` (Pegelskala, Spitzenwert-Halter, Wellenform, Klick → Zeit, Breite des rechten Bereichs)
