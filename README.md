@@ -102,6 +102,7 @@ tests/smoke.mjs        Browser-Smoke-Test (Playwright)
 tests/import.mjs       Browsertest: Import präparierter .cueshow-Dateien, site.json
 tests/pegel.mjs        Browsertest: GO-Taste, Pegelanzeigen, Springen, Breite des rechten Bereichs
 tests/zustand.mjs      Browsertest: Standby nach dem Neuladen, Datenbank-Upgrade mit zweitem Tab
+tests/fade.mjs         Browsertest: Fade-Cue pausieren und fortsetzen
 tests/unit/            Unit-Tests (node:test) für md.js, util.js, model.js, meter.js
 img/                   App-Icons (nicht „icons/“: Apache-Standard-Alias)
 docs/                  Anleitungen (BENUTZERHANDBUCH.md wird auch als Hilfe in der App angezeigt)

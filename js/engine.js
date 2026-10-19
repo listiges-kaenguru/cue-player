@@ -337,6 +337,19 @@ class AudioRunner extends Runner {
     return true;
   }
 
+  /** Laufenden Lautstärke-Fade auf dem aktuellen Wert anhalten (Fade-Cue pausiert). */
+  holdVolume() {
+    if (!this.chain) return;
+    const g = this.chain.vol.gain, now = this.engine.ctx.currentTime;
+    // cancelScheduledValues(now) ließe eine schon laufende Kurve weiterlaufen; Firefox kennt cancelAndHoldAtTime nicht.
+    if (g.cancelAndHoldAtTime) g.cancelAndHoldAtTime(now);
+    else {
+      const v = g.value;
+      g.cancelScheduledValues(0);
+      g.setValueAtTime(v, now);
+    }
+  }
+
   /** Springen ist möglich, solange die Datei läuft oder pausiert ist (nicht in Pre-/Post-Wait oder beim Stoppen). */
   canSeek() {
     return this.playing && !!this.chain && !!this.el && !this.stopping;
@@ -427,9 +440,29 @@ class FadeRunner extends TimedRunner {
       this.ended(true);
       return;
     }
+    this.target = target;
     this.runFor(cue.duration, () => {
       if (cue.stopAfter && target.playing) target.stop(0, true);
     });
+  }
+
+  /** Pause friert die Lautstärke des Ziels ein … */
+  pauseAction() {
+    super.pauseAction();
+    this.target?.holdVolume();
+  }
+
+  /** … „Weiter“ blendet ab dort mit der Restdauer und derselben Kurve zum Zielwert (endet zur angezeigten Zeit). */
+  resumeAction() {
+    super.resumeAction();
+    if (!this.actTimer || !this.target) return;
+    const rest = Math.max(0, (this.actTimer.ms - this.actTimer.elapsed()) / 1000);
+    this.target.fadeVolume(this.cue.volume, rest, this.cue.fadeCurve); // Ziel inzwischen beendet: tut nichts
+  }
+
+  stopAction() {
+    this.target = null;
+    super.stopAction();
   }
 }
 

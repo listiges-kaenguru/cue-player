@@ -31,6 +31,9 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 - **Regiebuch:** Auf- oder zugeklappt bleibt nach dem Neuladen erhalten (je Gerät gespeichert).
 
 ### Behoben
+- **Fade-Cue pausieren:** Bisher hielt eine Pause (Pause alle, Pause-Cue) nur die Zeitanzeige eines Fade-Cues an,
+  die Lautstärke änderte sich weiter. Jetzt friert sie ein; „Weiter“ blendet ab dort mit der Restdauer und derselben
+  Kurve zum Zielwert. Stop während der Pause lässt die Lautstärke, wo sie ist.
 - **Update bei mehreren offenen Tabs:** Hielt ein zweiter Tab die alte Datenbank offen, blieb die App nach einem Update
   ohne Hinweis hängen. Jetzt erscheint „Bitte dort schließen“, danach lädt die App von selbst weiter. Ab dieser Version
   gibt eine geöffnete App die Datenbank für eine neuere Version frei und bittet um Neuladen.
@@ -42,6 +45,7 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 ### Intern
 - Neues Modul `js/meter.js` (Pegelskala, Spitzenwert-Halter, Wellenform, Klick → Zeit, Breite des rechten Bereichs)
   mit Unit-Tests `tests/unit/meter.test.mjs`, auch im Mutation Testing.
+- Neuer Browsertest `tests/fade.mjs` (Fade-Cue pausieren und fortsetzen).
 - Neuer Browsertest `tests/zustand.mjs` (Standby merken, Datenbank-Upgrade mit zweitem Tab).
 - Neuer Browsertest `tests/pegel.mjs` (GO-Taste, Pegelanzeigen, Springen, Breite des rechten Bereichs).
 

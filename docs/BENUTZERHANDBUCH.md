@@ -191,6 +191,9 @@ ihn fort.
 Beispiel „Musik unter Text ziehen“: Fade-Cue auf −15 dB, 3 s, *Danach stoppen* aus. Später ein
 zweiter Fade auf −∞ mit *Danach stoppen* an.
 
+Pausiert man während eines Fades (Pause alle oder Pause-Cue), bleibt die Lautstärke stehen. Bei „Weiter“ läuft der
+Fade ab dort mit der Restzeit weiter.
+
 ### ▶■ Start / Stop
 
 Startet oder stoppt einen anderen Cue, aufgebaut wie der Pause/Weiter-Cue.
