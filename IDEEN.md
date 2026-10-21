@@ -16,9 +16,11 @@ Offene Punkte und Ideen für spätere Versionen. Erledigtes wird hier gestrichen
   lokal); Preset direkt bearbeiten (heute: einfügen, ändern, neu speichern, altes löschen); Mehrfachauswahl auch in
   der Cart-Ansicht?
 - [ ] **Ausgabegerät wach halten** (globale Option, z. B. für Bluetooth-Lautsprecher, die nach 10 Minuten Stille
-  abschalten; heute Notlösung per Stille-Cue in Schleife). Konzept mit offenen Fragen:
-  `~/projects/entwuerfe/2026-10-cueplayer-geraet-wach-halten/konzept-geraet-wach-halten.md`
-- [ ] **Import aus Linux Show Player (LiSP)** und evtl. anderen Programmen. *(Nutzer: später)*
+  abschalten). Stand 20.10.2026: Stille reicht nicht (Gerät erkennt Stille am Pegel), ein 50-Hz-Ton mit
+  Amplitude 0,05 (≈ −26 dBFS) hält eine JBL PartyBox 110 (Bluetooth) wach (Puls 5 s mit je 2 s Blende alle 300 s, Abschaltzeit 20 min);
+  Mindestpegel noch offen. Ein Konzept mit offenen Fragen liegt
+  in der Entwurfssammlung (`2026-10-cueplayer-geraet-wach-halten`, nicht im Repo).
+- [ ] **Import aus Linux Show Player (LiSP)** und evtl. anderen Programmen. *(später)*
   Stand des Wissens (an echter Datei prüfen!):
   - LiSP-Sessions (`.lsp`) sind JSON: Layout-Einstellungen + Liste `cues` mit `_type_` (z. B. `MediaCue`/`GstMediaCue`,
     `VolumeControl`, `StopAll`, `SeekCue`, `CollectionCue`, `IndexActionCue`, `MidiCue`, `OscCue`, `CommandCue`),
@@ -39,7 +41,7 @@ Offene Punkte und Ideen für spätere Versionen. Erledigtes wird hier gestrichen
   - Weitere Programme (später, je nach Bedarf): einfache Playlists (M3U, Ordner mit Dateien → Audio-Cues in Reihenfolge),
     CSV-Cue-Listen, Show Cue Systems (SCS, XML). QLab (macOS, Binärformat) eher nicht.
 - [ ] **Projekt-Export als ZIP zum Teilen, zusätzlich zu `.cueshow`.**
-  **`.cueshow` bleibt auf jeden Fall erhalten** (Nutzer: „Das ist super!“). ZIP ist eine zusätzliche Exportoption.
+  **`.cueshow` bleibt auf jeden Fall erhalten**. ZIP ist eine zusätzliche Exportoption.
   Stand: Der Export (☰ → „Aktuelle exportieren“) packt Show **und** Audiodateien bereits in **eine**
   Datei `.cueshow`, ein eigenes Binärformat (`js/storage.js`, `exportShow`/`importShow`).
   Plan:
@@ -56,6 +58,16 @@ Offene Punkte und Ideen für spätere Versionen. Erledigtes wird hier gestrichen
   - Optional (Desktop): „Als Ordner speichern“ über die File System Access API (`showDirectoryPicker`).
   - Teilen auf Android: `navigator.share({ files: [...] })` (Web Share API), wenn verfügbar.
   - Test in `tests/smoke.mjs` ergänzen: Export → entpacken (z. B. mit `unzip -l`) → Import.
+- [ ] **Cueshow-Werkzeug für die Entwicklung** (`tools/cueshow.mjs`, Node ohne Abhängigkeiten, `export-ignore`;
+  Aufwand ca. 1–2 h mit Tests):
+  - `unpack show.cueshow` → `show.json` (Header formatiert) + `show.media.bin`; `pack show.json` → `show.cueshow`.
+    Medien-Offsets sind relativ zum Header-Ende, beim Packen nur die Header-Länge neu schreiben.
+  - `texts` / `apply-texts`: Namen und Notizen als Markdown (ein Abschnitt je Cue, Cue-ID als Kommentar) herausziehen
+    und über die ID zurückschreiben. Ergebnis als neue Datei, Original bleibt.
+  - Vor dem Packen strenger prüfen als `validShow()` (Typen von `preWait`, `nextAction`, `color` …), damit Tippfehler
+    nicht erst in der App auffallen.
+  - Hinweis: Import in die App vergibt eine neue Show-ID, die bearbeitete Show erscheint neben der alten.
+  - Falls das Exportformat auf ZIP umgestellt wird (Punkt oben): beide Formate unterstützen.
 
 ## Ideen
 
