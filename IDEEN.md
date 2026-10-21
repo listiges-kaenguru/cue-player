@@ -19,7 +19,7 @@ Offene Punkte und Ideen für spätere Versionen. Erledigtes wird hier gestrichen
   abschalten). Stand 20.10.2026: Stille reicht nicht (Gerät erkennt Stille am Pegel), ein 50-Hz-Ton mit
   Amplitude 0,05 (≈ −26 dBFS) hält eine JBL PartyBox 110 (Bluetooth) wach (Puls 5 s mit je 2 s Blende alle 300 s, Abschaltzeit 20 min);
   Mindestpegel noch offen. Ein Konzept mit offenen Fragen liegt
-  in der Entwurfssammlung (`2026-10-cueplayer-geraet-wach-halten`, nicht im Repo).
+  außerhalb des Repos vor.
 - [ ] **Import aus Linux Show Player (LiSP)** und evtl. anderen Programmen. *(später)*
   Stand des Wissens (an echter Datei prüfen!):
   - LiSP-Sessions (`.lsp`) sind JSON: Layout-Einstellungen + Liste `cues` mit `_type_` (z. B. `MediaCue`/`GstMediaCue`,

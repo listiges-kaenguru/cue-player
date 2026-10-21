@@ -1,7 +1,8 @@
 # Cue Player – Hinweise für Claude
 
 Show-Player als PWA (Vanilla JS, kein Build). Ziel: Funktionsumfang ähnlich Linux Show Player auf
-Android/Windows/Linux. Homepage `../get-cueplayer`, Demo `../demo-cueplayer`.
+Android/Windows/Linux. Homepage: <https://get-cueplayer.schmaralde.de/>,
+Demo: <https://demo-cueplayer.schmaralde.de/>.
 
 ## Orientierung
 
@@ -20,11 +21,8 @@ Android/Windows/Linux. Homepage `../get-cueplayer`, Demo `../demo-cueplayer`.
 - Nach Änderungen den Smoke-Test ausführen (`tests/smoke.mjs`, siehe unten) und bei Bedarf erweitern.
 - Nutzerdoku pflegen: `docs/BENUTZERHANDBUCH.md`, `docs/INSTALLATION.md`, Funktionstabelle in `README.md`.
 - Neue Entwicklungsdateien in `.gitattributes` als `export-ignore` eintragen (Release-ZIP nur mit Benötigtem).
-- **Abhängige Projekte mitziehen:** Nach einem Release (Tag `vX.Y.Z`) `../get-cueplayer/scripts/build-download.sh` und
-  `../demo-cueplayer/scripts/build.sh` ausführen, Änderungen dort committen und pushen. Bei neuen oder geänderten
-  Funktionen auch die Texte in `../get-cueplayer/index.html` anpassen; bei neuer Speicherung, Berechtigung oder
-  externen Verbindungen die Datenschutzerklärung in `../get-cueplayer/impressum.html`. Danach beides hochladen
-  (Upload von Hand, kein automatisches Deployment).
+- Neue Speicherung, Berechtigungen oder externe Verbindungen im CHANGELOG deutlich nennen: Die Datenschutzerklärung
+  der Homepage muss dann angepasst werden.
 
 ## Aufbau
 

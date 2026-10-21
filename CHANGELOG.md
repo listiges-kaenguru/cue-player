@@ -19,6 +19,7 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 ### Intern
 
 - Hinweise für Mitwirkende (`CLAUDE.md`, CHANGELOG) allgemein formuliert, ohne lokale Pfade, Hoster-Namen und eigene Werkzeuge.
+- Hinweise für Mitwirkende beziehen sich nicht mehr auf andere Projekte; jedes Projekt ist für sich beschrieben.
 
 ## [0.7.1] – 2026-10-19
 
