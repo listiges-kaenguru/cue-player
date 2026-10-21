@@ -16,6 +16,10 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
   Wiedergabe bleibt wie bisher. Getestet mit Unit-Tests (`sessionFingerprint`, `needsBackup`) und dem
   Browsertest `tests/sicherung.mjs`.
 
+### Intern
+
+- Hinweise für Mitwirkende (`CLAUDE.md`, CHANGELOG) allgemein formuliert, ohne lokale Pfade, Hoster-Namen und eigene Werkzeuge.
+
 ## [0.7.1] – 2026-10-19
 
 Korrektur der Laufzeitanzeige in der Cue-Liste auf dem Handy. Version 0.7.1 in `sw.js`, `app.js`, `package.json`.
@@ -99,7 +103,7 @@ Sicherheitskorrektur für den Import von Shows (`.cueshow`). Version 0.6.1 in `s
 - Coverage der Unit-Tests mit dem in Node eingebauten Werkzeug (`npm run test:coverage`, 100 % Zeilen) und Mutation
   Testing mit Stryker (Command-Runner, `npm run test:mutation`, 92 %). Stryker ist die einzige neue devDependency;
   die App bleibt ohne Build und ohne Laufzeit-Abhängigkeiten.
-- Smoke-Test läuft lokal in der gemeinsamen Testumgebung (`~/projects/testumgebung/pt test`), nicht mehr mit Browsern aus `~/.cache/ms-playwright`.
+- Smoke-Test läuft in einem Container, nicht mehr mit lokal installierten Playwright-Browsern.
 
 ## [0.6.0] – 2026-10-17
 

@@ -9,7 +9,7 @@ Android/Windows/Linux. Homepage `../get-cueplayer`, Demo `../demo-cueplayer`.
 - `CHANGELOG.md` – Änderungen je Version; jede Änderung unter `## [Unveröffentlicht]` eintragen
 - `IDEEN.md` – ToDo, Ideen, bekannte Schwächen, Nutzertests; **zuerst lesen**, Erledigtes ins CHANGELOG
 - `docs/BENUTZERHANDBUCH.md` (auch Hilfe in der App), `docs/INSTALLATION.md` – Nutzerdoku
-- Entwürfe und Mockups liegen in `~/projects/entwuerfe/`, nicht im Repo.
+- Entwürfe und Mockups gehören nicht ins Repo.
 
 ## Regeln
 
@@ -23,8 +23,8 @@ Android/Windows/Linux. Homepage `../get-cueplayer`, Demo `../demo-cueplayer`.
 - **Abhängige Projekte mitziehen:** Nach einem Release (Tag `vX.Y.Z`) `../get-cueplayer/scripts/build-download.sh` und
   `../demo-cueplayer/scripts/build.sh` ausführen, Änderungen dort committen und pushen. Bei neuen oder geänderten
   Funktionen auch die Texte in `../get-cueplayer/index.html` anpassen; bei neuer Speicherung, Berechtigung oder
-  externen Verbindungen die Datenschutzerklärung in `../get-cueplayer/impressum.html`. Danach an den Upload erinnern
-  (Hochladen auf ALL-INKL macht der Nutzer selbst).
+  externen Verbindungen die Datenschutzerklärung in `../get-cueplayer/impressum.html`. Danach beides hochladen
+  (Upload von Hand, kein automatisches Deployment).
 
 ## Aufbau
 
@@ -56,21 +56,17 @@ npm start              # http://localhost:8080
 npm test               # in zweitem Terminal: Smoke-Test
 ```
 
-Lokal (Fedora) in der gemeinsamen Testumgebung, keine Browser auf dem Host installieren:
+Am besten in einem Container mit Node, Playwright und Chromium, damit keine Browser auf dem Rechner installiert
+werden müssen. Die Playwright-Version des Containers muss zu `node_modules/playwright` passen.
 
-```bash
-~/projects/testumgebung/pt test     # Syntax, Links und Smoke-Test im Container (startet den Server selbst)
-```
-
-Die Playwright-Version im Image muss zu `node_modules/playwright` passen; der Test warnt bei Abweichung.
-
-`pt test` führt aus: Unit-Tests (`tests/unit/*.test.mjs`, `node:test`, für `md.js`, `util.js`, `model.js`, `meter.js`), den
+Vollständiger Testlauf: Syntax- und Linkprüfung, Unit-Tests (`tests/unit/*.test.mjs`, `node:test`, für `md.js`, `util.js`, `model.js`, `meter.js`), den
 Smoke-Test und die Browsertests `tests/import.mjs` (präparierte `.cueshow`-Dateien, `site.json`) und `tests/pegel.mjs`
 (GO-Taste, Pegel, Wellenform, Springen, Breite des rechten Bereichs) sowie `tests/zustand.mjs` (Standby, DB-Upgrade), `tests/fade.mjs` (Fade-Cue pausieren) und `tests/sicherung.mjs`
 (Backup-Hinweis beim Schließen);
-weitere `tests/*.mjs` laufen automatisch mit. Weitere Befehle im
-Container: `pt npm run test:coverage` (Coverage der Unit-Tests), `pt npm run test:mutation` (Stryker, ca. 10 Minuten).
+weitere `tests/*.mjs` gehören dazu (`node tests/<name>.mjs`, Server auf Port 8080). Weitere Befehle:
+`npm run test:coverage` (Coverage der Unit-Tests), `npm run test:mutation` (Stryker, ca. 10 Minuten).
 
+- Bewusste Testlücke: `engine.js` und `app.js` haben keine Unit-Tests, nur die Browsertests.
 - Fremde Shows (`.cueshow`) prüft `importShow()` in `storage.js` vollständig, bevor etwas gespeichert wird. Neue
   Pflichtfelder dort ergänzen. Werte, die als CSS oder Attribut in die Seite gehen, vorher prüfen (wie `safeColor`
   in `model.js`); Text nur über `h()`/`textContent`, Markdown nur über `md.js`.
