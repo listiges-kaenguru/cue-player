@@ -196,6 +196,19 @@ describe('rampParam (Fade-Kurven)', () => {
     assert.ok(Math.abs(U.gainToDb(arr[63]) + 29.76) < 0.05, String(U.gainToDb(arr[63])));
     for (let i = 1; i < 127; i++) assert.ok(arr[i] <= arr[i - 1] + 1e-7, 'fällt monoton');
   });
+  it('nimmt einen expliziten Startwert statt param.value (eben erst geplante Werte liest der Browser noch nicht)', () => {
+    const p = param(1);
+    U.rampParam(ctx, p, 1, 2, 'linear', 10, 0);
+    const [kind, arr, t, d] = p.calls.at(-1);
+    assert.equal(kind, 'curve');
+    assert.equal(arr[0], 0);
+    assert.equal(arr[127], 1);
+    assert.ok(Math.abs(arr[64] - 64 / 127) < 1e-6);
+    assert.deepEqual([t, d], [10, 2]);
+    const q = param(1, true);
+    U.rampParam(ctx, q, 1, 2, 'log', 10, 0);
+    assert.deepEqual(q.calls.slice(-2), [['set', 0, 10], ['linear', 1, 12]]);
+  });
   it('fällt auf eine lineare Rampe zurück, wenn der Browser die Kurve ablehnt', () => {
     const p = param(0.2, true);
     U.rampParam(ctx, p, 0.8, 1);
