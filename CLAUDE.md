@@ -59,7 +59,7 @@ werden müssen. Die Playwright-Version des Containers muss zu `node_modules/play
 
 Vollständiger Testlauf: Syntax- und Linkprüfung, Unit-Tests (`tests/unit/*.test.mjs`, `node:test`, für `md.js`, `util.js`, `model.js`, `meter.js`), den
 Smoke-Test und die Browsertests `tests/import.mjs` (präparierte `.cueshow`-Dateien, `site.json`) und `tests/pegel.mjs`
-(GO-Taste, Pegel, Wellenform, Springen, Breite des rechten Bereichs) sowie `tests/zustand.mjs` (Standby, DB-Upgrade), `tests/fade.mjs` (Fade-Cue pausieren) und `tests/sicherung.mjs`
+(GO-Taste, Pegel, Wellenform, Springen, Breite des rechten Bereichs) sowie `tests/zustand.mjs` (Standby, DB-Upgrade), `tests/fade.mjs` (Fade-Cue pausieren), `tests/fadein.mjs` (Fade-In/-Out der Audio-Cues) und `tests/sicherung.mjs`
 (Backup-Hinweis beim Schließen);
 weitere `tests/*.mjs` gehören dazu (`node tests/<name>.mjs`, Server auf Port 8080). Weitere Befehle:
 `npm run test:coverage` (Coverage der Unit-Tests), `npm run test:mutation` (Stryker, ca. 10 Minuten).

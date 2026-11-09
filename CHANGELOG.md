@@ -16,6 +16,15 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
   Wiedergabe bleibt wie bisher. Getestet mit Unit-Tests (`sessionFingerprint`, `needsBackup`) und dem
   Browsertest `tests/sicherung.mjs`.
 
+### Behoben
+- **Fade-In zuverlässig:** Das Einblenden der Audio-Cues klappte nur, wenn der Cue vorher leise geendet hatte (Fade-Out,
+  Stopp oder Pause mit Fade). Beim ersten Start nach dem Laden, nach dem natürlichen Ende ohne Fade-Out und nach einem
+  erneuten GO auf einen laufenden Cue startete er oft sofort in voller Lautstärke. Der Grund: Der Browser meldet eben
+  erst geplante Pegel noch nicht. Das Fade-In beginnt jetzt immer bei Stille und erst, wenn die Wiedergabe tatsächlich
+  läuft. So geht bei einem langsam startenden Ausgabegerät der Anfang nicht verloren.
+- **Pause während des Fade-Ins:** Nach dem Fortsetzen blieb der Cue auf dem Zwischenpegel stehen, jetzt wird er wieder voll.
+  Getestet mit dem Browsertest `tests/fadein.mjs` und einem Unit-Test für `rampParam`.
+
 ### Intern
 
 - Hinweise für Mitwirkende (`CLAUDE.md`, CHANGELOG) allgemein formuliert, ohne lokale Pfade, Hoster-Namen und eigene Werkzeuge.

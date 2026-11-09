@@ -96,9 +96,9 @@ export class Timer {
 /**
  * Rampe eines AudioParam vom aktuellen Wert auf `to` über `dur` Sekunden.
  * curve: 'linear' (linear in Amplitude) oder 'log' (linear in dB, klingt natürlicher).
+ * from: Startwert, wenn er feststeht. param.value zeigt eben erst geplante Werte (setValueAtTime) noch nicht.
  */
-export function rampParam(ctx, param, to, dur, curve = 'log', when = ctx.currentTime) {
-  const from = param.value;
+export function rampParam(ctx, param, to, dur, curve = 'log', when = ctx.currentTime, from = param.value) {
   param.cancelScheduledValues(when);
   if (dur <= 0.005 || Math.abs(from - to) < 1e-5) {
     param.setValueAtTime(to, when);

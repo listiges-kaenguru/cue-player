@@ -156,6 +156,8 @@ class AudioRunner extends Runner {
     this.token = 0; // macht veraltete asynchrone Starts ungültig
     this.ready = null;
     this.fadingOut = false;
+    this.fadeInPending = false; // Fade-In wartet auf den tatsächlichen Start
+    this.fadeInEnd = 0; // ctx-Zeit, zu der das Fade-In voll ist
     this.stopH = null; // Timeout bis zum Ende eines Stop-Fades
     this.pauseH = null; // Timeout bis zum Anhalten nach einem Pause-Fade
     this.envBeforePause = null;
@@ -261,8 +263,8 @@ class AudioRunner extends Runner {
     if (pan.pan) pan.pan.setValueAtTime(cue.pan || 0, now);
     env.gain.cancelScheduledValues(now);
     env.gain.setValueAtTime(cue.fadeIn > 0 ? 0 : 1, now);
-    if (cue.fadeIn > 0) rampParam(ctx, env.gain, 1, cue.fadeIn, cue.fadeCurve);
     this.fadingOut = false;
+    this.fadeInPending = cue.fadeIn > 0;
     // Nahtloser Loop nur ohne Trimmung möglich; sonst springt tick() zurück.
     this.el.loop = !!cue.loop && start === 0 && end >= this.mediaDuration - 0.01;
     this.el.currentTime = start;
@@ -272,7 +274,14 @@ class AudioRunner extends Runner {
       if (tok !== this.token) return;
       this.engine.emit('error', `Wiedergabe fehlgeschlagen: ${e.message}`);
       this.ended(false);
+      return;
     }
+    // Fade-In erst ab dem tatsächlichen Start (play() kann je nach Ausgabegerät dauern), immer ab 0.
+    // Pause oder Stopp in der Zwischenzeit haben die Fade-Stufe schon selbst geplant.
+    if (tok !== this.token || !this.fadeInPending || this.paused || this.stopping) return;
+    this.fadeInPending = false;
+    this.fadeInEnd = ctx.currentTime + cue.fadeIn;
+    rampParam(ctx, env.gain, 1, cue.fadeIn, cue.fadeCurve, ctx.currentTime, 0);
   }
 
   /** Wird von der Engine regelmäßig aufgerufen. */
@@ -304,7 +313,11 @@ class AudioRunner extends Runner {
   pauseAction(fade = 0) {
     if (!this.chain) { this.token++; return; }
     // Läuft noch ein Pause-Fade (schnelles Pause/Weiter/Pause), den ursprünglichen Pegel behalten.
-    if (!this.pauseH) this.envBeforePause = this.chain.env.gain.value;
+    // Während des Fade-Ins (oder davor) ist das Ziel voll, sonst bliebe der Cue nach dem Fortsetzen leiser oder stumm.
+    const inFadeIn = this.fadeInPending || this.engine.ctx.currentTime < this.fadeInEnd;
+    if (!this.pauseH) this.envBeforePause = inFadeIn ? 1 : this.chain.env.gain.value;
+    this.fadeInPending = false;
+    this.fadeInEnd = 0;
     const f = Math.max(DECLICK, fade);
     rampParam(this.engine.ctx, this.chain.env.gain, 0, f, fade > 0 ? this.cue.fadeCurve : 'linear');
     clearTimeout(this.pauseH);
