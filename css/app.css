@@ -389,6 +389,8 @@ body.resizing { cursor: col-resize; user-select: none; }
   body { font-size: 14px; }
   .session-name { width: auto; flex: 1; max-width: none; order: -1; flex-basis: calc(100% - 110px); }
   #btn-help { order: -1; } /* erste Zeile neben dem Show-Namen, sonst rutscht ⚙ in eine eigene Zeile */
+  .ka-status { order: -1; } /* Statussymbol „wach halten“ ebenfalls in die erste Zeile */
+  .topbar:has(.ka-status:not([hidden])) .session-name { flex-basis: calc(100% - 150px); }
   .tb { padding: 6px 9px; }
   .mode-switch .ms-txt { display: none; }
   .mode-switch { padding: 4px 7px; gap: 5px; }

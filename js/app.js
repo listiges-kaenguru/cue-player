@@ -1440,8 +1440,8 @@ function addKeepAliveFields(add) {
       pulseBtn.disabled = !e.target.checked;
     },
   });
-  add(field('Ausgabegerät wach halten', h('label', { class: 'row' }, chk, 'Leisen Puls senden, wenn eine Weile nichts gespielt hat'),
-    'Für Lautsprecher, die sich bei Stille abschalten (z. B. Bluetooth). Intervall kürzer wählen als die Abschaltzeit des Geräts. Gilt für alle Shows auf diesem Gerät.'));
+  add(field('Ausgabegerät wach halten', h('label', { class: 'row' }, chk, 'Leisen Puls senden'),
+    'Für Lautsprecher, die sich bei Stille abschalten (z. B. Bluetooth): Nach einer Weile ohne Wiedergabe kommt ein leiser Puls. Intervall kürzer wählen als die Abschaltzeit des Geräts. Gilt für alle Shows auf diesem Gerät.'));
   const fields = [
     ['Signal', sig],
     ['Puls alle (min)', num('ka-interval', 'intervalMin', 1), 'Gezählt ab dem Ende der letzten Wiedergabe. Während Cues spielen, kommt kein Puls.'],

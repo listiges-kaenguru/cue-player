@@ -61,6 +61,9 @@ Inhalt:
   nichts versehentlich verändert wird.
 - **?** – diese Hilfe (Benutzerhandbuch) öffnen, auch mit **F1**. Funktioniert offline; Links im
   Inhaltsverzeichnis springen zum Abschnitt, **↑ Inhalt** wieder nach oben.
+- **◉** – nur sichtbar, wenn „Ausgabegerät wach halten“ an ist (siehe [Einstellungen](#10-einstellungen)): grün =
+  aktiv, grau = wartet auf die erste Bedienung. Der Tooltip nennt die Uhrzeit des letzten Pulses, ein Klick öffnet die
+  Einstellungen.
 - **⚙** – Einstellungen.
 - **📖 Regiebuch** (rechts oben, auf dem Handy über GO) – Memo-Texte und Notizen zum nächsten Cue,
   siehe [Memo](#-memo).
@@ -410,12 +413,35 @@ Shows ohne Cues lösen keine Nachfrage aus.
 | Cart-Spalten | Kacheln pro Zeile in der Cart-Ansicht. |
 | Bildschirm nicht abschalten | Verhindert, dass das Display während der Show ausgeht. |
 | Ausgabegerät | Soundkarte/Interface wählen (nur Chrome/Edge). |
+| Ausgabegerät wach halten | Für Lautsprecher, die sich bei Stille abschalten (z. B. Bluetooth). Hat eine Weile nichts gespielt, kommt ein kurzer, leiser Puls. Der Zähler beginnt nach jeder Wiedergabe neu, während der Show hört man also nichts davon. Standard: aus. Gilt **für alle Shows auf diesem Gerät** und wird nicht exportiert. Details unten. |
 | MIDI verwenden | Web MIDI aktivieren (der Browser fragt nach Erlaubnis). |
 | GO / Stop alle per MIDI | Globale MIDI-Trigger. |
 | Speicher | Belegung anzeigen, dauerhaften Speicher anfordern, unbenutzte Dateien löschen. |
 | Info | Version (mit Hinweis, wenn auf GitHub eine neuere erschienen ist), Hilfe öffnen, Lizenz (GNU AGPL v3) und Link zum Quelltext. Hat der Betreiber der Instanz ein Impressum hinterlegt, steht hier auch der Link dazu. |
 
-Die Einstellungen gelten **pro Show** und werden mit exportiert.
+Die Einstellungen gelten **pro Show** und werden mit exportiert. Ausnahme: „Ausgabegerät wach halten“ gehört zum
+Gerät, weil es vom Lautsprecher vor Ort abhängt.
+
+### Ausgabegerät wach halten
+
+Viele Bluetooth-Lautsprecher schalten sich nach einigen Minuten Stille ab. Das nächste GO bleibt dann stumm, oder der
+Anfang fehlt. Die Geräte erkennen Stille meist am Pegel, ein offener, aber stummer Audiostrom reicht ihnen nicht. Darum
+schickt der Cue Player nach einer Weile ohne Wiedergabe einen kurzen, leisen Puls, der weich ein- und ausgeblendet wird.
+
+| Feld | Bedeutung |
+|---|---|
+| Signal | **Tiefer Ton (50 Hz)** (Standard), **Leises Rauschen** oder **Stille**. Stille hält nur den Audiostrom offen und hilft bei Geräten, die abschalten, sobald gar kein Strom mehr kommt. |
+| Puls alle (min) | 1–60, Standard 5. Gezählt ab dem Ende der letzten Wiedergabe (auch Pause). Kürzer wählen als die Abschaltzeit des Lautsprechers. |
+| Pulsdauer (s) | 1–10, Standard 5, davon je 40 % Ein- und Ausblenden. |
+| Pegel (dB) | −60 bis −20, Standard −26 (an einem Bluetooth-Lautsprecher erprobt). So leise wie möglich, so laut wie nötig. |
+| Jetzt senden | Schickt sofort einen Puls, um am Gerät zu prüfen, ob er ankommt. |
+
+- Der Puls geht **am Master vorbei** auf das gewählte Ausgabegerät. Er wirkt also auch bei heruntergezogenem Master und
+  erscheint nicht in der Pegelanzeige. „Stop alle“, „Pause“ und ein Show-Wechsel beenden ihn nicht.
+- Er startet mit der **ersten Bedienung** der Seite (Tippen, Klicken, Taste). Vorher erlaubt der Browser keinen Ton.
+- **PA mit Subwoofer:** Dort ist ein 50-Hz-Ton auch leise deutlich als Brummen zu hören. Ausschalten oder den Pegel senken.
+- **Android:** Liegt die App im Hintergrund, kann das System den Ton anhalten. Die App in den Vordergrund holen und
+  einmal tippen.
 
 Beim Öffnen der Einstellungen fragt die App höchstens einmal am Tag bei GitHub nach der neuesten Version. Das ist
 die einzige Verbindung nach außen; ohne Internet bleibt der Hinweis einfach weg.
@@ -446,6 +472,7 @@ die einzige Verbindung nach außen; ohne Internet bleibt der Hinweis einfach weg
 - [ ] Schalter auf **▶ Show** (grün).
 - [ ] Standby steht auf Cue 1.
 - [ ] Einmal in die App getippt (Audio „aufgeweckt“).
+- [ ] Bluetooth-Lautsprecher? In ⚙ **Ausgabegerät wach halten** einschalten (◉ in der Kopfleiste wird grün).
 
 ---
 
@@ -460,6 +487,8 @@ die einzige Verbindung nach außen; ohne Internet bleibt der Hinweis einfach weg
 | „Datei nicht abspielbar“ | Format wird vom Browser nicht unterstützt (z. B. manche WMA/AIFF). In MP3/WAV/OGG umwandeln. |
 | Ton setzt aus / ruckelt auf Android | Akku-Optimierung für Chrome ausschalten; App im Vordergrund lassen; andere Apps schließen. |
 | Fade-Cue meldet „Ziel-Cue läuft nicht“ | Ein Fade wirkt nur auf einen gerade **laufenden** Audio-Cue. |
+| Bluetooth-Lautsprecher schaltet sich in Pausen ab | In ⚙ „Ausgabegerät wach halten“ einschalten. Intervall kürzer als die Abschaltzeit des Lautsprechers wählen. Hilft es nicht, den Pegel schrittweise erhöhen und mit „Jetzt senden“ prüfen. |
+| Leises Brummen alle paar Minuten | Das ist der Puls von „Ausgabegerät wach halten“. Pegel senken, Signal „Stille“ probieren oder ausschalten. |
 | Ausgabegerät-Auswahl fehlt | Nur in Chrome/Edge verfügbar; sonst Systemeinstellung nutzen. |
 | MIDI wird nicht erkannt | Chrome/Edge verwenden, Gerät vor dem Öffnen der App anschließen, in ⚙ MIDI aus- und wieder einschalten. |
 | Shows sind weg | Website-Daten wurden gelöscht. Letzten Export importieren. In ⚙ „Dauerhaft: Anfordern“ nutzen. |

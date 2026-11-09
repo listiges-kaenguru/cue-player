@@ -43,6 +43,7 @@ einzigen Codebasis, ohne Store, offline-fähig, installierbar wie eine normale A
 | Mehrfachauswahl (Klonen, Löschen, Als Preset) | ✅ |
 | Memo mit Bestätigung vor dem nächsten GO | ✅ |
 | Ausgabegerät wählen | ✅ (Chrome/Edge) |
+| Ausgabegerät wach halten (leiser Puls in Pausen, z. B. für Bluetooth-Lautsprecher) | ✅ |
 | Eingebaute Hilfe (Benutzerhandbuch, offline, F1) | ✅ |
 | Hinweis auf neue Version (GitHub-Release, höchstens einmal am Tag) | ✅ |
 | Video-Cues, OSC, Kommando-Cues, Gruppen-Cues | ❌ (Roadmap) |

@@ -32,6 +32,10 @@ Demo: <https://demo-cueplayer.schmaralde.de/>.
   über `engine.waveform()` (OfflineAudioContext mit 11 025 Hz, gecacht je mediaId, nicht über 20 min). Springen: `seek()`.
   Neuer Cue-Typ: Runner-Klasse + Eintrag in `RUNNERS`, Defaults in `model.js` (`newCue`), Editor-Felder in `app.js`
   (`openEditor`), Menüeintrag in `index.html`.
+- `js/keepalive.js`: Ausgabegerät wach halten. Reine Logik (`normalizeKeepAlive`, `pulsePlan`, `signalSamples`,
+  unit-getestet) und Klasse `KeepAlive` (geloopte Quelle → Gain → `ctx.destination`, am Master vorbei; Pulse als
+  Gain-Automation auf der Audio-Uhr, eine Stunde im Voraus). `engine.keepAlive`; die Engine meldet über `audible()`
+  bei jedem `change`, ob eine Audio-Cue hörbar spielt, der Zähler beginnt danach neu.
 - `js/meter.js`: reine Logik für Pegelanzeigen, Wellenform, Springen und Breite des rechten Bereichs (unit-getestet).
 - `js/md.js`: Markdown-Teilmenge, escaped zuerst alles HTML. Ergebnis darf per `innerHTML` gesetzt werden, anderes nicht.
 - Presets: `storage.js` (`listPresets/savePreset/deletePreset`), `model.js` (`cueToPreset`, `defaultPresets`),
@@ -39,7 +43,7 @@ Demo: <https://demo-cueplayer.schmaralde.de/>.
 - `window.cuePlayer = { engine, state }` für Tests/DevTools (Smoke-Test liest darüber Pegel und Cue-Daten).
 - `js/app.js`: komplette UI. Rendering bei Strukturänderung neu (`renderAll`), Fortschritt pro Frame (`frame`).
 - `js/storage.js`: IndexedDB-Stores `sessions`, `media` (Blobs), `meta`, `presets`. Export/Import. Meta-Keys: `lastSession`,
-  `presetsSeeded`, `standby:<sessionId>`, `exportiert:<sessionId>` (Fingerabdruck beim letzten Export/Import,
+  `presetsSeeded`, `keepAlive` (Einstellung „wach halten“, je Gerät, wird nicht exportiert), `standby:<sessionId>`, `exportiert:<sessionId>` (Fingerabdruck beim letzten Export/Import,
   `sessionFingerprint()`/`needsBackup()` in `model.js`, Hinweis beim Schließen). Upgrade mit anderen offenen Tabs: `onDbBlock()` (Hinweis in `app.js`).
   Gerätebezogene Ansicht im localStorage: `cue-player-side-width`, `cue-player-memo-open`.
 - `sw.js`: Cache-First, lädt beim Installieren am HTTP-Cache vorbei.
@@ -57,10 +61,10 @@ npm test               # in zweitem Terminal: Smoke-Test
 Am besten in einem Container mit Node, Playwright und Chromium, damit keine Browser auf dem Rechner installiert
 werden müssen. Die Playwright-Version des Containers muss zu `node_modules/playwright` passen.
 
-Vollständiger Testlauf: Syntax- und Linkprüfung, Unit-Tests (`tests/unit/*.test.mjs`, `node:test`, für `md.js`, `util.js`, `model.js`, `meter.js`), den
+Vollständiger Testlauf: Syntax- und Linkprüfung, Unit-Tests (`tests/unit/*.test.mjs`, `node:test`, für `md.js`, `util.js`, `model.js`, `meter.js`, `keepalive.js`), den
 Smoke-Test und die Browsertests `tests/import.mjs` (präparierte `.cueshow`-Dateien, `site.json`) und `tests/pegel.mjs`
-(GO-Taste, Pegel, Wellenform, Springen, Breite des rechten Bereichs) sowie `tests/zustand.mjs` (Standby, DB-Upgrade), `tests/fade.mjs` (Fade-Cue pausieren), `tests/fadein.mjs` (Fade-In/-Out der Audio-Cues) und `tests/sicherung.mjs`
-(Backup-Hinweis beim Schließen);
+(GO-Taste, Pegel, Wellenform, Springen, Breite des rechten Bereichs) sowie `tests/zustand.mjs` (Standby, DB-Upgrade), `tests/fade.mjs` (Fade-Cue pausieren), `tests/fadein.mjs` (Fade-In/-Out der Audio-Cues), `tests/sicherung.mjs`
+(Backup-Hinweis beim Schließen) und `tests/wachhalten.mjs` (Ausgabegerät wach halten);
 weitere `tests/*.mjs` gehören dazu (`node tests/<name>.mjs`, Server auf Port 8080). Weitere Befehle:
 `npm run test:coverage` (Coverage der Unit-Tests), `npm run test:mutation` (Stryker, ca. 10 Minuten).
 

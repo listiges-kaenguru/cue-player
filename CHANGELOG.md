@@ -9,6 +9,17 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 ## [Unveröffentlicht]
 
 ### Hinzugefügt
+- **Ausgabegerät wach halten** (⚙ → Audio, Standard: aus): Für Lautsprecher, die sich bei Stille abschalten (z. B.
+  Bluetooth). Hat eine Weile keine Audio-Cue gespielt, kommt ein kurzer, leiser Puls: tiefer Ton 50 Hz (Standard),
+  leises Rauschen oder Stille, alle 1–60 Minuten (Standard 5), 1–10 s lang mit weichem Ein- und Ausblenden, Pegel
+  −60 bis −20 dB (Standard −26). Der Zähler beginnt nach jeder Wiedergabe neu, während der Show kommt also kein Puls.
+  Das Signal geht am Master und an der Pegelanzeige vorbei auf das gewählte Ausgabegerät und läuft auf der Audio-Uhr
+  (auch im Hintergrund genau). „Stop alle“, „Pause“ und Show-Wechsel beenden es nicht. Es startet mit der ersten
+  Bedienung der Seite. „Jetzt senden“ schickt zum Ausprobieren sofort einen Puls. Ein Symbol ◉ in der Kopfleiste zeigt,
+  ob die Funktion aktiv ist, der Tooltip nennt die Uhrzeit des letzten Pulses.
+  **Neue Speicherung:** Die Einstellung gilt je Gerät für alle Shows und liegt lokal im Browser (IndexedDB, Meta-Key
+  `keepAlive`). Sie wird nicht exportiert, und es entsteht keine Verbindung nach außen.
+  Getestet mit Unit-Tests (`keepalive.test.mjs`: Einstellungen, Pulsplan, Signal) und dem Browsertest `tests/wachhalten.mjs`.
 - **Backup-Hinweis:** Wenn sich eine Show seit dem letzten Export geändert hat oder noch nie exportiert wurde, fragt
   der Browser beim Schließen oder Neuladen nach. Ein Export oder Import gilt als gesichert. Der Stand wird je Show
   gemerkt (Meta-Key `exportiert:<id>`) und gilt auch nach dem Neuladen. Shows ohne Cues lösen keinen Hinweis aus,
