@@ -36,6 +36,9 @@ describe('Einstellungen normalisieren', () => {
     assert.equal(K.normalizeKeepAlive({ signal: 'constructor' }).signal, 'tone');
     assert.equal(K.normalizeKeepAlive({ levelDb: null }).levelDb, -26);
     assert.equal(K.normalizeKeepAlive({ intervalMin: [] }).intervalMin, 5);
+    assert.equal(K.normalizeKeepAlive({ intervalMin: '' }).intervalMin, 5);
+    assert.equal(K.normalizeKeepAlive({ intervalMin: '   ' }).intervalMin, 5);
+    assert.equal(K.normalizeKeepAlive({ levelDb: ' -30 ' }).levelDb, -30);
   });
   it('übernimmt keine fremden Felder', () => {
     assert.deepEqual(Object.keys(K.normalizeKeepAlive({ x: 1, __proto__: { y: 2 } })).sort(),
@@ -122,13 +125,22 @@ describe('Signal erzeugen', () => {
     assert.ok(Math.abs(t[0]) < 1e-6); // nach dem letzten Sample kommt wieder sin(0)
     assert.ok(t[t.length - 1] < 0 && t[t.length - 1] > -0.01);
   });
-  it('Rauschen: deterministisch, Spitze höchstens 1, nicht stumm', () => {
+  it('Rauschen: deterministisch, auf Spitze 1 normiert, ohne Gleichanteil, tiefpassgefiltert', () => {
     const a = K.signalSamples('noise', sr);
     const b = K.signalSamples('noise', sr);
     assert.deepEqual(a, b);
-    let max = 0;
-    for (const v of a) max = Math.max(max, Math.abs(v));
-    assert.ok(max > 0.5 && max <= 1, String(max));
+    let max = 0, sum = 0, abs = 0, diff = 0;
+    for (let i = 0; i < a.length; i++) {
+      max = Math.max(max, Math.abs(a[i]));
+      sum += a[i];
+      abs += Math.abs(a[i]);
+      if (i) diff += Math.abs(a[i] - a[i - 1]);
+    }
+    assert.ok(Math.abs(max - 1) < 1e-6, `Spitze ${max}`);
+    assert.ok(Math.abs(sum / a.length) < 0.05, `Gleichanteil ${sum / a.length}`);
+    assert.ok(abs / a.length > 0.1, `zu leise ${abs / a.length}`);
+    // Tiefpass: benachbarte Werte liegen nah beieinander (weißes Rauschen hätte etwa den doppelten Betragsmittelwert)
+    assert.ok(diff / abs < 0.5, `nicht geglättet ${diff / abs}`);
   });
   it('Stille: nur Nullen', () => {
     assert.ok(K.signalSamples('silence', sr).every((v) => v === 0));
