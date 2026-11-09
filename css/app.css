@@ -57,6 +57,9 @@ button.danger, .danger { color: var(--danger); }
 .tb { white-space: nowrap; }
 .tb-group { display: flex; gap: 6px; }
 .tb-spacer { flex: 1; }
+.ka-status { color: var(--muted); padding-left: 8px; padding-right: 8px; }
+.ka-status[data-state="active"] { color: var(--accent); }
+.ka-status[hidden] { display: none; }
 .session-name {
   background: transparent; border: 1px solid transparent; border-radius: var(--radius);
   font-weight: 600; font-size: 17px; padding: 4px 8px; min-width: 6em; width: 16em; max-width: 40vw;

@@ -7,6 +7,7 @@ export const KEEPALIVE_DEFAULTS = Object.freeze({ enabled: false, signal: 'tone'
 export const LIMITS = Object.freeze({ intervalMin: [1, 60], durationS: [1, 10], levelDb: [-60, -20] });
 const TONE_HZ = 50; // 1 s Puffer = 50 ganze Schwingungen, schleift ohne Knacken
 const MAX_PULSES = 1000;
+const EPS = 1e-6; // s
 
 function num(v, def, [lo, hi]) {
   const n = typeof v === 'string' && v.trim() !== '' ? Number(v) : typeof v === 'number' ? v : NaN;
@@ -38,12 +39,15 @@ export function pulseShape(durationS) {
 export function pulsePlan({ lastActivity, intervalS, durationS, from, to } = {}) {
   const ok = [lastActivity, intervalS, durationS, from, to].every((v) => typeof v === 'number' && Number.isFinite(v));
   if (!ok || intervalS <= 0 || durationS <= 0 || to <= from) return [];
-  const k0 = Math.max(1, Math.ceil((from - lastActivity) / intervalS - 1e-9));
+  // Toleranz gegen Rundungsfehler der Audio-Uhr, an beiden Grenzen gleich: aufeinanderfolgende Fenster
+  // [a, b) und [b, c) planen jeden Puls genau einmal.
+  const lo = from - EPS, hi = to - EPS;
+  const k0 = Math.max(1, Math.ceil((lo - lastActivity) / intervalS));
   const out = [];
   for (let k = k0; out.length < MAX_PULSES; k++) {
     const start = lastActivity + k * intervalS;
-    if (start >= to) break;
-    if (start >= from) out.push([start, start + durationS]);
+    if (start >= hi) break;
+    if (start >= lo) out.push([start, start + durationS]);
   }
   return out;
 }
@@ -119,10 +123,11 @@ export class KeepAlive {
   /** Sofort einen Puls schicken (zum Ausprobieren am Gerät). */
   pulseNow() {
     if (!this.running) return false;
-    // Erster Puls direkt nach dem kurzen Ausblenden in _replan()
-    this.lastActivity = this.ctx.currentTime + QUICK - this.intervalS;
+    // Erster Puls direkt nach dem kurzen Ausblenden in _replan(); Zeit nur einmal lesen (läuft auf dem Audio-Thread weiter)
+    const now = this.ctx.currentTime;
+    this.lastActivity = now + QUICK - this.intervalS;
     this.audible = false;
-    this._replan();
+    this._replan(now);
     return true;
   }
 
@@ -171,10 +176,9 @@ export class KeepAlive {
     this.plannedUntil = 0;
   }
 
-  _replan() {
+  _replan(now = this.ctx?.currentTime) {
     if (!this.running) return;
     const g = this.gain.gain;
-    const now = this.ctx.currentTime;
     // Laufenden Puls weich beenden, geplante verwerfen
     if (g.cancelAndHoldAtTime) g.cancelAndHoldAtTime(now); else { g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); }
     g.linearRampToValueAtTime(0, now + QUICK);

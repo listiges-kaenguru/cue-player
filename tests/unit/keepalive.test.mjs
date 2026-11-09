@@ -85,6 +85,23 @@ describe('Pulse planen', () => {
       {},
     ]) assert.deepEqual(K.pulsePlan(bad), [], JSON.stringify(bad));
   });
+  it('„Jetzt senden“: Puls am Fensteranfang trotz Rundungsfehlern (Audio-Uhr in 128er-Blöcken)', () => {
+    let missing = 0;
+    for (let i = 0; i < 5000; i++) {
+      const now = (i * 128) / 44100, from = now + 0.05;
+      const plan = K.pulsePlan({ lastActivity: now + 0.05 - 300, intervalS: 300, durationS: 1, from, to: from + 3600 });
+      if (!plan.length || Math.abs(plan[0][0] - from) > 1e-6) missing++;
+    }
+    assert.equal(missing, 0);
+  });
+  it('aufeinanderfolgende Fenster planen jeden Puls genau einmal', () => {
+    for (const la of [0, 0.1 + 0.2, 1000 - 300 * 3 + 1e-12, 1000 - 300 * 3 - 1e-12, 99.99999999]) {
+      const a = K.pulsePlan({ lastActivity: la, intervalS: 300, durationS: 5, from: 0, to: 1000 });
+      const b = K.pulsePlan({ lastActivity: la, intervalS: 300, durationS: 5, from: 1000, to: 2000 });
+      const all = K.pulsePlan({ lastActivity: la, intervalS: 300, durationS: 5, from: 0, to: 2000 });
+      assert.deepEqual([...a, ...b], all, String(la));
+    }
+  });
   it('begrenzt die Zahl der Pulse (Schutz vor Endlosschleifen)', () => {
     assert.ok(K.pulsePlan({ lastActivity: 0, intervalS: 0.001, durationS: 0.0001, from: 0, to: 1e9 }).length <= 1000);
   });

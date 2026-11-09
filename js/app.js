@@ -5,6 +5,7 @@ import * as store from './storage.js';
 import { CUE_TYPES, NEXT_ACTIONS, newSession, newCue, normalizeSession, sessionFingerprint, needsBackup, cueDisplayName, cueToPreset, cuesToPreset, cuesToTemplates, instantiateCues, defaultPresets } from './model.js';
 import { fmtTime, fmtDb, debounce, keyLabel, uid, clamp, MIN_DB, compareVersions, latestRelease } from './util.js';
 import { renderMarkdown, renderDocument, firstLine } from './md.js';
+import { LIMITS as KA_LIMITS } from './keepalive.js';
 import { meterFraction, peakDb, holdPeak, peakRange, fractionAt, seekTarget, stepTarget, clampSideWidth, CLIP_HOLD_MS } from './meter.js';
 
 export const APP_VERSION = '0.7.1';
@@ -160,6 +161,9 @@ async function init() {
     session = newSession('Meine Show');
     await store.saveSession(session).catch(() => {});
   }
+  // Gerätebezogen; configure() prüft die gespeicherten Werte
+  engine.keepAlive.configure(await store.getMeta('keepAlive').catch(() => null));
+  updateKeepAliveStatus();
   await openSession(session);
   ensureDefaultPresets().catch((e) => console.warn('Presets:', e));
   loadSiteInfo();
@@ -1318,6 +1322,8 @@ async function openSettings() {
     add(field('Ausgabegerät', h('span', { class: 'muted' }, 'Auswahl in diesem Browser nicht möglich – Systemausgang wird verwendet.')));
   }
 
+  addKeepAliveFields(add);
+
   add(h('h3', {}, 'MIDI'));
   const midiStatus = h('span', { class: 'muted' }, midi.supported ? (midi.enabled ? `${midi.inputs().length} Eingänge, ${midi.outputs().length} Ausgänge` : 'aus') : 'nicht unterstützt');
   const midiChk = h('input', {
@@ -1397,6 +1403,89 @@ function scrollHelpTo(anchor) {
   const el = anchor ? document.getElementById(`hilfe-${anchor}`) : null;
   if (el) el.scrollIntoView({ block: 'start' });
   else $('#help-body').scrollTop = 0;
+}
+
+// ---------------------------------------------------------------------------
+// Ausgabegerät wach halten (Einstellung je Gerät im meta-Store, nicht in der Show)
+
+function keepAliveSettings() { return engine.keepAlive.settings; }
+
+function setKeepAlive(patch) {
+  engine.keepAlive.configure({ ...keepAliveSettings(), ...patch });
+  // Beim Einschalten gilt der Klick selbst als erste Bedienung
+  if (keepAliveSettings().enabled) engine.ensureContext();
+  store.setMeta('keepAlive', keepAliveSettings()).catch((e) => toast('Speichern fehlgeschlagen: ' + e.message, true));
+  updateKeepAliveStatus();
+}
+
+function addKeepAliveFields(add) {
+  const ka = keepAliveSettings();
+  const num = (id, key, step) => {
+    const [min, max] = KA_LIMITS[key];
+    const inp = h('input', { id, type: 'number', min, max, step, value: ka[key], disabled: !ka.enabled });
+    inp.addEventListener('change', () => {
+      setKeepAlive({ [key]: inp.value });
+      inp.value = keepAliveSettings()[key]; // Begrenzung anzeigen
+    });
+    return inp;
+  };
+  const sig = h('select', { id: 'ka-signal', disabled: !ka.enabled, onchange: (e) => setKeepAlive({ signal: e.target.value }) },
+    [['tone', 'Tiefer Ton (50 Hz)'], ['noise', 'Leises Rauschen'], ['silence', 'Stille (nur Audiostrom offen halten)']]
+      .map(([v, l]) => h('option', { value: v, selected: ka.signal === v }, l)));
+  const chk = h('input', {
+    type: 'checkbox', id: 'ka-enabled', checked: ka.enabled,
+    onchange: (e) => {
+      setKeepAlive({ enabled: e.target.checked });
+      [sig, ...fields.map((f) => f[1])].forEach((el) => { el.disabled = !e.target.checked; });
+      pulseBtn.disabled = !e.target.checked;
+    },
+  });
+  add(field('Ausgabegerät wach halten', h('label', { class: 'row' }, chk, 'Leisen Puls senden, wenn eine Weile nichts gespielt hat'),
+    'Für Lautsprecher, die sich bei Stille abschalten (z. B. Bluetooth). Intervall kürzer wählen als die Abschaltzeit des Geräts. Gilt für alle Shows auf diesem Gerät.'));
+  const fields = [
+    ['Signal', sig],
+    ['Puls alle (min)', num('ka-interval', 'intervalMin', 1), 'Gezählt ab dem Ende der letzten Wiedergabe. Während Cues spielen, kommt kein Puls.'],
+    ['Pulsdauer (s)', num('ka-duration', 'durationS', 0.5), 'Davon je 40 % Ein- und Ausblenden.'],
+    ['Pegel (dB)', num('ka-level', 'levelDb', 1), 'Unabhängig vom Master. Bei einer PA mit Subwoofer ausschalten oder den Pegel senken.'],
+  ];
+  fields.forEach(([l, c, hint]) => add(field(l, c, hint)));
+  const pulseBtn = h('button', {
+    type: 'button', id: 'ka-pulse', disabled: !ka.enabled,
+    onclick: () => {
+      engine.ensureContext();
+      if (engine.keepAlive.pulseNow()) toast('Puls wird gesendet');
+      setTimeout(updateKeepAliveStatus, 100);
+    },
+  }, 'Jetzt senden');
+  add(field('Ausprobieren', pulseBtn, 'Schickt sofort einen Puls, um am Gerät zu prüfen, ob er reicht.'));
+}
+
+/** Statussymbol in der Kopfzeile: unsichtbar (aus), wartet auf erste Bedienung oder aktiv mit letztem Puls. */
+function updateKeepAliveStatus() {
+  const el = $('#ka-status');
+  const ka = engine.keepAlive;
+  el.hidden = !ka.settings.enabled;
+  if (el.hidden) return;
+  if (!ka.running) {
+    el.dataset.state = 'waiting';
+    el.title = 'Ausgabegerät wach halten: wartet auf die erste Bedienung (Tippen oder Taste)';
+    return;
+  }
+  el.dataset.state = 'active';
+  const last = ka.lastPulse();
+  const when = last === null ? 'noch kein Puls'
+    : 'letzter Puls ' + new Date(Date.now() - (engine.ctx.currentTime - last) * 1000).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  el.title = `Ausgabegerät wach halten: aktiv, ${when}`;
+}
+
+/**
+ * Ergänzt das einmalige Entsperren unten: Jede Bedienung nimmt ein Anhalten durch das System zurück und
+ * aktualisiert das Statussymbol (der Context kann schon vom Entsperren angelegt sein).
+ */
+function wakeOnInteraction() {
+  if (!keepAliveSettings().enabled) return;
+  if (!engine.ctx || engine.ctx.state === 'suspended') engine.ensureContext();
+  updateKeepAliveStatus();
 }
 
 // ---------------------------------------------------------------------------
@@ -1553,6 +1642,15 @@ function bindUI() {
   window.addEventListener('keydown', unlock, { once: true, capture: true });
 
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') applyWakeLock(); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && keepAliveSettings().enabled && engine.ctx?.state === 'suspended') {
+      toast('Audio wurde vom System angehalten – einmal tippen, damit das Ausgabegerät wach bleibt', true);
+    }
+  });
+  document.addEventListener('pointerdown', wakeOnInteraction, true);
+  document.addEventListener('keydown', wakeOnInteraction, true);
+  $('#ka-status').addEventListener('click', openSettings);
+  setInterval(updateKeepAliveStatus, 30_000);
   window.addEventListener('beforeunload', (e) => {
     store.saveSession(state.session);
     // Laufende Wiedergabe oder Änderungen seit dem letzten Export → Browser fragt nach
