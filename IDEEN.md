@@ -15,11 +15,6 @@ Offene Punkte und Ideen für spätere Versionen. Erledigtes wird hier gestrichen
 - [ ] **Presets – Ausbau (bei Bedarf):** Presets exportieren/importieren bzw. mit `.cueshow` weitergeben (heute nur
   lokal); Preset direkt bearbeiten (heute: einfügen, ändern, neu speichern, altes löschen); Mehrfachauswahl auch in
   der Cart-Ansicht?
-- [ ] **Ausgabegerät wach halten** (globale Option, z. B. für Bluetooth-Lautsprecher, die nach 10 Minuten Stille
-  abschalten). Stand 20.10.2026: Stille reicht nicht (Gerät erkennt Stille am Pegel), ein 50-Hz-Ton mit
-  Amplitude 0,05 (≈ −26 dBFS) hält eine JBL PartyBox 110 (Bluetooth) wach (Puls 5 s mit je 2 s Blende alle 300 s, Abschaltzeit 20 min);
-  Mindestpegel noch offen. Ein Konzept mit offenen Fragen liegt
-  außerhalb des Repos vor.
 - [ ] **Import aus Linux Show Player (LiSP)** und evtl. anderen Programmen. *(später)*
   Stand des Wissens (an echter Datei prüfen!):
   - LiSP-Sessions (`.lsp`) sind JSON: Layout-Einstellungen + Liste `cues` mit `_type_` (z. B. `MediaCue`/`GstMediaCue`,
@@ -109,5 +104,8 @@ Roadmap-Vorschläge (auch in der README):
 - Windows/Linux-Installation als App, Desktop-Darstellung allgemein
 - MIDI mit echter Hardware (Lernen, Trigger, MIDI-Cues)
 - Ausgabegerät-Wahl (`AudioContext.setSinkId`)
+- Ausgabegerät wach halten: Mindestpegel (erprobt: −26 dBFS an einem Bluetooth-Lautsprecher mit 20 min Abschaltzeit,
+  niedrigere Stufen bis −56 dBFS noch offen; danach ggf. Standardpegel senken), App im Hintergrund auf Android
+  (reicht die Web-Audio-Quelle oder braucht es ein `<audio>`-Element?)
 - Start/Stop-Cue mit Ziel „Alle“, Auto-Follow, Loop mit Trimmung, Fade-Out am Ende, Panorama
 - Offline-Betrieb nach Installation, Update von v0.1.0 auf v0.2.0 (DB-Upgrade auf Version 2)

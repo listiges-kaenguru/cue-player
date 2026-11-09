@@ -2,6 +2,7 @@
 import { Emitter, Timer, clamp, dbToGain, rampParam } from './util.js';
 import { midiBytes } from './midi.js';
 import { blockPeak, waveformPeaks, WAVEFORM_MAX_SEC } from './meter.js';
+import { KeepAlive } from './keepalive.js';
 
 const DECLICK = 0.015; // s – kurze Rampe gegen Knackser bei Pause/Stop
 
@@ -541,6 +542,9 @@ export class Engine extends Emitter {
     this.urls = new Map();
     this.waves = new Map(); // mediaId -> Promise<Float32Array | null>
     this.labelFn = (c) => c.name || c.type;
+    // Ausgabegerät wach halten: Zähler beginnt nach dem letzten Spielen einer Audio-Cue neu
+    this.keepAlive = new KeepAlive();
+    this.on('change', () => this.keepAlive.setAudible(this.audible()));
     // Ende-Erkennung, Loop-Sprünge und Fade-Out am Ende der Audio-Cues
     setInterval(() => this.runners.forEach((r) => r.tick?.()), 20);
   }
@@ -565,6 +569,11 @@ export class Engine extends Emitter {
       });
       this.setMaster(this.session?.settings.masterDb ?? 0);
       if (this.session?.settings.sinkId) this.setSink(this.session.settings.sinkId).catch(() => {});
+      // Vom System angehalten (z. B. Android im Hintergrund): Für das Wachhalten wieder anwerfen
+      this.ctx.addEventListener('statechange', () => {
+        if (this.ctx.state === 'suspended' && this.keepAlive.settings.enabled) this.ctx.resume().catch(() => {});
+      });
+      this.keepAlive.attach(this.ctx);
     }
     if (this.ctx.state === 'suspended') this.ctx.resume();
     return this.ctx;
@@ -656,6 +665,12 @@ export class Engine extends Emitter {
   }
 
   active() { return [...this.runners.values()].filter((r) => r.active); }
+
+  /** Spielt gerade eine Audio-Cue hörbar (nicht pausiert, nicht im Pre-/Post-Wait)? */
+  audible() {
+    for (const r of this.runners.values()) if (r instanceof AudioRunner && r.playing && !r.paused) return true;
+    return false;
+  }
 
   stopAll(fade = 0) { this.active().forEach((r) => r.stop(fade)); }
   pauseAll(fade = 0) { this.active().forEach((r) => r.pause(fade)); }

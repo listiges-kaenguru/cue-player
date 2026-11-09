@@ -10,6 +10,7 @@ const ASSETS = [
   'js/engine.js',
   'js/md.js',
   'js/meter.js',
+  'js/keepalive.js',
   'js/midi.js',
   'js/model.js',
   'js/storage.js',
