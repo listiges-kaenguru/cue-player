@@ -8,6 +8,11 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+## [0.8.0] – 2026-11-09
+
+Ausgabegerät wach halten, Hinweis auf ungesicherte Shows und zuverlässiges Fade-In. Version 0.8.0 in `sw.js`,
+`app.js`, `package.json`.
+
 ### Hinzugefügt
 - **Ausgabegerät wach halten** (⚙ → Audio, Standard: aus): Für Lautsprecher, die sich bei Stille abschalten (z. B.
   Bluetooth). Hat eine Weile keine Audio-Cue gespielt, kommt ein kurzer, leiser Puls: tiefer Ton 50 Hz (Standard),
