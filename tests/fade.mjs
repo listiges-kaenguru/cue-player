@@ -61,6 +61,14 @@ const fade = (m) => page.evaluate((m) => {
 }, m);
 const reset = () => page.evaluate(() => window.cuePlayer.engine.stopAll(0));
 
+// Aufwärmen: Der erste Fade direkt nach dem Anlegen des AudioContext lief im Container gelegentlich etwa 0,35 s vor
+// der angezeigten Zeit (Lautstärke 0,098 statt 0,175 nach 1 s Log-Fade; vermutlich meldet der frische Context kurz eine
+// veraltete currentTime). Gemessen wird erst, wenn der Context läuft; die Prüfungen bleiben unverändert.
+await page.evaluate(() => { const { engine, state } = window.cuePlayer; engine.go(state.session.cues[0].id); });
+await page.waitForFunction(() => window.cuePlayer.engine.ctx?.state === 'running' && window.cuePlayer.engine.ctx.currentTime > 0.5);
+await reset();
+await wait(200);
+
 for (const curve of ['log', 'linear']) {
   await run(curve);
   await wait(1000);
