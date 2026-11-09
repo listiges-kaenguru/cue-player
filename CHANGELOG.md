@@ -38,6 +38,8 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ### Intern
 
+- Browsertest `tests/fade.mjs` wärmt den AudioContext vor der ersten Messung auf. Der erste Fade direkt nach dem Start
+  lief im Testcontainer gelegentlich etwa 0,35 s vor, sodass der Test sporadisch scheiterte. Die Prüfungen sind unverändert.
 - Hinweise für Mitwirkende (`CLAUDE.md`, CHANGELOG) allgemein formuliert, ohne lokale Pfade, Hoster-Namen und eigene Werkzeuge.
 - Hinweise für Mitwirkende beziehen sich nicht mehr auf andere Projekte; jedes Projekt ist für sich beschrieben.
 
