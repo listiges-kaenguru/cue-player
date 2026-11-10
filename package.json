@@ -15,7 +15,8 @@
     "test:unit": "node --test 'tests/unit/*.test.mjs'",
     "test:import": "node tests/import.mjs",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-include='js/**' 'tests/unit/*.test.mjs'",
-    "test:mutation": "stryker run"
+    "test:mutation": "stryker run",
+    "cueshow": "node tools/cueshow.mjs"
   },
   "devDependencies": {
     "@stryker-mutator/core": "^10.0.0",

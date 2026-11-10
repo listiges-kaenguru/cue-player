@@ -168,3 +168,8 @@ export async function freePath(base, ext) {
   for (let k = 2; await exists(p); k++) p = `${base}-${k}${ext}`;
   return p;
 }
+
+/** Textdatei sicher schreiben (Zwischendatei, nie überschreiben ohne force). */
+export function writeTextFile(target, text, { force = false } = {}) {
+  return atomically(target, force, (tmp) => fs.writeFile(tmp, text, { flag: 'wx' }));
+}
