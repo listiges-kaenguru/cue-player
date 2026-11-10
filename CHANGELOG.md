@@ -8,6 +8,11 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+### Sicherheit
+- Entwicklungsabhängigkeiten aktualisiert (`npm audit fix`): `follow-redirects` 1.16.3 (hoher Fund
+  GHSA-mrwp-f3q8-3g9p), `qs` 6.17.1, Stryker 10.1.1. Betrifft nur Testserver und Tests, nicht die App. Offen bleiben
+  zwei mittlere Funde in `minimatch` über Stryker; die vorgeschlagene Lösung wäre ein Rückschritt auf Stryker 6.
+
 ### Intern
 - **Entwicklungswerkzeug für `.cueshow`-Dateien** (`tools/cueshow.mjs`, Node ≥ 20 ohne Abhängigkeiten, nicht im
   Release-Archiv; Aufruf `node tools/cueshow.mjs <befehl>` oder `npm run cueshow -- <befehl>`):
