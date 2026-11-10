@@ -21,7 +21,8 @@ const exists = (p) => fs.lstat(p).then(() => true, () => false);
 
 /**
  * Öffnet eine Show. Ergebnis:
- * { kind: 'file'|'folder', path, header: { format, session, media: [{ id, name, type, file? }] }, blobs: Map, warnings }
+ * { kind: 'file'|'folder', path, header: { format, session, media: [{ id, name, type, file? | offset?, length? }] },
+ *   blobs: Map, warnings }
  */
 export async function openShow(p) {
   const st = await fs.stat(p).catch(() => null);
@@ -39,7 +40,7 @@ async function openFile(p) {
   }
   const { header, base } = res;
   const blobs = new Map(header.media.map((m) => [m.id, mediaBlob(blob, base, m)]));
-  const media = header.media.map(({ id, name, type }) => ({ id, name, type }));
+  const media = header.media.map(({ id, name, type, offset, length }) => ({ id, name, type, offset, length }));
   return { kind: 'file', path: p, header: { format: header.format, session: header.session, media }, blobs, warnings: [] };
 }
 
