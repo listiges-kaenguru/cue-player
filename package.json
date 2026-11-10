@@ -14,8 +14,10 @@
     "test": "node tests/smoke.mjs",
     "test:unit": "node --test 'tests/unit/*.test.mjs'",
     "test:import": "node tests/import.mjs",
-    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include='js/**' 'tests/unit/*.test.mjs'",
-    "test:mutation": "stryker run"
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include='js/**' --test-coverage-include='tools/**' 'tests/unit/*.test.mjs'",
+    "test:mutation": "stryker run",
+    "test:gross": "node tests/gross/cueshow-speicher.mjs",
+    "cueshow": "node tools/cueshow.mjs"
   },
   "devDependencies": {
     "@stryker-mutator/core": "^10.0.0",

@@ -1,6 +1,7 @@
 // Persistenz im Browser (IndexedDB) sowie Export/Import von Shows als .cueshow-Datei.
 import { uid } from './util.js';
 import { migratePreset } from './model.js';
+import { buildShowFile, readShowFile, mediaBlob } from './showfile.js';
 
 const DB_NAME = 'cue-player';
 const DB_VERSION = 2; // 2: Store „presets“
@@ -106,63 +107,25 @@ export const getMeta = async (key) => (await tx('meta', 'readonly', (s) => req2p
 export const setMeta = (key, value) => tx('meta', 'readwrite', (s) => s.put({ key, value }));
 
 // ---------------------------------------------------------------------------
-// .cueshow-Format:  "CUESHOW1" | uint32 LE Header-Länge | Header (JSON, UTF-8) | Mediendaten hintereinander
-// Header: { format: 1, session, media: [{ id, name, type, offset, length }] }
-
-const MAGIC = 'CUESHOW1';
+// Export/Import als .cueshow (Format in showfile.js)
 
 export async function exportShow(session) {
   const ids = [...new Set(session.cues.map((c) => c.mediaId).filter(Boolean))];
-  const media = [];
-  const blobs = [];
-  let offset = 0;
+  const items = [];
   for (const id of ids) {
     const rec = await getMedia(id);
-    if (!rec) continue;
-    media.push({ id, name: rec.name, type: rec.type, offset, length: rec.blob.size });
-    blobs.push(rec.blob);
-    offset += rec.blob.size;
+    if (rec) items.push({ id, name: rec.name, type: rec.type, blob: rec.blob });
   }
-  const header = new TextEncoder().encode(JSON.stringify({ format: 1, session, media }));
-  const len = new Uint8Array(4);
-  new DataView(len.buffer).setUint32(0, header.length, true);
-  return new Blob([MAGIC, len, header, ...blobs], { type: 'application/octet-stream' });
-}
-
-const isObj = (v) => typeof v === 'object' && v !== null && !Array.isArray(v);
-const isSize = (v) => Number.isSafeInteger(v) && v >= 0;
-
-/** Prüft Header und Medienangaben einer .cueshow vollständig, bevor etwas gespeichert wird. */
-function validShow(header, dataSize) {
-  if (!isObj(header) || header.format !== 1) return false;
-  const s = header.session;
-  if (!isObj(s) || !Array.isArray(s.cues) || !s.cues.every((c) => isObj(c) && typeof c.type === 'string')) return false;
-  if (s.settings !== undefined && !isObj(s.settings)) return false;
-  return Array.isArray(header.media) && header.media.every((m) => isObj(m) && typeof m.id === 'string'
-    && isSize(m.offset) && isSize(m.length) && m.offset + m.length <= dataSize);
+  return buildShowFile(session, items);
 }
 
 export async function importShow(file) {
-  const invalid = () => new Error('Keine gültige .cueshow-Datei');
-  if (file.size < 12) throw invalid();
-  const head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
-  if (new TextDecoder().decode(head.slice(0, 8)) !== MAGIC) throw invalid();
-  const hlen = new DataView(head.buffer).getUint32(8, true);
-  if (hlen > file.size - 12) throw invalid();
-  let header;
-  try {
-    header = JSON.parse(new TextDecoder().decode(await file.slice(12, 12 + hlen).arrayBuffer()));
-  } catch {
-    throw invalid();
-  }
-  const base = 12 + hlen;
-  if (!validShow(header, file.size - base)) throw invalid();
+  const { header, base } = await readShowFile(file);
   // Neue Media-IDs vergeben, damit Importe bestehende Shows nie überschreiben.
   const idMap = new Map();
   for (const m of header.media) {
-    const blob = file.slice(base + m.offset, base + m.offset + m.length, m.type);
     // In einen eigenständigen Blob kopieren (die Quelldatei kann später verschwinden).
-    const copy = new Blob([await blob.arrayBuffer()], { type: m.type });
+    const copy = new Blob([await mediaBlob(file, base, m).arrayBuffer()], { type: m.type });
     const id = uid();
     idMap.set(m.id, id);
     await putMedia({ id, name: m.name, type: m.type, size: m.length, blob: copy });

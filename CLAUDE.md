@@ -37,6 +37,8 @@ Demo: <https://demo-cueplayer.schmaralde.de/>.
   Gain-Automation auf der Audio-Uhr, eine Stunde im Voraus). `engine.keepAlive`; die Engine meldet über `audible()`
   bei jedem `change`, ob eine Audio-Cue hörbar spielt, der Zähler beginnt danach neu.
 - `js/meter.js`: reine Logik für Pegelanzeigen, Wellenform, Springen und Breite des rechten Bereichs (unit-getestet).
+- `js/showfile.js`: Dateiformat `.cueshow` (`buildShowFile`, `readShowFile`, `validShow`, `mediaBlob`), nur `Blob`, ohne
+  IndexedDB; läuft im Browser und in Node. `storage.js` nutzt es für Export/Import.
 - `js/md.js`: Markdown-Teilmenge, escaped zuerst alles HTML. Ergebnis darf per `innerHTML` gesetzt werden, anderes nicht.
 - Presets: `storage.js` (`listPresets/savePreset/deletePreset`), `model.js` (`cueToPreset`, `defaultPresets`),
   UI in `app.js` (Abschnitt „Presets“). Seed einmalig über Meta-Key `presetsSeeded`.
@@ -46,6 +48,10 @@ Demo: <https://demo-cueplayer.schmaralde.de/>.
   `presetsSeeded`, `keepAlive` (Einstellung „wach halten“, je Gerät, wird nicht exportiert), `standby:<sessionId>`, `exportiert:<sessionId>` (Fingerabdruck beim letzten Export/Import,
   `sessionFingerprint()`/`needsBackup()` in `model.js`, Hinweis beim Schließen). Upgrade mit anderen offenen Tabs: `onDbBlock()` (Hinweis in `app.js`).
   Gerätebezogene Ansicht im localStorage: `cue-player-side-width`, `cue-player-memo-open`.
+- `tools/cueshow.mjs`: Entwicklungswerkzeug (Node, nicht im Release): `unpack`, `pack`, `info`, `check`, `texts`,
+  `apply-texts`; Hilfe mit `node tools/cueshow.mjs help`. Logik in `tools/cueshow/`: `io.mjs` (Show lesen, sicher
+  schreiben, Pfadprüfung), `names.mjs` (Dateinamen), `check.mjs` (strenge Prüfung), `info.mjs`, `texts.mjs`, `cli.mjs`.
+  Neue Cue-Felder oder Einstellungen: Regeln in `check.mjs` ergänzen (sonst meldet `check` sie als unbekannt).
 - `sw.js`: Cache-First, lädt beim Installieren am HTTP-Cache vorbei.
 - `site.json`: optionaler Impressum-Link, im Repo leer (`{}`); die Demo bringt ihre eigene mit.
 - Icons in `img/`, nie in `icons/` (Apache-Alias).
@@ -61,16 +67,30 @@ npm test               # in zweitem Terminal: Smoke-Test
 Am besten in einem Container mit Node, Playwright und Chromium, damit keine Browser auf dem Rechner installiert
 werden müssen. Die Playwright-Version des Containers muss zu `node_modules/playwright` passen.
 
-Vollständiger Testlauf: Syntax- und Linkprüfung, Unit-Tests (`tests/unit/*.test.mjs`, `node:test`, für `md.js`, `util.js`, `model.js`, `meter.js`, `keepalive.js`), den
+Vollständiger Testlauf: Syntax- und Linkprüfung, Unit-Tests (`tests/unit/*.test.mjs`, `node:test`, für `md.js`, `util.js`, `model.js`, `meter.js`, `keepalive.js`, `showfile.js`
+und `tools/cueshow/`), den
 Smoke-Test und die Browsertests `tests/import.mjs` (präparierte `.cueshow`-Dateien, `site.json`) und `tests/pegel.mjs`
 (GO-Taste, Pegel, Wellenform, Springen, Breite des rechten Bereichs) sowie `tests/zustand.mjs` (Standby, DB-Upgrade), `tests/fade.mjs` (Fade-Cue pausieren), `tests/fadein.mjs` (Fade-In/-Out der Audio-Cues), `tests/sicherung.mjs`
-(Backup-Hinweis beim Schließen) und `tests/wachhalten.mjs` (Ausgabegerät wach halten);
+(Backup-Hinweis beim Schließen), `tests/wachhalten.mjs` (Ausgabegerät wach halten) und `tests/cueshow.mjs` (Werkzeug
+`tools/cueshow.mjs` zusammen mit der App: Export, Rundreise, Bearbeiten, Import);
 weitere `tests/*.mjs` gehören dazu (`node tests/<name>.mjs`, Server auf Port 8080). Weitere Befehle:
-`npm run test:coverage` (Coverage der Unit-Tests), `npm run test:mutation` (Stryker, ca. 10 Minuten).
+`npm run test:coverage` (Coverage der Unit-Tests), `npm run test:mutation` (Stryker, ca. 10 Minuten),
+`npm run test:gross` (Werkzeug mit 1 GB Medien: Speicherverbrauch, schreibt etwa 3 GB, gehört zum vollständigen Testlauf).
 
 - Bewusste Testlücke: `engine.js` und `app.js` haben keine Unit-Tests, nur die Browsertests.
-- Fremde Shows (`.cueshow`) prüft `importShow()` in `storage.js` vollständig, bevor etwas gespeichert wird. Neue
-  Pflichtfelder dort ergänzen. Werte, die als CSS oder Attribut in die Seite gehen, vorher prüfen (wie `safeColor`
+
+Shows ansehen und von Hand bearbeiten (Werkzeug `tools/cueshow.mjs`):
+
+```bash
+node tools/cueshow.mjs unpack Show.cueshow      # → Show/show.json + Show/media/
+node tools/cueshow.mjs pack Show                # prüft und packt → Show-neu.cueshow
+node tools/cueshow.mjs check Show.cueshow --streng
+node tools/cueshow.mjs texts Show.cueshow       # → Show-texte.md; bearbeiten, dann:
+node tools/cueshow.mjs apply-texts Show.cueshow Show-texte.md --probe
+```
+
+- Fremde Shows (`.cueshow`) prüft `importShow()` in `storage.js` über `validShow()` in `showfile.js` vollständig, bevor
+  etwas gespeichert wird. Neue Pflichtfelder dort ergänzen. Werte, die als CSS oder Attribut in die Seite gehen, vorher prüfen (wie `safeColor`
   in `model.js`); Text nur über `h()`/`textContent`, Markdown nur über `md.js`.
 
 In der Claude-Cloud-Umgebung (Playwright und Chromium sind vorinstalliert, `npm install` ist nicht nötig):
