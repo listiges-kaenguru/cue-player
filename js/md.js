@@ -77,13 +77,13 @@ export function slugify(text) {
 const IMG_SRC = /^img\/[a-z0-9][a-z0-9-]*\.(webp|svg|png)$/;
 const IMG_BASE = /^([a-z0-9][a-z0-9_-]*\/)*$/;
 
-function docInlineBase(s, images = '') {
+function docInlineBase(s, images) {
   // s ist bereits escaped. Code, Bilder und Links werden ausgelagert, damit *, _ usw. darin unverändert bleiben.
   const keep = [];
   const put = (html) => `\u0000${keep.push(html) - 1}\u0000`;
   s = s.replace(/`([^`]+)`/g, (_, code) => put(`<code>${code}</code>`));
   s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (all, alt, src) => put(IMG_SRC.test(src)
-    ? `<img src="${IMG_BASE.test(images) ? images : ''}${src}" alt="${alt}" loading="lazy">`
+    ? `<img src="${IMG_BASE.test(images) ? images : ''}${src}" alt="${alt}">`
     : alt));
   s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (all, text, href) => {
     if (href.startsWith('#')) return put(`<a href="${href}" data-anchor="${href.slice(1)}">${inline(text)}</a>`);

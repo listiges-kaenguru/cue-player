@@ -1387,7 +1387,9 @@ async function openHelp() {
     try {
       const res = await fetch(HELP_FILE);
       if (!res.ok) throw new Error(res.status);
-      body.innerHTML = renderDocument(await res.text(), { prefix: 'hilfe-' }); // sicher: escaped jedes HTML
+      body.innerHTML = renderDocument(await res.text(), { prefix: 'hilfe-', images: 'docs/' }); // sicher: escaped jedes HTML
+      // Bilder vor dem ersten Sprung zu einem Abschnitt fertig laden, sonst verschieben sie den Text darunter
+      await Promise.all([...body.querySelectorAll('img')].map((img) => img.decode().catch(() => {})));
       body.dataset.loaded = '1';
     } catch {
       body.textContent = '';

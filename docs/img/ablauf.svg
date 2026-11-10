@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 270" width="820" height="270" role="img" aria-labelledby="t d">
+  <title id="t">Ablauf eines Cues</title>
+  <desc id="d">Nach GO läuft zuerst die Pre-Wait, dann der Cue. Bei Auto-Continue beginnt die Post-Wait mit dem Start des Cues,
+    bei Auto-Follow mit seinem Ende. Nach der Post-Wait startet der nächste Cue.</desc>
+  <defs>
+    <marker id="pfeil" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 10 5 0 10z" fill="#e7e9ef"/>
+    </marker>
+  </defs>
+  <style>
+    text { font: 15px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #e7e9ef; }
+    .titel { font-weight: 700; }
+    .klein { font-size: 13px; fill: #8a90a2; }
+    .dunkel { fill: #14151b; font-weight: 600; }
+    .go { font-weight: 800; fill: #3fb950; font-size: 17px; }
+  </style>
+  <rect width="820" height="270" rx="10" fill="#1c1e26" stroke="#333746"/>
+
+  <!-- GO -->
+  <text class="go" x="150" y="30" text-anchor="middle">GO</text>
+  <line x1="150" y1="38" x2="150" y2="250" stroke="#3fb950" stroke-width="2" stroke-dasharray="5 4"/>
+
+  <!-- Auto-Continue -->
+  <text class="titel" x="20" y="74">Auto-Continue</text>
+  <text class="klein" x="20" y="93">(AC)</text>
+  <rect x="150" y="58" width="110" height="28" rx="5" fill="#a371f7"/>
+  <text class="dunkel" x="205" y="77" text-anchor="middle">Pre-Wait</text>
+  <rect x="260" y="58" width="360" height="28" rx="5" fill="#238636" stroke="#3fb950"/>
+  <text x="440" y="77" text-anchor="middle">Cue läuft</text>
+  <rect x="260" y="94" width="110" height="24" rx="5" fill="#d29922"/>
+  <text class="dunkel" x="315" y="111" text-anchor="middle">Post-Wait</text>
+  <line x1="372" y1="106" x2="412" y2="106" stroke="#e7e9ef" stroke-width="2" marker-end="url(#pfeil)"/>
+  <text x="420" y="111">nächster Cue startet</text>
+
+  <!-- Auto-Follow -->
+  <text class="titel" x="20" y="184">Auto-Follow</text>
+  <text class="klein" x="20" y="203">(AF)</text>
+  <rect x="150" y="168" width="110" height="28" rx="5" fill="#a371f7"/>
+  <text class="dunkel" x="205" y="187" text-anchor="middle">Pre-Wait</text>
+  <rect x="260" y="168" width="300" height="28" rx="5" fill="#238636" stroke="#3fb950"/>
+  <text x="410" y="187" text-anchor="middle">Cue läuft</text>
+  <rect x="560" y="204" width="110" height="24" rx="5" fill="#d29922"/>
+  <text class="dunkel" x="615" y="221" text-anchor="middle">Post-Wait</text>
+  <line x1="672" y1="216" x2="702" y2="216" stroke="#e7e9ef" stroke-width="2" marker-end="url(#pfeil)"/>
+  <text x="708" y="221">nächster Cue</text>
+  <text class="klein" x="800" y="252" text-anchor="end">Wird der Cue von Hand gestoppt, folgt nichts.</text>
+</svg>
