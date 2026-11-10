@@ -177,6 +177,18 @@ describe('texts und apply-texts', () => {
     assert.ok(await exists(path.join(tmp, 'Ordner-neu/media/musik.mp3')));
   });
 
+  it('schreibt nichts, wenn die Show Prüffehler hat', async () => {
+    await cueshow('Defekt.cueshow', (s) => { s.cues[0].pan = 5; });
+    assert.equal(cli('texts', 'Defekt.cueshow').code, 0, 'texts geht trotzdem');
+    const mdPath = path.join(tmp, 'Defekt-texte.md');
+    await fs.writeFile(mdPath, (await fs.readFile(mdPath, 'utf8')).replace('## Musik', '## Neu'));
+    const r = cli('apply-texts', 'Defekt.cueshow', 'Defekt-texte.md');
+    assert.equal(r.code, 1);
+    assert.match(r.out, /Fehler\s+Cue 1 \(id a\) · pan/);
+    assert.match(r.err, /nichts geschrieben/);
+    assert.equal(await exists(path.join(tmp, 'Defekt-neu.cueshow')), false);
+  });
+
   it('bricht bei unbekannter Cue-ID ab und schreibt nichts', async () => {
     await cueshow('Fremd.cueshow');
     cli('texts', 'Fremd.cueshow');
