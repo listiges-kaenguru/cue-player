@@ -8,6 +8,11 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+## [0.8.1] – 2026-11-10
+
+Benutzerhandbuch mit echten Screenshots und Ablaufgrafik statt ASCII-Skizzen, auch offline in der Hilfe. Version 0.8.1
+in `sw.js`, `app.js`, `package.json`.
+
 ### Geändert
 - **Benutzerhandbuch mit echten Screenshots statt ASCII-Skizzen:** Kapitel 2 zeigt den Hauptbildschirm mit
   nummerierten Bereichen und Legende, Kapitel 4 den Cue-Editor, Kapitel 7 die Cart-Ansicht und Kapitel 10 die
