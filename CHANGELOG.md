@@ -8,6 +8,11 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+### Intern
+- Das Dateiformat `.cueshow` (Kennung, Lesen, Prüfen, Schreiben) steht jetzt in einem eigenen Modul `js/showfile.js`
+  ohne IndexedDB, das im Browser und in Node läuft. `storage.js` nutzt es für Export und Import, das Verhalten bleibt
+  gleich. Neue Unit-Tests `tests/unit/showfile.test.mjs` (Aufbau byte-genau, kaputte und verfälschte Dateien).
+
 ## [0.8.0] – 2026-11-09
 
 Ausgabegerät wach halten, Hinweis auf ungesicherte Shows und zuverlässiges Fade-In. Version 0.8.0 in `sw.js`,

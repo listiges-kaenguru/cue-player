@@ -94,6 +94,7 @@ css/app.css            Gestaltung (dunkel, touch-tauglich, responsiv)
 js/app.js              UI-Logik: Liste, Cart, Editor, Shows, Einstellungen, Tastatur, MIDI-Trigger
 js/engine.js           Wiedergabe-Engine: Cue-Ablauf, Audio-Kette, Fades
 js/model.js            Datenmodell (Session, Cue-Typen, Standardwerte)
+js/showfile.js         Dateiformat .cueshow (Lesen, Prüfen, Schreiben)
 js/storage.js          IndexedDB-Speicher, Export/Import (.cueshow)
 js/midi.js             Web-MIDI-Anbindung
 js/md.js               Markdown-Renderer für Memos und die eingebaute Hilfe (sicher, ohne Bibliothek)

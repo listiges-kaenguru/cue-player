@@ -37,6 +37,8 @@ Demo: <https://demo-cueplayer.schmaralde.de/>.
   Gain-Automation auf der Audio-Uhr, eine Stunde im Voraus). `engine.keepAlive`; die Engine meldet über `audible()`
   bei jedem `change`, ob eine Audio-Cue hörbar spielt, der Zähler beginnt danach neu.
 - `js/meter.js`: reine Logik für Pegelanzeigen, Wellenform, Springen und Breite des rechten Bereichs (unit-getestet).
+- `js/showfile.js`: Dateiformat `.cueshow` (`buildShowFile`, `readShowFile`, `validShow`, `mediaBlob`), nur `Blob`, ohne
+  IndexedDB; läuft im Browser und in Node. `storage.js` nutzt es für Export/Import.
 - `js/md.js`: Markdown-Teilmenge, escaped zuerst alles HTML. Ergebnis darf per `innerHTML` gesetzt werden, anderes nicht.
 - Presets: `storage.js` (`listPresets/savePreset/deletePreset`), `model.js` (`cueToPreset`, `defaultPresets`),
   UI in `app.js` (Abschnitt „Presets“). Seed einmalig über Meta-Key `presetsSeeded`.
@@ -61,7 +63,7 @@ npm test               # in zweitem Terminal: Smoke-Test
 Am besten in einem Container mit Node, Playwright und Chromium, damit keine Browser auf dem Rechner installiert
 werden müssen. Die Playwright-Version des Containers muss zu `node_modules/playwright` passen.
 
-Vollständiger Testlauf: Syntax- und Linkprüfung, Unit-Tests (`tests/unit/*.test.mjs`, `node:test`, für `md.js`, `util.js`, `model.js`, `meter.js`, `keepalive.js`), den
+Vollständiger Testlauf: Syntax- und Linkprüfung, Unit-Tests (`tests/unit/*.test.mjs`, `node:test`, für `md.js`, `util.js`, `model.js`, `meter.js`, `keepalive.js`, `showfile.js`), den
 Smoke-Test und die Browsertests `tests/import.mjs` (präparierte `.cueshow`-Dateien, `site.json`) und `tests/pegel.mjs`
 (GO-Taste, Pegel, Wellenform, Springen, Breite des rechten Bereichs) sowie `tests/zustand.mjs` (Standby, DB-Upgrade), `tests/fade.mjs` (Fade-Cue pausieren), `tests/fadein.mjs` (Fade-In/-Out der Audio-Cues), `tests/sicherung.mjs`
 (Backup-Hinweis beim Schließen) und `tests/wachhalten.mjs` (Ausgabegerät wach halten);
