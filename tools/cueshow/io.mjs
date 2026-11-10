@@ -41,7 +41,10 @@ async function openFile(p) {
   const { header, base } = res;
   const blobs = new Map(header.media.map((m) => [m.id, mediaBlob(blob, base, m)]));
   const media = header.media.map(({ id, name, type, offset, length }) => ({ id, name, type, offset, length }));
-  return { kind: 'file', path: p, header: { format: header.format, session: header.session, media }, blobs, warnings: [] };
+  return {
+    kind: 'file', path: p, fileSize: blob.size, headerSize: base - 12,
+    header: { format: header.format, session: header.session, media }, blobs, warnings: [],
+  };
 }
 
 /** Pfad aus show.json auflösen; muss eine Datei innerhalb des Show-Ordners sein (auch nach Symlinks). */
