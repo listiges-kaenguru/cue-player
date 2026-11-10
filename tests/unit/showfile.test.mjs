@@ -79,7 +79,7 @@ describe('Datei lesen', () => {
     const h = { format: 1, session: session(), media: [] };
     await rejects(raw(h, undefined, { hlen: 0 }));
     await rejects(raw(h, undefined, { hlen: 0xffffffff }));
-    await rejects(raw(h, undefined, { hlen: JSON.stringify(h).length + 1 }));
+    await rejects(raw(h, undefined, { hlen: enc.encode(JSON.stringify(h)).length + 1 }), 'ein Byte zu lang (Bytes, nicht Zeichen)');
     await rejects(raw('{"format":1,'));
     await rejects(raw('null'));
     await rejects(raw('[]'));
@@ -105,6 +105,14 @@ describe('Datei lesen', () => {
     await rejects(raw(h({ offset: 0, length: '4' }), data));
     await rejects(raw(h({ offset: 0, length: 2 ** 53 }), data));
     await rejects(raw(h({ id: 7, offset: 0, length: 1 }), data));
+  });
+});
+
+describe('Show ohne Einstellungen', () => {
+  it('nimmt eine Show ohne settings an (ältere oder von Hand gebaute Dateien)', async () => {
+    const { settings, ...ohne } = session();
+    const { header } = await F.readShowFile(raw({ format: 1, session: ohne, media: [] }));
+    assert.equal(header.session.settings, undefined);
   });
 });
 

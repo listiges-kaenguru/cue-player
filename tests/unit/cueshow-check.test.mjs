@@ -216,3 +216,45 @@ describe('Einstellungen', () => {
     assert.deepEqual(run((s) => { delete s.settings; }), []);
   });
 });
+
+describe('Grenzfälle (aus dem Mutation Testing)', () => {
+  it('verlangt die Farbe als ganzen Wert', () => {
+    for (const c of ['red;#fff', 'x#abc', '#abcd#abc', ' #abc']) err((s) => { s.cues[0].color = c; }, /· color$/);
+  });
+  it('erkennt Überlappung auch unsortiert und erlaubt aneinanderliegende und leere Medien', () => {
+    const lay = (sh, a, b) => { Object.assign(sh.header.media[0], a); Object.assign(sh.header.media[1], b); };
+    assert.deepEqual(run((s, sh) => lay(sh, { offset: 0, length: 10 }, { offset: 10, length: 4 })), [], 'aneinander');
+    assert.deepEqual(run((s, sh) => lay(sh, { offset: 3, length: 0 }, { offset: 0, length: 10 })), [], 'Länge 0');
+    err((s, sh) => lay(sh, { offset: 5, length: 10 }, { offset: 0, length: 6 }), /^media\[0\]$/, /überlappt mit media\[1\]/);
+    assert.deepEqual(run((s, sh) => lay(sh, { offset: 20, length: 4 }, { offset: 0, length: 20 })), [], 'unsortiert, ohne Überlappung');
+  });
+  it('kennt auch den alten Typ start', () => {
+    warn((s) => { s.cues[3].type = 'start'; delete s.cues[3].mode; }, /^Cue 4 .* · type$/, /Start\/Stop/);
+  });
+  it('nennt den richtigen Grund bei IDs', () => {
+    err((s) => { s.cues[1].id = 3; }, /^Cue 2 .* · id$/, /fehlt oder ist kein Text/);
+    err((s) => { s.cues[2].id = s.cues[0].id; }, /^Cue 3 .* · id$/, /doppelt \(wie Cue 1\)/);
+    err((s) => { s.id = 5; }, /^Show · id$/);
+  });
+  it('meldet fehlende Felder, aber nie eine fehlende id doppelt', () => {
+    const list = run((s) => { delete s.cues[7].id; });
+    assert.deepEqual(list.map((f) => f.stufe + ' ' + f.ort.replace(/\(id [^)]*\)/, '')), ['fehler Cue 8  · id']);
+  });
+  it('nennt Werte in der Meldung lesbar', () => {
+    const [f] = run((s) => { s.cues[0].nextAction = 'auto'; });
+    assert.match(f.text, /^„auto“ \(erlaubt: none, continue, follow\)$/);
+    const [g] = run((s) => { s.cues[6].channel = 0; });
+    assert.match(g.text, /^0: ganze Zahl von 1 bis 16 erwartet$/);
+    const [h] = run((s) => { s.cues[0].fadeIn = null; });
+    assert.match(h.text, /^null: Zahl ≥ 0 erwartet/);
+  });
+  it('kürzt lange IDs im Ort auf 8 Zeichen, kurze bleiben', () => {
+    const [f] = run((s) => { s.cues[0].id = '123456789'; s.cues[0].fadeIn = -1; });
+    assert.equal(f.ort, 'Cue 1 (id 12345678…) · fadeIn');
+    const [g] = run((s) => { s.cues[0].id = '12345678'; s.cues[0].fadeIn = -1; });
+    assert.equal(g.ort, 'Cue 1 (id 12345678) · fadeIn');
+  });
+  it('kommt mit Einstellungen ohne midi zurecht', () => {
+    assert.deepEqual(run((s) => { delete s.settings.midi; }), []);
+  });
+});

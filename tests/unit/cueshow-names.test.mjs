@@ -97,6 +97,22 @@ describe('mediaFileNames', () => {
 });
 
 describe('MIME-Typ und Endung', () => {
+  it('ordnet alle bekannten Formate in beide Richtungen zu', () => {
+    const table = [['.mp3', 'audio/mpeg'], ['.wav', 'audio/wav'], ['.ogg', 'audio/ogg'], ['.opus', 'audio/opus'],
+      ['.flac', 'audio/flac'], ['.m4a', 'audio/mp4'], ['.aac', 'audio/aac'], ['.webm', 'audio/webm'], ['.aiff', 'audio/aiff'],
+      ['.mp4', 'video/mp4']];
+    for (const [ext, type] of table) {
+      assert.equal(extForType(type), ext, type);
+      assert.equal(typeForFile('x' + ext), type, ext);
+    }
+    assert.equal(extForType('audio/x-flac'), '.flac');
+    assert.equal(extForType('audio/x-aac'), '.aac');
+    assert.equal(extForType('audio/x-aiff'), '.aiff');
+    assert.equal(typeForFile('x.aif'), 'audio/aiff');
+    assert.equal(typeForFile('x.weba'), 'audio/webm');
+    assert.equal(extForType(''), '.bin', 'leerer Typ trifft keinen Eintrag ohne Liste');
+  });
+
   it('kennt die üblichen Audioformate in beide Richtungen', () => {
     assert.equal(extForType('audio/mpeg'), '.mp3');
     assert.equal(extForType('AUDIO/WAV'), '.wav');
