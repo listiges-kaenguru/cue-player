@@ -37,20 +37,19 @@ Inhalt:
 
 ## 2. Der Bildschirm
 
-```
-┌───────────────────────────────────────────────────────────────────────┐
-│ ☰  Meine Show   ＋Audio  ＋Cue▾      ▦ Cart  ✎ Edit ◯━ ▶ Show  ?  ⚙  │  ← Kopfleiste
-├────────────────────────────────────────────────────┬──────────────────┤
-│ #  Cue                   Pre    Dauer       Post   │ AKTIV            │
-│ 1  ♪ Einlassmusik               ███░░ 1:02  ↧ AF   │ 1 · Einlassmusik │
-│ 2▸ ◢ Fade #1 → −∞               0:03.0             │        ❚❚  ■     │
-│                                                    │ ▁▃▅▇▅▃▂▃▅▆▄▂▁  ▌ │
-│ 3  ♪ Gewitter          0:02.0   0:45.0             │                  │
-├────────────────────────────────────────────────────┴──────────────────┤
-│ [   GO   ]  [■ Stop alle] [❚❚ Pause] [▶ Weiter]  Master ──●─ 0 dB ▬▬▬▫│  ← Transportleiste
-│  2 · Fade…                                                            │
-└───────────────────────────────────────────────────────────────────────┘
-```
+![Hauptbildschirm im Edit-Modus mit nummerierten Bereichen: Kopfleiste, Cue-Liste, Regiebuch, Aktiv-Bereich, GO-Taste, Transportknöpfe, Master und Pegelanzeige](img/bildschirm.webp)
+
+*Mitten in der Szene: Gewitter und Regen laufen (grün), der Kauz steht im Standby (blau, ▸).*
+
+1. **Kopfleiste** – Shows, Show-Name, neue Cues, Ansicht, Edit/Show, Hilfe und Einstellungen.
+2. **Cue-Liste** – Nummer, Name, Pre-Wait, Dauer mit Fortschritt, Post-Wait und was danach passiert (AC/AF).
+3. **Regiebuch** – Memo-Texte und Notizen zum nächsten Cue.
+4. **Aktiv** – die laufenden Cues mit Wellenform, Pegel, Pause- und Stop-Knopf.
+5. **GO** – löst den Standby-Cue aus; darunter steht, welcher das ist.
+6. **Stop alle, Pause, Weiter** – für alle laufenden Cues.
+7. **Master und Pegelanzeige** – Gesamtlautstärke und was tatsächlich rausgeht.
+
+Im Einzelnen:
 
 - **☰** – Shows verwalten (neu, öffnen, löschen, exportieren, importieren).
 - **Show-Name** – direkt anklicken und umbenennen.
@@ -153,6 +152,11 @@ müssen sie dort neu angelegt werden.
 ---
 
 ## 4. Cue-Typen
+
+Ein Doppelklick auf einen Cue (oder **✎** in seiner Zeile) öffnet den **Editor**. Oben stehen die gemeinsamen Felder,
+darunter die des Cue-Typs, dann **Ablauf** und **Trigger**:
+
+![Editor eines Audio-Cues mit den Abschnitten Audio, Ablauf und Trigger](img/editor.webp)
 
 Alle Cues haben diese gemeinsamen Felder:
 
@@ -297,10 +301,7 @@ Jeder Cue hat drei Einstellungen im Editor unter **Ablauf**:
     Ablauf von *Post-Wait*. So entstehen Abfolgen. Wird der Cue manuell gestoppt, folgt nichts.
 - **Post-Wait** – Verzögerung für Auto-Continue/-Follow.
 
-```
-GO ─┬─ Pre-Wait ─┬──── Cue läuft ─────────┬─ Post-Wait ─▶ nächster Cue  (Auto-Follow)
-    │            └─ Post-Wait ─▶ nächster Cue                           (Auto-Continue)
-```
+![Zeitleiste: Nach GO folgen Pre-Wait und Cue. Bei Auto-Continue beginnt die Post-Wait mit dem Start des Cues, bei Auto-Follow mit seinem Ende; danach startet der nächste Cue.](img/ablauf.svg)
 
 Beispiele:
 
@@ -353,6 +354,8 @@ Benutzeraktion. Ein Tipp irgendwo in die App genügt; ein GO zählt natürlich a
 **▦ Cart** zeigt alle Cues als große Kacheln – ideal für Tablets/Handys und für Jingles,
 Soundeffekte oder Einspieler, die in beliebiger Reihenfolge gebraucht werden.
 
+![Cart-Ansicht: Cues als Kacheln in vier Spalten, laufende Cues grün umrandet, der Standby-Cue blau gestrichelt](img/cart.webp)
+
 - **Antippen** startet den Cue. **Erneut antippen** stoppt ihn. Ein pausierter Cue wird fortgesetzt.
 - Die Kachel füllt sich von unten mit dem Fortschritt und zeigt Restzeit an.
 - Im Edit-Modus öffnet **✎** oben rechts den Editor.
@@ -403,6 +406,10 @@ Shows ohne Cues lösen keine Nachfrage aus.
 ---
 
 ## 10. Einstellungen
+
+**⚙** in der Kopfleiste öffnet die Einstellungen:
+
+![Einstellungen mit den Abschnitten Bedienung, Audio, MIDI, Speicher und Info](img/einstellungen.webp)
 
 | Einstellung | Bedeutung |
 |---|---|

@@ -52,6 +52,12 @@ Demo: <https://demo-cueplayer.schmaralde.de/>.
   `apply-texts`; Hilfe mit `node tools/cueshow.mjs help`. Logik in `tools/cueshow/`: `io.mjs` (Show lesen, sicher
   schreiben, Pfadprüfung), `names.mjs` (Dateinamen), `check.mjs` (strenge Prüfung), `info.mjs`, `texts.mjs`, `cli.mjs`.
   Neue Cue-Felder oder Einstellungen: Regeln in `check.mjs` ergänzen (sonst meldet `check` sie als unbekannt).
+- Handbuch-Bilder: `docs/img/` (WebP-Screenshots, `ablauf.svg` von Hand gezeichnet), im Markdown als
+  `![Alt-Text](img/name.webp)`. `renderDocument` in `md.js` lässt nur einfache Dateinamen unter `img/` zu, die App
+  übergibt `images: 'docs/'`. Neue Bilder in `ASSETS` in `sw.js` eintragen (`tests/hilfe.mjs` prüft das). Die
+  Screenshots erzeugt `tools/handbuch-bilder.mjs` (Beispielshow, nummerierte Marken auf dem Hauptbildschirm; braucht
+  ImageMagick); neu erzeugen, wenn sich die Oberfläche sichtbar ändert, danach ansehen und die Texte im Handbuch
+  (Legende in Kapitel 2, Alt-Texte) abgleichen. Kursiv/fett im Handbuch nicht über Zeilenumbrüche ziehen.
 - `sw.js`: Cache-First, lädt beim Installieren am HTTP-Cache vorbei.
 - `site.json`: optionaler Impressum-Link, im Repo leer (`{}`); die Demo bringt ihre eigene mit.
 - Icons in `img/`, nie in `icons/` (Apache-Alias).
@@ -71,7 +77,7 @@ Vollständiger Testlauf: Syntax- und Linkprüfung, Unit-Tests (`tests/unit/*.tes
 und `tools/cueshow/`), den
 Smoke-Test und die Browsertests `tests/import.mjs` (präparierte `.cueshow`-Dateien, `site.json`) und `tests/pegel.mjs`
 (GO-Taste, Pegel, Wellenform, Springen, Breite des rechten Bereichs) sowie `tests/zustand.mjs` (Standby, DB-Upgrade), `tests/fade.mjs` (Fade-Cue pausieren), `tests/fadein.mjs` (Fade-In/-Out der Audio-Cues), `tests/sicherung.mjs`
-(Backup-Hinweis beim Schließen), `tests/wachhalten.mjs` (Ausgabegerät wach halten) und `tests/cueshow.mjs` (Werkzeug
+(Backup-Hinweis beim Schließen), `tests/hilfe.mjs` (Bilder im Handbuch, offline), `tests/wachhalten.mjs` (Ausgabegerät wach halten) und `tests/cueshow.mjs` (Werkzeug
 `tools/cueshow.mjs` zusammen mit der App: Export, Rundreise, Bearbeiten, Import);
 weitere `tests/*.mjs` gehören dazu (`node tests/<name>.mjs`, Server auf Port 8080). Weitere Befehle:
 `npm run test:coverage` (Coverage der Unit-Tests), `npm run test:mutation` (Stryker, ca. 10 Minuten),

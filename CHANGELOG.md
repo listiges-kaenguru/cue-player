@@ -8,12 +8,23 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+### Geändert
+- **Benutzerhandbuch mit echten Screenshots statt ASCII-Skizzen:** Kapitel 2 zeigt den Hauptbildschirm mit
+  nummerierten Bereichen und Legende, Kapitel 4 den Cue-Editor, Kapitel 7 die Cart-Ansicht und Kapitel 10 die
+  Einstellungen. Der Ablauf von Pre-Wait, Post-Wait, Auto-Continue und Auto-Follow in Kapitel 5 ist jetzt eine Grafik.
+  Die Hilfe (F1) zeigt die Bilder auch offline. Sie liegen in `docs/img/` (zusammen etwa 320 KB) und sind im
+  Offline-Cache. Erlaubt sind nur einfache Dateinamen im eigenen Bildordner (`.webp`, `.svg`, `.png`), andere
+  Bildquellen erscheinen als Alt-Text.
+
 ### Sicherheit
 - Entwicklungsabhängigkeiten aktualisiert (`npm audit fix`): `follow-redirects` 1.16.3 (hoher Fund
   GHSA-mrwp-f3q8-3g9p), `qs` 6.17.1, Stryker 10.1.1. Betrifft nur Testserver und Tests, nicht die App. Offen bleiben
   zwei mittlere Funde in `minimatch` über Stryker; die vorgeschlagene Lösung wäre ein Rückschritt auf Stryker 6.
 
 ### Intern
+- `tools/handbuch-bilder.mjs` erzeugt die Screenshots des Handbuchs aus der echten App (nicht im Release).
+  Neuer Browsertest `tests/hilfe.mjs`: Bilder geladen, im Offline-Cache, offline sichtbar, fehlendes Bild, Handy-Breite.
+  Der Smoke-Test prüft statt eines Codeblocks jetzt die Bilder im Handbuch.
 - **Entwicklungswerkzeug für `.cueshow`-Dateien** (`tools/cueshow.mjs`, Node ≥ 20 ohne Abhängigkeiten, nicht im
   Release-Archiv; Aufruf `node tools/cueshow.mjs <befehl>` oder `npm run cueshow -- <befehl>`):
   - `unpack`/`pack`: Show in einen Ordner entpacken (`show.json` + `media/<Name>`) und wieder packen. Unverändert

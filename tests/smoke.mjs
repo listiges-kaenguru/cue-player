@@ -322,9 +322,9 @@ await page.click('#dlg-settings button[value=close]');
 // Hilfe: Benutzerhandbuch im Dialog
 await page.click('#btn-help');
 await page.waitForSelector('#dlg-help[open] #help-body h2');
-const help = await page.$eval('#help-body', (b) => ({ h2: b.querySelectorAll('h2').length, tables: b.querySelectorAll('table').length, pre: b.querySelectorAll('pre').length,
+const help = await page.$eval('#help-body', (b) => ({ h2: b.querySelectorAll('h2').length, tables: b.querySelectorAll('table').length, img: b.querySelectorAll('img').length,
   broken: [...b.querySelectorAll('a[data-anchor]')].filter((a) => !document.getElementById('hilfe-' + a.dataset.anchor)).map((a) => a.dataset.anchor) }));
-check('Hilfe: Handbuch gerendert, alle Sprungmarken gültig', help.h2 >= 13 && help.tables >= 5 && help.pre >= 1 && help.broken.length === 0, JSON.stringify(help));
+check('Hilfe: Handbuch gerendert, alle Sprungmarken gültig', help.h2 >= 13 && help.tables >= 5 && help.img >= 5 && help.broken.length === 0, JSON.stringify(help));
 await page.click('#help-body a[data-anchor="11-tastenkürzel"]');
 await page.waitForTimeout(200);
 const jump = await page.evaluate(() => { const b = document.getElementById('help-body'); return Math.abs(document.getElementById('hilfe-11-tastenkürzel').getBoundingClientRect().top - b.getBoundingClientRect().top); });

@@ -62,20 +62,29 @@ export function firstLine(src) {
 
 // ---------------------------------------------------------------------------
 // Dokument-Renderer für das eingebaute Benutzerhandbuch (größerer Markdown-Umfang).
-// Zusätzlich: Tabellen, ``` Codeblöcke, `Code`, [Links](#anker), --- Linie, verschachtelte Listen, - [ ] Checklisten.
+// Zusätzlich: Tabellen, ``` Codeblöcke, `Code`, [Links](#anker), ![Bilder](img/name.webp), --- Linie, verschachtelte Listen,
+// - [ ] Checklisten.
 // Überschriften bekommen Anker wie auf GitHub (Präfix `prefix`), damit die Links im Inhaltsverzeichnis funktionieren.
-// Auch hier wird alles HTML escaped; Links sind nur als #anker oder http(s) erlaubt.
+// Auch hier wird alles HTML escaped; Links sind nur als #anker oder http(s) erlaubt, Bilder nur als einfacher Dateiname
+// im Bildordner des Handbuchs (img/…, .webp/.svg/.png). Andere Bildquellen erscheinen als Alt-Text. `images` ist der
+// Ordner, in dem das Handbuch liegt, von der Seite aus gesehen (in der App 'docs/').
 
 /** Anker wie GitHub: klein, nur Buchstaben/Ziffern/Leer/-/_, Leerzeichen → '-'. */
 export function slugify(text) {
   return text.toLowerCase().replace(/[*_~=`]/g, '').replace(/[^\p{L}\p{N}\s_-]/gu, '').replace(/\s/g, '-');
 }
 
-function docInline(s) {
-  // s ist bereits escaped. Code und Links werden ausgelagert, damit *, _ usw. darin unverändert bleiben.
+const IMG_SRC = /^img\/[a-z0-9][a-z0-9-]*\.(webp|svg|png)$/;
+const IMG_BASE = /^([a-z0-9][a-z0-9_-]*\/)*$/;
+
+function docInlineBase(s, images) {
+  // s ist bereits escaped. Code, Bilder und Links werden ausgelagert, damit *, _ usw. darin unverändert bleiben.
   const keep = [];
   const put = (html) => `\u0000${keep.push(html) - 1}\u0000`;
   s = s.replace(/`([^`]+)`/g, (_, code) => put(`<code>${code}</code>`));
+  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (all, alt, src) => put(IMG_SRC.test(src)
+    ? `<img src="${IMG_BASE.test(images) ? images : ''}${src}" alt="${alt}">`
+    : alt));
   s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (all, text, href) => {
     if (href.startsWith('#')) return put(`<a href="${href}" data-anchor="${href.slice(1)}">${inline(text)}</a>`);
     if (/^https?:\/\//.test(href)) return put(`<a href="${href}" target="_blank" rel="noopener">${inline(text)}</a>`);
@@ -84,7 +93,8 @@ function docInline(s) {
   return inline(s).replace(/\u0000(\d+)\u0000/g, (_, i) => keep[i]);
 }
 
-export function renderDocument(src, { prefix = 'doc-' } = {}) {
+export function renderDocument(src, { prefix = 'doc-', images = '' } = {}) {
+  const docInline = (t) => docInlineBase(t, images);
   const lines = toLines(src);
   const used = new Map();
   let html = '';

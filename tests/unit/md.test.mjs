@@ -8,12 +8,16 @@ import { renderMarkdown, renderDocument, firstLine, slugify } from '../../js/md.
 function harmlos(html) {
   const tags = [...html.matchAll(/<\/?([a-z0-9]+)/gi)].map((m) => m[1].toLowerCase());
   const erlaubt = new Set(['p', 'br', 'strong', 'em', 'del', 'mark', 'h1', 'h2', 'h3', 'h4', 'h5', 'ul', 'ol', 'li',
-    'blockquote', 'code', 'pre', 'a', 'hr', 'div', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'span']);
+    'blockquote', 'code', 'pre', 'a', 'hr', 'div', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'span', 'img']);
   for (const t of tags) assert.ok(erlaubt.has(t), `unerwartetes Tag <${t}> in ${html}`);
   // Attribute nur aus der festen Liste, Werte ohne ausbrechende Anführungszeichen
   for (const m of html.matchAll(/<[a-z0-9]+(\s[^>]*)?>/gi)) {
     const attrs = [...(m[1] ?? '').matchAll(/\s([a-z-]+)=/gi)].map((a) => a[1].toLowerCase());
-    for (const a of attrs) assert.ok(['href', 'target', 'rel', 'class', 'id', 'data-anchor'].includes(a), `Attribut ${a} in ${m[0]}`);
+    for (const a of attrs) assert.ok(['href', 'target', 'rel', 'class', 'id', 'data-anchor', 'src', 'alt'].includes(a), `Attribut ${a} in ${m[0]}`);
+  }
+  // Bilder nur aus dem eigenen Bildordner des Handbuchs (einfacher Dateiname, keine fremden Adressen)
+  for (const m of html.matchAll(/\ssrc="([^"]*)"/gi)) {
+    assert.match(m[1], /^(docs\/)?img\/[a-z0-9][a-z0-9-]*\.(webp|svg|png)$/, `Bildquelle ${m[1]}`);
   }
   assert.doesNotMatch(html, /href="(?!#|https?:\/\/)/i, 'nur #anker oder http(s) als Link');
 }
@@ -125,6 +129,41 @@ describe('renderDocument (Benutzerhandbuch)', () => {
       harmlos(renderDocument(`- ${a}\n  ${a}`));
     });
   }
+  it('zeigt Bilder aus dem eigenen Bildordner, mit Präfix für die App', () => {
+    assert.equal(renderDocument('![Der Bildschirm](img/bildschirm.webp)'),
+      '<p><img src="img/bildschirm.webp" alt="Der Bildschirm"></p>');
+    assert.equal(renderDocument('![Ablauf](img/ablauf.svg)', { images: 'docs/' }),
+      '<p><img src="docs/img/ablauf.svg" alt="Ablauf"></p>');
+    assert.equal(renderDocument('![a](img/a.webp)', { images: 'app/docs/' }), '<p><img src="app/docs/img/a.webp" alt="a"></p>');
+    assert.match(renderDocument('![a](img/x-1.png)'), /src="img\/x-1\.png"/);
+    // leerer Alt-Text bleibt erlaubt, Markdown im Alt-Text wird nicht zu Tags
+    assert.equal(renderDocument('![](img/a.webp)'), '<p><img src="img/a.webp" alt=""></p>');
+    assert.equal(renderDocument('![**fett** _x_](img/a.webp)'), '<p><img src="img/a.webp" alt="**fett** _x_"></p>');
+    // im Fließtext und in Tabellen
+    assert.match(renderDocument('Vorher ![a](img/a.webp) nachher'), /^<p>Vorher <img src="img\/a\.webp" alt="a"> nachher<\/p>$/);
+  });
+  it('zeigt fremde oder ungültige Bildquellen nur als Alt-Text', () => {
+    for (const src of ['https://example.org/a.webp', '//evil.example/a.png', 'javascript:alert(1)', 'data:image/svg+xml,<svg onload=1>',
+      '../img/a.webp', 'img/../../a.webp', 'img/a.webp?x=1', 'img/a.gif', 'img/A.webp', 'img/sub/a.webp', 'img/.webp',
+      'img/a.webp"onerror="alert(1)', '/img/a.webp', 'IMG/a.webp', 'img/a b.webp']) {
+      const html = renderDocument(`![Bild](${src})`);
+      harmlos(html);
+      assert.doesNotMatch(html, /<img/, src);
+      assert.match(html, /Bild/, src);
+    }
+  });
+  it('lässt aus dem Alt-Text keine Attribute ausbrechen', () => {
+    // Anführungszeichen bleiben escaped im Wert (harmlos() würde „ onerror=“ im Wert fälschlich als Attribut zählen)
+    assert.equal(renderDocument('![x" onerror="alert(1)](img/a.webp)'),
+      '<p><img src="img/a.webp" alt="x&quot; onerror=&quot;alert(1)"></p>');
+    assert.equal(renderDocument("![<script>x</script>'](img/a.webp)"),
+      '<p><img src="img/a.webp" alt="&lt;script&gt;x&lt;/script&gt;&#39;"></p>');
+  });
+  it('nimmt als Präfix nur einen einfachen relativen Ordner', () => {
+    for (const images of ['https://evil.example/', '//evil/', 'javascript:', '../', 'docs/../', 'a"b/']) {
+      assert.equal(renderDocument('![a](img/a.webp)', { images }), '<p><img src="img/a.webp" alt="a"></p>', images);
+    }
+  });
   it('kommt mit leeren Eingaben und offenem Codeblock zurecht', () => {
     assert.equal(renderDocument(''), '');
     assert.equal(renderDocument(null), '');

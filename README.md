@@ -106,10 +106,13 @@ tests/pegel.mjs        Browsertest: GO-Taste, Pegelanzeigen, Springen, Breite de
 tests/zustand.mjs      Browsertest: Standby nach dem Neuladen, Datenbank-Upgrade mit zweitem Tab
 tests/fade.mjs         Browsertest: Fade-Cue pausieren und fortsetzen
 tests/cueshow.mjs      Browsertest: Werkzeug tools/cueshow.mjs zusammen mit der App
+tests/hilfe.mjs        Browsertest: Bilder im Benutzerhandbuch, auch offline
 tests/unit/            Unit-Tests (node:test) für md.js, util.js, model.js, meter.js, showfile.js, tools/cueshow/
 tools/cueshow.mjs      Entwicklungswerkzeug: .cueshow entpacken, packen, prüfen, Texte bearbeiten (nicht im Release)
+tools/handbuch-bilder.mjs  Erzeugt die Screenshots in docs/img/ aus der echten App (nicht im Release)
 img/                   App-Icons (nicht „icons/“: Apache-Standard-Alias)
 docs/                  Anleitungen (BENUTZERHANDBUCH.md wird auch als Hilfe in der App angezeigt)
+docs/img/              Screenshots und Grafiken des Handbuchs (auch offline in der Hilfe)
 ```
 
 **Audio-Kette pro Audio-Cue:**
