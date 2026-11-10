@@ -16,6 +16,7 @@
     "test:import": "node tests/import.mjs",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-include='js/**' 'tests/unit/*.test.mjs'",
     "test:mutation": "stryker run",
+    "test:gross": "node tests/gross/cueshow-speicher.mjs",
     "cueshow": "node tools/cueshow.mjs"
   },
   "devDependencies": {
