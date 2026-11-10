@@ -8,7 +8,7 @@ import { renderMarkdown, renderDocument, firstLine } from './md.js';
 import { LIMITS as KA_LIMITS } from './keepalive.js';
 import { meterFraction, peakDb, holdPeak, peakRange, fractionAt, seekTarget, stepTarget, clampSideWidth, CLIP_HOLD_MS } from './meter.js';
 
-export const APP_VERSION = '0.8.0';
+export const APP_VERSION = '0.8.1';
 export const SOURCE_URL = 'https://github.com/listiges-kaenguru/cue-player';
 /** Versionsprüfung: einzige Verbindung nach außen, höchstens einmal am Tag beim Öffnen der Einstellungen */
 const RELEASE_API = 'https://api.github.com/repos/listiges-kaenguru/cue-player/releases/latest';
