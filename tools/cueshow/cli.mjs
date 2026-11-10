@@ -75,7 +75,7 @@ const COMMANDS = {
     const show = await openShow(src);
     if (show.kind !== 'file') throw new ToolError('unpack erwartet eine .cueshow-Datei (zum Packen eines Ordners: pack)', 2);
     const list = findingsOf(show);
-    const out = await target(o.output, stem(show), '', o.force);
+    const out = await target(o.output, stem(show), '');
     const r = await writeFolder(show, out, { force: o.force });
     io.out(`Entpackt nach ${path.relative(process.cwd(), out) || '.'}${path.sep}`);
     io.out(`  show.json     ${r.cues} Cues, ${r.media} Medien`);
@@ -91,7 +91,7 @@ const COMMANDS = {
     io.out(`Geprüft: ${summary(list)}`);
     for (const l of formatFindings(list)) io.out('  ' + l);
     if (errorsIn(list)) throw new ToolError('Die Show hat Fehler und wurde nicht gepackt');
-    const out = await target(o.output, stem(show) + '-neu', '.cueshow', o.force);
+    const out = await target(o.output, stem(show) + '-neu', '.cueshow');
     const r = await writeShowFile(show, out, { force: o.force });
     for (const w of r.warnings) io.out(`  Warnung  ${w}`);
     io.out(`Gepackt: ${path.relative(process.cwd(), out)} (${formatBytes(r.bytes)})`);
@@ -101,7 +101,7 @@ const COMMANDS = {
   async texts([src], o, io) {
     const show = await openShow(src);
     const md = textsToMarkdown(show.header.session);
-    const out = await target(o.output, stem(show) + '-texte', '.md', o.force);
+    const out = await target(o.output, stem(show) + '-texte', '.md');
     await writeTextFile(out, md, { force: o.force });
     io.out(`Texte geschrieben: ${path.relative(process.cwd(), out)} (${show.header.session.cues.length} Cues)`);
     return 0;
@@ -118,10 +118,10 @@ const COMMANDS = {
     const q = (t) => `„${t}“`;
     for (const c of r.changes) {
       const lines = (t) => (t ? t.split('\n').length : 0);
-      const what = c.feld === 'notes' ? `Notizen geändert (${lines(c.alt)} → ${lines(c.neu)} Zeilen)` : `name: ${q(c.alt)} → ${q(c.neu)}`;
+      const what = c.feld === 'notes' ? `Notizen geändert (${lines(c.alt)} → ${lines(c.neu)} ${lines(c.neu) === 1 ? 'Zeile' : 'Zeilen'})` : `name: ${q(c.alt)} → ${q(c.neu)}`;
       io.out(`  ${c.ort.padEnd(7)} ${what}`);
     }
-    io.out(`${r.changes.length} Änderungen`);
+    io.out(`${r.changes.length} ${r.changes.length === 1 ? 'Änderung' : 'Änderungen'}`);
     if (o.probe) return 0;
     const next = { ...show, header: { ...show.header, session: r.session }, warnings: [] };
     const list = checkShow(next);
@@ -130,11 +130,11 @@ const COMMANDS = {
       throw new ToolError('Nach dem Einspielen hat die Show Fehler, nichts geschrieben');
     }
     if (show.kind === 'file') {
-      const out = await target(o.output, stem(show) + '-neu', '.cueshow', o.force);
+      const out = await target(o.output, stem(show) + '-neu', '.cueshow');
       await writeShowFile(next, out, { force: o.force });
       io.out(`Geschrieben: ${path.relative(process.cwd(), out)}`);
     } else {
-      const out = await target(o.output, stem(show) + '-neu', '', o.force);
+      const out = await target(o.output, stem(show) + '-neu', '');
       await writeFolder(next, out, { force: o.force });
       io.out(`Geschrieben: ${path.relative(process.cwd(), out)}${path.sep}`);
     }
