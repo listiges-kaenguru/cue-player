@@ -11,3 +11,4 @@ package.json export-ignore
 tests export-ignore
 stryker.config.json export-ignore
 package-lock.json export-ignore
+tools export-ignore
