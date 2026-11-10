@@ -53,22 +53,17 @@ Offene Punkte und Ideen für spätere Versionen. Erledigtes wird hier gestrichen
   - Optional (Desktop): „Als Ordner speichern“ über die File System Access API (`showDirectoryPicker`).
   - Teilen auf Android: `navigator.share({ files: [...] })` (Web Share API), wenn verfügbar.
   - Test in `tests/smoke.mjs` ergänzen: Export → entpacken (z. B. mit `unzip -l`) → Import.
-- [ ] **Cueshow-Werkzeug für die Entwicklung** (`tools/cueshow.mjs`, Node ohne Abhängigkeiten, `export-ignore`;
-  Aufwand ca. 1–2 h mit Tests):
-  - `unpack show.cueshow` → `show.json` (Header formatiert) + `show.media.bin`; `pack show.json` → `show.cueshow`.
-    Medien-Offsets sind relativ zum Header-Ende, beim Packen nur die Header-Länge neu schreiben.
-  - `texts` / `apply-texts`: Namen und Notizen als Markdown (ein Abschnitt je Cue, Cue-ID als Kommentar) herausziehen
-    und über die ID zurückschreiben. Ergebnis als neue Datei, Original bleibt.
-  - Vor dem Packen strenger prüfen als `validShow()` (Typen von `preWait`, `nextAction`, `color` …), damit Tippfehler
-    nicht erst in der App auffallen.
-  - Hinweis: Import in die App vergibt eine neue Show-ID, die bearbeitete Show erscheint neben der alten.
-  - Falls das Exportformat auf ZIP umgestellt wird (Punkt oben): beide Formate unterstützen.
+  - Das Werkzeug `tools/cueshow.mjs` entpackt schon in denselben Aufbau (`show.json` + `media/`); ZIP dort in
+    `tools/cueshow/io.mjs` (`openShow`, Schreiben) mit unterstützen.
 
 ## Ideen
 
 Roadmap-Vorschläge (auch in der README):
 
 - Gruppen-Cues (Mehrfachauswahl ist seit v0.4.0 da)
+- Import strenger prüfen: einzelne Regeln aus `tools/cueshow/check.mjs` (Zahlenbereiche, Ziele, Auswahlwerte) in
+  `validShow()` bzw. `normalizeSession()` übernehmen. Eigene Entscheidung, weil die App ältere oder von Hand gebaute Shows
+  bisher großzügig annimmt.
 - Vorhören auf zweitem Ausgang
 - Video-Cues (Vollbild, zweiter Bildschirm)
 - Tauri-Desktop-Build (OSC, Netzwerk-Fernsteuerung, Projektordner statt Browser-Speicher)

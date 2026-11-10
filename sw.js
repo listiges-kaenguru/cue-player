@@ -13,6 +13,7 @@ const ASSETS = [
   'js/keepalive.js',
   'js/midi.js',
   'js/model.js',
+  'js/showfile.js',
   'js/storage.js',
   'js/util.js',
   'site.json',

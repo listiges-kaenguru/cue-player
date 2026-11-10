@@ -8,6 +8,25 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+### Intern
+- **Entwicklungswerkzeug für `.cueshow`-Dateien** (`tools/cueshow.mjs`, Node ≥ 20 ohne Abhängigkeiten, nicht im
+  Release-Archiv; Aufruf `node tools/cueshow.mjs <befehl>` oder `npm run cueshow -- <befehl>`):
+  - `unpack`/`pack`: Show in einen Ordner entpacken (`show.json` + `media/<Name>`) und wieder packen. Unverändert
+    gepackt ist die Datei byte-gleich, ausgetauschte Audiodateien werden übernommen. Dateinamen aus der Show werden
+    bereinigt (kein Pfad, keine für Windows reservierten Namen, Dubletten nummeriert), `pack` liest nur Dateien im
+    Show-Ordner.
+  - `check`: strenge Prüfung (Typen und Bereiche aller Felder, Auswahlwerte wie im Editor, Ziele, Medien, unbekannte
+    Felder, doppelte Trigger), Warnungen mit `--streng` als Fehler. `info`: Übersicht über Cues, Abläufe und Medien.
+  - `texts`/`apply-texts`: Show-Name, Cue-Namen und Notizen als Markdown bearbeiten und in eine neue Show
+    zurückschreiben, `--probe` zeigt nur die Änderungen.
+  - Schreibt nie über vorhandene Dateien ohne `--force`, ändert nie die Quelle, streamt die Medien (1 GB Medien mit
+    etwa 100 MB Speicher).
+  - Tests: Unit-Tests `tests/unit/cueshow-*.test.mjs`, Browsertest `tests/cueshow.mjs` (App → Werkzeug → App),
+    Speichertest `npm run test:gross` (1 GB, nicht im normalen Testlauf).
+- Das Dateiformat `.cueshow` (Kennung, Lesen, Prüfen, Schreiben) steht jetzt in einem eigenen Modul `js/showfile.js`
+  ohne IndexedDB, das im Browser und in Node läuft. `storage.js` nutzt es für Export und Import, das Verhalten bleibt
+  gleich. Neue Unit-Tests `tests/unit/showfile.test.mjs` (Aufbau byte-genau, kaputte und verfälschte Dateien).
+
 ## [0.8.0] – 2026-11-09
 
 Ausgabegerät wach halten, Hinweis auf ungesicherte Shows und zuverlässiges Fade-In. Version 0.8.0 in `sw.js`,

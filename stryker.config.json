@@ -11,7 +11,11 @@
     "js/util.js",
     "js/model.js",
     "js/meter.js",
-    "js/keepalive.js:1-74"
+    "js/keepalive.js:1-74",
+    "js/showfile.js",
+    "tools/cueshow/names.mjs",
+    "tools/cueshow/check.mjs",
+    "tools/cueshow/texts.mjs"
   ],
   "reporters": [
     "clear-text",
