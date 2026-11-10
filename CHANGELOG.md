@@ -8,6 +8,10 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+### Geändert
+- **Benutzerhandbuch mit echten Screenshots:** Die Hilfe (F1) zeigt Bilder aus `docs/img/`. Es sind nur einfache
+  Dateinamen im eigenen Bildordner erlaubt (`.webp`, `.svg`, `.png`), andere Bildquellen erscheinen als Alt-Text.
+
 ### Sicherheit
 - Entwicklungsabhängigkeiten aktualisiert (`npm audit fix`): `follow-redirects` 1.16.3 (hoher Fund
   GHSA-mrwp-f3q8-3g9p), `qs` 6.17.1, Stryker 10.1.1. Betrifft nur Testserver und Tests, nicht die App. Offen bleiben
