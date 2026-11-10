@@ -8,6 +8,11 @@ Die laufende Version steht in `sw.js` (`VERSION`) und `package.json`.
 
 ## [Unveröffentlicht]
 
+### Sicherheit
+- Entwicklungsabhängigkeiten aktualisiert (`npm audit fix`): `follow-redirects` 1.16.3 (hoher Fund
+  GHSA-mrwp-f3q8-3g9p), `qs` 6.17.1, Stryker 10.1.1. Betrifft nur Testserver und Tests, nicht die App. Offen bleiben
+  zwei mittlere Funde in `minimatch` über Stryker; die vorgeschlagene Lösung wäre ein Rückschritt auf Stryker 6.
+
 ## [0.8.0] – 2026-11-09
 
 Ausgabegerät wach halten, Hinweis auf ungesicherte Shows und zuverlässiges Fade-In. Version 0.8.0 in `sw.js`,
